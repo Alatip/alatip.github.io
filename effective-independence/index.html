@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Panels of language models carry fewer independent votes than the literature reports; the gap is an estimator artefact (phi vs tetrachoric).">
+<title>Effective Independence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<style>
+:root{
+  --paper:#F8F9FA; --card:#FFFFFF; --sunk:#F0F2F5;
+  --ink:#12161C; --ink2:#39424F; --muted:#6B7684; --rule:#DDE1E7; --hair:#EAEDF1;
+  --accent:#14548C; --accent-soft:#E4EDF6;
+  --a:#14548C; --b:#BF5B04; --truth:#39424F;
+  --warn-bg:#FBF2E4; --warn-ink:#8A5A00;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0F1216; --card:#161A20; --sunk:#1C2128;
+    --ink:#E6EAEF; --ink2:#B6BFCA; --muted:#828D9B; --rule:#2A313A; --hair:#222932;
+    --accent:#7FB3E0; --accent-soft:#152838;
+    --a:#4D93D0; --b:#D4762A; --truth:#B6BFCA;
+    --warn-bg:#2A2214; --warn-ink:#D8AA5C;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0F1216; --card:#161A20; --sunk:#1C2128;
+  --ink:#E6EAEF; --ink2:#B6BFCA; --muted:#828D9B; --rule:#2A313A; --hair:#222932;
+  --accent:#7FB3E0; --accent-soft:#152838;
+  --a:#4D93D0; --b:#D4762A; --truth:#B6BFCA;
+  --warn-bg:#2A2214; --warn-ink:#D8AA5C;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"Source Serif 4",Georgia,serif; font-size:17.5px; line-height:1.62;
+  -webkit-font-smoothing:antialiased; font-variant-numeric:oldstyle-nums;
+}
+.page{max-width:1000px; margin:0 auto; padding:0 24px 110px}
+.col{max-width:640px; margin:0 auto}
+.col > * + *{margin-top:1.05em}
+p{margin:0}
+h1,h2,h3{margin:0; line-height:1.2; text-wrap:balance; font-weight:600}
+h1{font-size:clamp(2rem,4.6vw,2.85rem); letter-spacing:-.012em}
+h2{font-size:1.42rem}
+h3{font-size:1.08rem}
+a{color:var(--accent)}
+strong{font-weight:600}
+code,.mono,.eyebrow{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace}
+code{font-size:.84em; background:var(--sunk); padding:.1em .35em; border-radius:3px}
+.eyebrow{font-size:.68rem; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); font-weight:500}
+
+header{padding:82px 0 30px}
+.byline{display:flex; flex-wrap:wrap; gap:6px 20px; margin-top:1.1em; font-family:"JetBrains Mono",monospace; font-size:.74rem; color:var(--muted)}
+.abstract{
+  margin-top:2em; padding:22px 26px; background:var(--card);
+  border-top:2px solid var(--ink); border-bottom:1px solid var(--rule);
+  font-size:.97rem; line-height:1.6; color:var(--ink2);
+}
+.abstract .eyebrow{display:block; margin-bottom:.7em}
+.abstract strong{color:var(--ink)}
+
+section{padding-top:56px}
+.sec-head{display:flex; gap:14px; align-items:baseline; margin-bottom:20px}
+.sec-num{font-family:"JetBrains Mono",monospace; font-size:.78rem; color:var(--accent); padding-top:.3em; flex:none; font-weight:500}
+
+.eq{
+  background:var(--card); border:1px solid var(--rule); border-radius:4px;
+  padding:16px 20px; overflow-x:auto; font-family:"JetBrains Mono",monospace;
+  font-size:.88rem; line-height:1.85;
+}
+.eq .cm{color:var(--muted)}
+.note{background:var(--accent-soft); padding:16px 20px; border-radius:4px; font-size:.95rem}
+.note.warn{background:var(--warn-bg)}
+.note .eyebrow{display:block; margin-bottom:.45em; color:var(--ink2)}
+
+.tw{overflow-x:auto; border:1px solid var(--rule); border-radius:4px; background:var(--card)}
+table{border-collapse:collapse; width:100%; font-size:.88rem; font-family:"JetBrains Mono",monospace}
+th,td{padding:9px 13px; text-align:right; border-bottom:1px solid var(--hair)}
+th:first-child,td:first-child{text-align:left}
+thead th{font-size:.66rem; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:500; background:var(--sunk)}
+tbody tr:last-child td{border-bottom:none}
+td.hi{color:var(--ink); font-weight:500}
+td.dim{color:var(--muted)}
+.tnum{font-variant-numeric:tabular-nums}
+
+figure{margin:0; max-width:880px; margin-inline:auto}
+.fig{background:var(--card); border:1px solid var(--rule); border-radius:4px; overflow:hidden}
+.fig-b{padding:18px 14px 6px}
+figcaption{padding:0 24px 20px; font-size:.85rem; color:var(--muted); line-height:1.55; max-width:66ch}
+figcaption b{color:var(--ink2); font-weight:600}
+.legend{display:flex; flex-wrap:wrap; gap:6px 22px; padding:16px 24px 0; font-size:.8rem; color:var(--ink2); font-family:"JetBrains Mono",monospace}
+.legend span{display:inline-flex; align-items:center; gap:7px}
+.legend i{width:15px; height:2.5px; border-radius:2px}
+.legend i.dash{background:none; border-top:2px dashed var(--truth); height:0}
+svg{display:block; width:100%; height:auto; overflow:visible}
+
+ol,ul{margin:0; padding-left:1.25em}
+li{margin:.42em 0}
+.refs{font-size:.88rem; color:var(--ink2)}
+.refs li{margin:.55em 0}
+.refs .mono{color:var(--muted); font-size:.92em}
+hr.r{border:none; border-top:1px solid var(--rule); margin:0}
+.foot{padding-top:52px; font-size:.86rem; color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="page">
+
+<header>
+  <div class="col">
+    <div class="eyebrow">Technical note · Ensembles</div>
+    <h1 style="margin-top:.5em">Effective Independence</h1>
+    <p style="margin-top:.6em; font-size:1.12rem; color:var(--ink2)">Panels of language models carry fewer independent votes than the literature reports, and the gap is an estimator artefact rather than a disagreement about data.</p>
+    <div class="byline">
+      <span>31 August 2026</span><span>working note</span><span>zero inference cost</span><span>fully reproducible</span>
+    </div>
+    <div class="abstract">
+      <span class="eyebrow">Abstract</span>
+      Panels of language models are routinely summarised by an <em>effective number of independent votes</em>, obtained from the mean pairwise φ coefficient through Kish's design effect. The latent-variable model that gives that quantity its meaning assumes a Gaussian latent with a single threshold; under exactly that model, φ is attenuated by dichotomisation, and the model-consistent estimator is the <strong>tetrachoric</strong> correlation — a century-old psychometric point, recently restated for LLM co-failure ceilings, that we apply here to the effective-vote figures themselves. On a synthetic world where the latent correlation is known by construction, tetrachoric recovers it across ρ ∈ [0.13, 0.86] while φ understates it by 26–40%. Applied to recorded per-instance correctness for 24–28 open models spanning 13–15 families, the correction moves <em>n</em><sub>eff</sub> from 1.51 to <strong>1.15</strong> on ARC-challenge, from 2.40 to <strong>1.59</strong> on Winogrande, and from 4.76 to <strong>2.68</strong> on GSM8K. Projected onto two published panels, reported figures of 2.65 and 2.18 become 1.78 and 1.56. The correction is mechanical, costs no inference, and applies to every published number of this kind.
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">1</div><h2>The quantity being reported</h2></div>
+    <p>When several models judge or answer the same items, the natural question is how much independent information the panel actually carries. The standard answer borrows Kish's design effect from survey statistics:</p>
+    <div class="eq">n<sub>eff</sub> = k / (1 + (k−1)·ρ̄)          <span class="cm">k → ∞ ⟹ n<sub>eff</sub> → 1/ρ̄</span></div>
+    <p>with ρ̄ the mean pairwise correlation of errors. The same limit is independently familiar as the diversification floor in portfolio theory and as the Spearman–Brown ceiling in test theory. In ensemble learning it is the reason Random Forests randomise features rather than only bootstrapping rows.</p>
+    <p>What makes <code>n_eff</code> interpretable is a latent model. Correctness is treated as a threshold on a continuous, unobserved quantity — <em>ability meets difficulty</em> — and ρ is the correlation of that <em>latent</em>, not of the recorded zeros and ones:</p>
+    <div class="eq">s<sub>ij</sub> = μ<sub>i</sub> + √ρ · c<sub>i</sub> + √(1−ρ) · e<sub>ij</sub>   <span class="cm">correct ⟺ s<sub>ij</sub> &gt; 0</span></div>
+    <p>Here <code>c_i</code> is the component shared by every model on item <em>i</em> — shared pretraining, shared blind spots — and <code>e_ij</code> is idiosyncratic. Practice, however, estimates ρ̄ with the φ coefficient: a Pearson correlation computed directly on the binary correctness vectors.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">2</div><h2>Why φ is the wrong estimator here</h2></div>
+    <p>Dichotomising a continuous variable discards information about where within a class each observation fell, and the resulting Pearson correlation is <strong>attenuated</strong> relative to the latent one. This is not a subtlety of language models; it is a century-old result in psychometrics, and the estimator built to undo it is the tetrachoric correlation — the correlation of the bivariate normal whose thresholded version reproduces the observed 2 × 2 table.</p>
+    <p>The point is narrow and worth stating precisely. <strong>The published analyses are not wrong about their data.</strong> φ is a perfectly good descriptive measure of association between two binary vectors. But the moment φ is substituted into Kish's formula and read as “independent votes”, the latent model has been invoked — and that model prescribes a different estimator. Using φ there is internally inconsistent: the interpretation assumes a latent that the estimator refuses to model.</p>
+    <p>The estimator point itself is not ours. Chen (arXiv:2606.27288) states it for co-failure ceilings — the single-factor copula “must be calibrated with the tetrachoric (latent) correlation, not the Pearson correlation of 0/1 correctness indicators … a century-old psychometric point we claim no novelty for, but which the LLM-evaluation literature routinely elides” — and credits Turkmen et&nbsp;al. (arXiv:2602.08003) with fitting a tetrachoric copula to binary LLM errors before that. What we do here is apply the same correction to the published effective-vote figures themselves, and measure its size on per-instance leaderboard data.</p>
+    <p>Attenuation is not a fixed factor. It vanishes as marginals approach 0.5 and grows as they move to the extremes, so the size of the correction depends on the accuracy of the models being compared. Its <em>direction</em> does not: φ is never larger than the tetrachoric value, so <code>n_eff</code> computed from φ is never smaller than the truth. Every error of this kind flatters the panel.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">3</div><h2>Validation against a known truth</h2></div>
+    <p>Before applying an estimator to data where the answer is unknown, it should be pointed at data where it is known. We built a synthetic world in which the latent correlation is fixed by construction: each agent's error decomposes into a per-item shared component, a constant per-agent offset, and fresh per-draw noise, so ρ = var<sub>c</sub> / (var<sub>c</sub> + var<sub>e</sub>) exactly. Correctness is a one-sided threshold, matching the model's assumption.</p>
+  </div>
+
+  <figure style="margin-top:30px">
+    <div class="fig">
+      <div class="eyebrow" style="padding:18px 24px 0">Figure 1</div>
+      <div style="padding:0 24px"><h3 style="margin-top:.3em">Estimator recovery against known latent ρ</h3></div>
+      <div class="legend" id="lg1"></div>
+      <div class="fig-b"><div id="f1"></div></div>
+      <figcaption><b>Tetrachoric tracks the identity line; φ falls well below it.</b> Nine agents, 6000 items per point, one-sided correctness criterion. Averaged over all 36 pairs. The gap is the attenuation, and it is present across the whole range.</figcaption>
+    </div>
+  </figure>
+
+  <div class="col" style="margin-top:30px">
+    <div class="tw">
+      <table><thead><tr><th>true ρ</th><th>tetrachoric</th><th>φ</th><th>understatement</th></tr></thead>
+      <tbody id="tb1"></tbody></table>
+    </div>
+    <p style="margin-top:1.1em">At ρ = 0.500 with nine agents, the truth is <code>n_eff = 1.80</code>. Tetrachoric returns 1.79; φ returns <strong>2.52</strong> — forty per cent more votes than the panel actually carries. In a second synthetic world that adds a constant per-agent bias the same substitution reports 3.48 against a true 1.80: the flattery only grows as the world departs from the cleanest case.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">4</div><h2>Measurement on real pools</h2></div>
+    <p>The correction can be applied to real models without running any of them. The archived Open LLM Leaderboard publishes per-instance correctness for several thousand models, evaluated through a common harness. We assembled pools of 24–28 open models spanning 13–15 families — from bloom-7b1 to Mixtral-8x7B and Qwen1.5-72B — and recomputed both estimators pairwise from the actual 2 × 2 tables, with each pair's own marginals.</p>
+  </div>
+
+  <figure style="margin-top:30px">
+    <div class="fig">
+      <div class="eyebrow" style="padding:18px 24px 0">Figure 2</div>
+      <div style="padding:0 24px"><h3 style="margin-top:.3em">Effective votes, by estimator</h3></div>
+      <div class="legend" id="lg2"></div>
+      <div class="fig-b"><div id="f2"></div></div>
+      <figcaption><b>The correction removes between a quarter and a half of the reported independence.</b> Bars show <code>n_eff</code> implied by each estimator for the same pool on the same items. Dashed line marks a single independent model.</figcaption>
+    </div>
+  </figure>
+
+  <div class="col" style="margin-top:30px">
+    <div class="tw">
+      <table><thead><tr><th>benchmark</th><th>k</th><th>acc.</th><th>φ̄</th><th>n<sub>eff</sub></th><th>tetrachoric</th><th>n<sub>eff</sub></th></tr></thead>
+      <tbody id="tb2"></tbody></table>
+    </div>
+    <p style="margin-top:1.1em">On ARC-challenge, <strong>twenty-four models drawn from thirteen families carry roughly one independent model's worth of information.</strong> Restricting the pool to its strongest third makes this worse rather than better: tetrachoric ρ rises from 0.865 to 0.908 and coverage falls, consistent with the observation that more accurate models are also more correlated.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">5</div><h2>Consequences for published figures</h2></div>
+    <p>Two recent papers report effective independence for cross-family panels. Neither releases the underlying 2 × 2 tables, so the correction can only be <em>projected</em> from the summary φ̄ under an assumed common marginal. On our own data that projection sits within 1% of the honest pairwise recomputation, which suggests it is informative about magnitude, though it remains a projection rather than a recomputation.</p>
+    <div class="tw" style="margin-top:1.2em">
+      <table><thead><tr><th>source</th><th>k</th><th>φ̄</th><th>reported n<sub>eff</sub></th><th>tetrachoric</th><th>implied n<sub>eff</sub></th></tr></thead>
+      <tbody id="tb3"></tbody></table>
+    </div>
+    <p style="margin-top:1.2em">The direction is uniform. A nine-judge panel reported as carrying “two effective votes” carries closer to one and a half; a twenty-four model pool reported at 2.65 sits nearer 1.78. Every downstream quantity derived from these — ensemble ceilings, expected gains from adding a model, cost-benefit arguments for panel size — inherits the same optimistic bias.</p>
+    <div class="note" style="margin-top:1.3em">
+      <span class="eyebrow">What we are and are not claiming</span>
+      That the estimator is inconsistent with the interpretation, and that correcting it moves every such figure in one direction. Not that the cited measurements are unsound, nor that their qualitative conclusions change: both papers argue that panels are far less independent than assumed, and this correction strengthens that argument rather than undermining it.
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">6</div><h2>ρ is a property of the task distribution</h2></div>
+    <p>A single number for “how correlated are model errors” does not exist. Drawing on the same archive of models and changing only the benchmark moves tetrachoric ρ from 0.350 to 0.967 — effective independence by a factor of 2.6. (Pools overlap heavily but are not identical across benchmarks; the decisive ARC–MMLU comparison below is on one common pool of 24 models.)</p>
+  </div>
+
+  <figure style="margin-top:30px">
+    <div class="fig">
+      <div class="eyebrow" style="padding:18px 24px 0">Figure 3</div>
+      <div style="padding:0 24px"><h3 style="margin-top:.3em">Same pool, six task distributions</h3></div>
+      <div class="legend" id="lg3"></div>
+      <div class="fig-b"><div id="f3"></div></div>
+      <figcaption><b>The ordering does not follow task format.</b> MMLU is four-option multiple choice with the same 0.25 guessing floor as ARC-challenge, yet it sits beside free-form arithmetic rather than beside ARC. Bars are labelled with what the harness actually compares when it scores an answer.</figcaption>
+    </div>
+  </figure>
+
+  <div class="col" style="margin-top:30px">
+    <h3>A format explanation, and its refutation</h3>
+    <p style="margin-top:.6em">The obvious reading of three benchmarks was that multiple choice supplies shared distractors which pull every model the same way, while free generation offers nothing to be pulled toward. Three benchmarks differed simultaneously in format, guessing floor, subject matter and difficulty, so three points could not separate four explanations.</p>
+    <p>MMLU supplies the control: <strong>57 subjects, all four-option, all with a 0.25 floor</strong>, varying only in content. Pooled across all 14 042 items it returns ρ = 0.373 — adjacent to GSM8K at 0.350, not to ARC at 0.865. On a single common pool of 24 models evaluated on every task, the gap persists: ARC 0.865 against MMLU 0.474. <strong>Format does not explain the ordering.</strong></p>
+    <p>Two further explanations were pre-registered and also fail. <em>Restriction of range</em> — a single subject being more homogeneous than a mixed benchmark — predicts that pooling the 57 subjects should raise ρ; it does not (0.373 pooled against a subject median of 0.362). <em>Sample size</em> predicts that small subjects bias ρ; slicing MMLU and ARC into random chunks of equal size leaves both unmoved (0.375 and 0.866), so few items add noise but no bias.</p>
+    <p>Within MMLU the subjects hold together tightly: interquartile range 0.058, and a between-subject standard deviation of 0.074 which falls to 0.068 once bootstrap noise is removed — against 0.239 across tasks on the same pool. <strong>Subjects scored the same way cluster roughly three times more tightly than tasks cluster with one another.</strong></p>
+
+    <div class="note" style="margin-top:1.4em">
+      <span class="eyebrow">A hypothesis fitted after the fact, offered as such</span>
+      Inspecting the archived evaluation records shows that MMLU is scored by comparing the log-likelihood of the bare letters <code>['A','B','C','D']</code>, whereas ARC and HellaSwag compare full answer texts. That is a property of the harness, not of the task, and the six points order monotonically along it: long continuations (0.967) → answer texts (0.888, 0.865) → two texts differing by one word (0.614) → letters (0.373) → nothing (0.350).<br><br>
+      This is a mechanism fitted to six points <em>after</em> seeing them, and worth little on its own. It is cheap to falsify: rescore MMLU with full answer texts as the compared continuations. The hypothesis requires ρ to rise into the 0.8 band; if it stays near 0.37 the hypothesis is dead.<br><br>
+      If it survives, a substantial part of measured cross-benchmark correlation is an artefact of the evaluation harness rather than a property of the models — which would matter for every comparison of this kind. Independent support for the direction: Chen (arXiv:2606.27288) re-asks the same GPQA-Diamond questions free-response instead of multiple-choice and the co-failure tail reopens — on that data, format rather than content sets the regime.
+    </div>
+
+    <div class="note warn" style="margin-top:1.2em">
+      <span class="eyebrow">The guessing floor, now measured rather than flagged</span>
+      Across the 57 subjects, accuracy and tetrachoric ρ correlate at <strong>+0.673</strong>. The sign was predicted negative and came out positive. The lowest-ρ subjects are those sitting near the floor — mathematics, physics, and <code>moral_scenarios</code> at ρ = 0.038 with accuracy 0.322; the highest are virology and computer security.<br><br>
+      The reading: correct answers obtained by guessing are independent across models and dilute the shared component, and dilution is strongest where the pool hovers near chance. This is the probit violation the previous section warned about, now quantified. It also means absolute tetrachoric values under a non-zero guessing floor are upper bounds with unknown bias; comparisons <em>within</em> MMLU are legitimate because the floor is shared, comparisons between MMLU and GSM8K are not. Separating them needs a three-parameter IRT model, which we have not fitted.
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">7</div><h2>Limitations</h2></div>
+    <ul style="margin-top:.4em">
+      <li><strong>Tetrachoric carries its own assumption.</strong> It presumes a bivariate normal latent — exactly the assumption that makes <code>n_eff</code> meaningful, so the estimator is internally consistent, but it is not assumption-free. Where the latent is plainly not normal, as under a guessing floor, our figures are upper bounds with unknown bias.</li>
+      <li><strong>The corrected figures are still likely optimistic.</strong> Chen (arXiv:2606.27288) measures the all-models-wrong tail at ~2.5× what even a correctly tetrachoric-calibrated single-factor model predicts — a common-mode component that pairwise correlation of any kind cannot represent. The direction is one-way: the truth sits at or below our corrected <code>n_eff</code>, not above it.</li>
+      <li><strong>Kish's design effect was derived for means of continuous outcomes.</strong> Applying it to binary correctness is a further approximation, inherited from the practice being corrected rather than introduced here.</li>
+      <li><strong>Published numbers are projected, not recomputed.</strong> Without the original 2 × 2 tables the correction assumes a common marginal; measured projection bias on our own data was −1%, but that is one regime.</li>
+      <li><strong>Pool composition.</strong> Open models from 2023–2024 up to 72B. No frontier closed models appear in the archive, and effective independence among stronger, more recent models is not measured here.</li>
+      <li><strong>Stratifying by item difficulty does not fix anything.</strong> We tried it. In this model item difficulty <em>is</em> the shared component; conditioning on a leave-out estimate of it removes the quantity being measured, driving recovered ρ from 0.51 to 0.04 on data with a known ρ of 0.50, and negative on real data through collider bias. Unstratified tetrachoric is the correct estimator.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">8</div><h2>Reproduction</h2></div>
+    <p>Everything here runs on public data with no model inference. The archived leaderboard is ungated; the current leaderboard requires a token and is not needed. Code: <a href="https://github.com/Alatip/tech-note-1">github.com/Alatip/tech-note-1</a>; per-instance correctness downloads on first run and is cached locally.</p>
+    <div class="eq" style="margin-top:1em">python3 -m core.hfdata --list<br>python3 run.py v003          <span class="cm"># pools, both estimators, coverage</span><br>python3 run.py --verify      <span class="cm"># re-run all versions against recorded snapshots</span><br>python3 -m pytest tests/ -q  <span class="cm"># estimator recovery on known truth</span></div>
+    <p style="margin-top:1.1em">The tetrachoric implementation is self-contained: the bivariate normal CDF is integrated numerically and the inverse normal uses Acklam's approximation, so the result depends on no external numerical library and every step is auditable. Per-model, per-item correctness is cached after a single download.</p>
+    <p>Practical notes for anyone rebuilding the matrix: some archived runs are truncated to a handful of rows; the correctness column appears variously as <code>acc</code>, <code>acc_norm</code>, <code>mc1</code>, or a <code>metrics</code> struct, and occasionally as the strings <code>'True'</code>/<code>'False'</code>; and the prompt field is formatted differently across runs, so hashing it does not align models. Align positionally and verify the question text matches, or the matrix will be silently joined out of register.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col foot">
+    <hr class="r">
+    <div class="eyebrow" style="padding-top:26px">References</div>
+    <ul class="refs" style="padding-left:1.1em; margin-top:.8em">
+      <li>Kish, L. (1965). <em>Survey Sampling.</em> Design effect; <code class="mono">n_eff = k/(1+(k−1)ρ)</code>.</li>
+      <li>Pearson, K. (1900). Tetrachoric correlation for dichotomised bivariate normal variables.</li>
+      <li>Breiman, L. (2001). Random Forests. Correlation as the limit of averaging.</li>
+      <li>Krogh, A. &amp; Vedelsby, J. (1995). Neural network ensembles, cross validation and active learning. Ambiguity decomposition.</li>
+      <li><span class="mono">arXiv:2605.29800</span> — Nine Judges, Two Effective Votes: Correlated Errors Undermine LLM Evaluation Panels. φ̄ = 0.391, n<sub>eff</sub> = 2.18 over nine models from seven families.</li>
+      <li><span class="mono">arXiv:2607.20464</span> — Stochastic Sampling is Epistemically Shallow. Cross-model r = 0.35 over 24 models from eleven families; four error dimensions above the noise floor against one within a single model.</li>
+      <li><span class="mono">arXiv:2506.07962</span> — Correlated Errors in Large Language Models. Monoculture effects on leaderboard per-instance data.</li>
+      <li><span class="mono">arXiv:2407.21787</span> — Large Language Monkeys. Coverage scales log-linearly over four orders of magnitude of repeated sampling.</li>
+      <li><span class="mono">arXiv:2502.17578</span> — How Do Large Language Monkeys Get Their Power (Laws)? Left power-law tail of single-attempt success probabilities.</li>
+      <li><span class="mono">arXiv:2607.20768</span> — Capability-controlled audit of majority-vote gain. More accurate models are, if anything, more correlated.</li>
+      <li><span class="mono">arXiv:2606.27288</span> — When Does Combining Language Models Help? The “Pearson trap” named for co-failure ceilings: tetrachoric, not Pearson-of-indicators, calibrates the single-factor copula — and even then the all-wrong tail is ~2.5× fatter than the copula predicts. Independently: the same GPQA questions asked free-response instead of multiple-choice reopen the co-failure tail — format, not content, sets the regime.</li>
+      <li><span class="mono">arXiv:2602.08003</span> — Information-theoretic view of LLM ensemble selection; tetrachoric Gaussian copula over binary errors, explicit saturation floor.</li>
+      <li>Knight, J. C. &amp; Leveson, N. G. (1986). An experimental evaluation of the assumption of independence in multiversion programming. The same lesson, forty years earlier, with people instead of weights.</li>
+    </ul>
+    <p style="margin-top:1.6em">Data: archived Open LLM Leaderboard per-instance results, ungated. Synthetic validation world and analysis code are self-contained and dependency-light.</p>
+  </div>
+</section>
+
+</div>
+
+<script>
+(function(){
+'use strict';
+var NS='http://www.w3.org/2000/svg';
+function el(t,a){var e=document.createElementNS(NS,t);for(var k in a)e.setAttribute(k,a[k]);return e;}
+var CSS=getComputedStyle(document.documentElement);
+function tok(n){return CSS.getPropertyValue(n).trim();}
+function txt(o,s){var t=el('text',o);t.textContent=s;return t;}
+
+var SWEEP=[[0.1304,0.1335,0.0783],[0.2857,0.2918,0.1763],[0.5000,0.5044,0.3213],
+           [0.7143,0.7134,0.4909],[0.8571,0.8528,0.6385]];
+var POOLS=[{t:'ARC-challenge',k:24,acc:0.531,phi:0.6497,np:1.51,tet:0.8647,nt:1.15},
+           {t:'Winogrande',k:28,acc:0.746,phi:0.396,np:2.40,tet:0.614,nt:1.59},
+           {t:'GSM8K',k:28,acc:0.298,phi:0.181,np:4.76,tet:0.350,nt:2.68}];
+var SIX=[{t:'HellaSwag',tet:0.967,sub:'long text continuations'},
+         {t:'TruthfulQA',tet:0.888,sub:'answer texts, plausible lures'},
+         {t:'ARC-challenge',tet:0.865,sub:'answer texts'},
+         {t:'Winogrande',tet:0.614,sub:'two texts, one word apart'},
+         {t:'MMLU (57 subj.)',tet:0.373,sub:'bare letters A/B/C/D'},
+         {t:'GSM8K',tet:0.350,sub:'free generation'}];
+var PUB=[{s:'arXiv:2607.20464',k:24,phi:0.350,np:2.65,tet:0.543,nt:1.78},
+         {s:'arXiv:2605.29800',k:9,phi:0.391,np:2.18,tet:0.596,nt:1.56}];
+
+function legend(id,items){var h=document.getElementById(id);if(!h)return;h.innerHTML='';
+  items.forEach(function(s){var w=document.createElement('span');
+    w.innerHTML=(s.dash?'<i class="dash"></i>':'<i style="background:'+tok(s.c)+'"></i>')+s.n;h.appendChild(w);});}
+
+function fig1(){
+  var W=760,H=430,M={t:14,r:22,b:48,l:56},iw=W-M.l-M.r,ih=H-M.t-M.b;
+  var svg=el('svg',{viewBox:'0 0 '+W+' '+H,role:'img','aria-label':'Estimator recovery'});
+  var X=function(v){return M.l+v*iw;},Y=function(v){return M.t+ih-v*ih;};
+  [0,.2,.4,.6,.8,1].forEach(function(v){
+    svg.appendChild(el('line',{x1:M.l,x2:M.l+iw,y1:Y(v),y2:Y(v),stroke:tok('--hair'),'stroke-width':1}));
+    svg.appendChild(txt({x:M.l-11,y:Y(v)+4,fill:tok('--muted'),'text-anchor':'end','font-size':11,'font-family':'JetBrains Mono, monospace'},v.toFixed(1)));
+    svg.appendChild(txt({x:X(v),y:M.t+ih+20,fill:tok('--muted'),'text-anchor':'middle','font-size':11,'font-family':'JetBrains Mono, monospace'},v.toFixed(1)));
+  });
+  svg.appendChild(txt({x:M.l+iw/2,y:H-8,fill:tok('--muted'),'text-anchor':'middle','font-size':11.5,'font-family':'JetBrains Mono, monospace'},'true latent ρ'));
+  svg.appendChild(txt({x:14,y:M.t+ih/2,fill:tok('--muted'),'text-anchor':'middle','font-size':11.5,'font-family':'JetBrains Mono, monospace',transform:'rotate(-90 14 '+(M.t+ih/2)+')'},'estimated ρ'));
+  svg.appendChild(el('line',{x1:X(0),y1:Y(0),x2:X(1),y2:Y(1),stroke:tok('--truth'),'stroke-width':2,'stroke-dasharray':'4 4',opacity:.7}));
+  [[1,'--b','tetrachoric'],[2,'--a','φ']].forEach(function(s){
+    var idx=s[0],c=tok(s[1]);
+    var d=SWEEP.map(function(r,i){return (i?'L':'M')+X(r[0]).toFixed(1)+' '+Y(r[idx]).toFixed(1);}).join(' ');
+    svg.appendChild(el('path',{d:d,fill:'none',stroke:c,'stroke-width':2.4,'stroke-linecap':'round'}));
+    SWEEP.forEach(function(r){svg.appendChild(el('circle',{cx:X(r[0]),cy:Y(r[idx]),r:4.5,fill:c,stroke:tok('--card'),'stroke-width':2}));});
+  });
+  document.getElementById('f1').appendChild(svg);
+  legend('lg1',[{n:'identity (perfect recovery)',c:'--truth',dash:1},{n:'tetrachoric',c:'--b'},{n:'φ',c:'--a'}]);
+  var tb=document.getElementById('tb1');tb.innerHTML='';
+  SWEEP.forEach(function(r){
+    var tr=document.createElement('tr');
+    tr.innerHTML='<td class="tnum">'+r[0].toFixed(4)+'</td><td class="tnum hi">'+r[1].toFixed(4)+
+      '</td><td class="tnum">'+r[2].toFixed(4)+'</td><td class="tnum dim">−'+((1-r[2]/r[0])*100).toFixed(0)+'%</td>';
+    tb.appendChild(tr);});
+}
+
+function fig2(){
+  var W=760,H=330,M={t:16,r:26,b:46,l:140},iw=W-M.l-M.r,ih=H-M.t-M.b;
+  var max=5.2;
+  var svg=el('svg',{viewBox:'0 0 '+W+' '+H,role:'img','aria-label':'Effective votes by estimator'});
+  [0,1,2,3,4,5].forEach(function(v){
+    var x=M.l+v/max*iw;
+    svg.appendChild(el('line',{x1:x,x2:x,y1:M.t,y2:M.t+ih,stroke:tok('--hair'),'stroke-width':1}));
+    svg.appendChild(txt({x:x,y:M.t+ih+20,fill:tok('--muted'),'text-anchor':'middle','font-size':11,'font-family':'JetBrains Mono, monospace'},String(v)));
+  });
+  var x1=M.l+1/max*iw;
+  svg.appendChild(el('line',{x1:x1,x2:x1,y1:M.t,y2:M.t+ih,stroke:tok('--truth'),'stroke-width':1.5,'stroke-dasharray':'3 3',opacity:.6}));
+  svg.appendChild(txt({x:M.l+iw/2,y:H-8,fill:tok('--muted'),'text-anchor':'middle','font-size':11.5,'font-family':'JetBrains Mono, monospace'},'effective independent models'));
+  var gh=ih/POOLS.length, bh=22;
+  POOLS.forEach(function(p,i){
+    var y0=M.t+i*gh+(gh-2*bh-6)/2;
+    svg.appendChild(txt({x:M.l-14,y:y0+bh+2,fill:tok('--ink2'),'text-anchor':'end','font-size':13},p.t));
+    svg.appendChild(txt({x:M.l-14,y:y0+bh+18,fill:tok('--muted'),'text-anchor':'end','font-size':10.5,'font-family':'JetBrains Mono, monospace'},'k = '+p.k));
+    [[p.np,'--a','φ'],[p.nt,'--b','tetrachoric']].forEach(function(b,j){
+      var w=b[0]/max*iw, y=y0+j*(bh+6);
+      svg.appendChild(el('rect',{x:M.l,y:y,width:Math.max(3,w),height:bh,rx:3,fill:tok(b[1])}));
+      svg.appendChild(txt({x:M.l+w+9,y:y+bh/2+4.5,fill:tok('--ink'),'font-size':12.5,'font-weight':600,'font-family':'JetBrains Mono, monospace'},b[0].toFixed(2)));
+    });
+  });
+  document.getElementById('f2').appendChild(svg);
+  legend('lg2',[{n:'φ (as reported)',c:'--a'},{n:'tetrachoric (model-consistent)',c:'--b'},{n:'one independent model',c:'--truth',dash:1}]);
+  var tb=document.getElementById('tb2');tb.innerHTML='';
+  POOLS.forEach(function(p){var tr=document.createElement('tr');
+    tr.innerHTML='<td>'+p.t+'</td><td class="tnum">'+p.k+'</td><td class="tnum dim">'+p.acc.toFixed(3)+
+      '</td><td class="tnum">'+p.phi.toFixed(3)+'</td><td class="tnum">'+p.np.toFixed(2)+
+      '</td><td class="tnum hi">'+p.tet.toFixed(3)+'</td><td class="tnum hi">'+p.nt.toFixed(2)+'</td>';
+    tb.appendChild(tr);});
+  var t3=document.getElementById('tb3');t3.innerHTML='';
+  PUB.forEach(function(p){var tr=document.createElement('tr');
+    tr.innerHTML='<td class="mono" style="font-size:.92em">'+p.s+'</td><td class="tnum">'+p.k+
+      '</td><td class="tnum">'+p.phi.toFixed(3)+'</td><td class="tnum">'+p.np.toFixed(2)+
+      '</td><td class="tnum hi">'+p.tet.toFixed(3)+'</td><td class="tnum hi">'+p.nt.toFixed(2)+'</td>';
+    t3.appendChild(tr);});
+}
+
+function fig3(){
+  var W=760,H=340,M={t:24,r:24,b:66,l:58},iw=W-M.l-M.r,ih=H-M.t-M.b;
+  var svg=el('svg',{viewBox:'0 0 '+W+' '+H,role:'img','aria-label':'rho across six task distributions'});
+  var Y=function(v){return M.t+ih-v*ih;};
+  [0,.2,.4,.6,.8,1].forEach(function(v){
+    svg.appendChild(el('line',{x1:M.l,x2:M.l+iw,y1:Y(v),y2:Y(v),stroke:tok('--hair'),'stroke-width':1}));
+    svg.appendChild(txt({x:M.l-11,y:Y(v)+4,fill:tok('--muted'),'text-anchor':'end','font-size':11,'font-family':'JetBrains Mono, monospace'},v.toFixed(1)));
+  });
+  var gap=iw/SIX.length, bw=Math.min(58,gap*0.6);
+  SIX.forEach(function(p,i){
+    var cx=M.l+gap*(i+.5);
+    var col = (p.t.indexOf('MMLU')===0||p.t==='ARC-challenge') ? '--b' : '--a';
+    svg.appendChild(el('rect',{x:cx-bw/2,y:Y(p.tet),width:bw,height:ih-(Y(p.tet)-M.t),rx:3,fill:tok(col)}));
+    svg.appendChild(txt({x:cx,y:Y(p.tet)-8,fill:tok('--ink'),'text-anchor':'middle','font-size':12.5,'font-weight':600,'font-family':'JetBrains Mono, monospace'},p.tet.toFixed(3)));
+    var name=el('text',{x:cx,y:M.t+ih+20,fill:tok('--ink2'),'text-anchor':'middle','font-size':11.5});
+    name.textContent=p.t; svg.appendChild(name);
+    var parts=[],cur='';
+    p.sub.split(' ').forEach(function(w){ if((cur+' '+w).trim().length>18){parts.push(cur);cur=w;} else cur=(cur?cur+' ':'')+w; });
+    if(cur)parts.push(cur);
+    parts.forEach(function(t,k){ svg.appendChild(txt({x:cx,y:M.t+ih+34+k*12,fill:tok('--muted'),'text-anchor':'middle','font-size':9.5},t)); });
+  });
+  svg.appendChild(txt({x:16,y:M.t+ih/2,fill:tok('--muted'),'text-anchor':'middle','font-size':11.5,'font-family':'JetBrains Mono, monospace',transform:'rotate(-90 16 '+(M.t+ih/2)+')'},'tetrachoric ρ'));
+  document.getElementById('f3').appendChild(svg);
+  legend('lg3',[{n:'same format, ρ 0.4 apart (ARC vs MMLU)',c:'--b'},{n:'other tasks',c:'--a'}]);
+}
+
+function build(){['f1','f2','f3'].forEach(function(i){var e=document.getElementById(i);if(e)e.innerHTML='';});fig1();fig2();fig3();}
+build();
+if(window.matchMedia){var mq=window.matchMedia('(prefers-color-scheme: dark)');if(mq.addEventListener)mq.addEventListener('change',build);}
+new MutationObserver(build).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+})();
+</script>
+
+</body>
+</html>
