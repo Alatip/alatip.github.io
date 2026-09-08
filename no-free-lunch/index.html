@@ -128,8 +128,11 @@ hr.r{border:none; border-top:1px solid var(--rule); margin:0}
 <section>
   <div class="col">
     <div class="sec-head"><div class="sec-num">1</div><h2>Where it started</h2></div>
-    <p>For a month and a half I measured how much intelligence a swarm of language
-models actually adds. The answer turned out to be dull. Twenty-four models
+    <p>For a month and a half I looked at how much intelligence a swarm of language
+models actually adds. Not with my own runs: I took the recorded per-instance
+answers of open models from the Open LLM Leaderboard and recomputed the
+error correlations on them, at zero inference cost. The answer turned out to
+be dull. Twenty-four models
 from thirteen families on ARC-challenge carry the information of roughly one
 independent model, plus a little. Majority voting over a pool of uneven
 strength is worse than simply taking the best model. Selection with a perfect
