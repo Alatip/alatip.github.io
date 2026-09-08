@@ -129,15 +129,8 @@ hr.r{border:none; border-top:1px solid var(--rule); margin:0}
   <div class="col">
     <div class="sec-head"><div class="sec-num">1</div><h2>Where it started</h2></div>
     <p>For a month and a half I looked at how much intelligence a swarm of language
-models actually adds. Not with my own runs: I took the recorded per-instance
-answers of open models from the archived first Open LLM Leaderboard
-(the frozen per-model <code>details</code> datasets under
-<a href="https://huggingface.co/open-llm-leaderboard-old">open-llm-leaderboard-old</a>;
-the exact 24 models and the loader are in
-<a href="https://github.com/Alatip/tech-note-1">Alatip/tech-note-1</a>, <code>DATA.md</code> and
-<code>versions/v003</code>) and recomputed the error correlations on them, at zero
-inference cost (the method, with the tetrachoric correction, is in the previous note,
-<a href="../effective-independence/">Effective Independence</a>). The answer turned out to
+models actually adds. Not with my own runs, but on recorded answers of open models, at zero
+inference cost.<sup id="fnref1"><a href="#fn1">1</a></sup> The answer turned out to
 be dull. Twenty-four models
 from thirteen families on ARC-challenge carry the information of roughly one
 independent model, plus a little. Majority voting over a pool of uneven
@@ -301,6 +294,14 @@ little scientific novelty in the claim. The novelty, if any, is in a
 definition of C_d that can be checked on data, and in measuring ε as a
 function of distance. If the testbed shows a step instead of a smooth decay,
 or a swarm lifts pass@k without data, I will write that up the same way.</p>
+  </div>
+</section>
+<section>
+  <div class="col">
+    <hr class="r">
+    <ol class="refs" style="padding-left:1.1em; margin-top:1.2em">
+      <li id="fn1">Per-instance answers from the archived first Open LLM Leaderboard: the frozen per-model <code>details</code> datasets under <a href="https://huggingface.co/open-llm-leaderboard-old">open-llm-leaderboard-old</a>. The exact 24 models, their dataset revisions and the loader are in <a href="https://github.com/Alatip/tech-note-1">Alatip/tech-note-1</a> (<code>versions/v003/manifest.json</code>, <code>DATA.md</code>). The method, with the tetrachoric correction, is in the previous note, <a href="../effective-independence/">Effective Independence</a>. <a href="#fnref1">↩</a></li>
+    </ol>
   </div>
 </section>
 <section>
