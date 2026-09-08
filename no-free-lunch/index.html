@@ -130,9 +130,13 @@ hr.r{border:none; border-top:1px solid var(--rule); margin:0}
     <div class="sec-head"><div class="sec-num">1</div><h2>Where it started</h2></div>
     <p>For a month and a half I looked at how much intelligence a swarm of language
 models actually adds. Not with my own runs: I took the recorded per-instance
-answers of open models from the <a href="https://huggingface.co/spaces/open-llm-leaderboard-old/open_llm_leaderboard">Open LLM Leaderboard</a>
-and recomputed the error correlations on them, at zero inference cost
-(the method, with the tetrachoric correction, is in the previous note,
+answers of open models from the archived first Open LLM Leaderboard
+(the frozen per-model <code>details</code> datasets under
+<a href="https://huggingface.co/open-llm-leaderboard-old">open-llm-leaderboard-old</a>;
+the exact 24 models and the loader are in
+<a href="https://github.com/Alatip/tech-note-1">Alatip/tech-note-1</a>, <code>DATA.md</code> and
+<code>versions/v003</code>) and recomputed the error correlations on them, at zero
+inference cost (the method, with the tetrachoric correction, is in the previous note,
 <a href="../effective-independence/">Effective Independence</a>). The answer turned out to
 be dull. Twenty-four models
 from thirteen families on ARC-challenge carry the information of roughly one
