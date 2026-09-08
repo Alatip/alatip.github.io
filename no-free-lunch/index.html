@@ -138,7 +138,7 @@ strength is worse than simply taking the best model. Selection with a perfect
 verifier gives ×1.25 over the strongest model on ARC and ×1.43 on GSM8K, and
 that is an upper bound. And 20% of ARC tasks are solved by no model in the
 pool, under any combination.</p>
-<p>A swarm turned out to be a slightly extended version of its strongest member.
+<p>A swarm turned out to be a slightly extended version of its strongest member.<sup id="fnref2"><a href="#fn2">2</a></sup>
 So the question shifted: if combining adds almost nothing, what sets the
 boundary of what a model can solve at all?</p>
   </div>
@@ -301,6 +301,7 @@ or a swarm lifts pass@k without data, I will write that up the same way.</p>
     <hr class="r">
     <ol class="refs" style="padding-left:1.1em; margin-top:1.2em">
       <li id="fn1">Per-instance answers from the archived first Open LLM Leaderboard: the frozen per-model <code>details</code> datasets under <a href="https://huggingface.co/open-llm-leaderboard-old">open-llm-leaderboard-old</a>. The exact 24 models, their dataset revisions and the loader are in <a href="https://github.com/Alatip/tech-note-1">Alatip/tech-note-1</a> (<code>versions/v003/manifest.json</code>, <code>DATA.md</code>). The method, with the tetrachoric correction, is in the previous note, <a href="../effective-independence/">Effective Independence</a>. <a href="#fnref1">↩</a></li>
+      <li id="fn2">Two things stand behind this sentence. First, communication between agents that share a prior does not add information, it removes it: the strong data processing inequality makes every round a strict contraction, so the agents' outputs grow more correlated and the ceiling of any averaging falls. Empirically, Yang et al. (<a href="https://arxiv.org/abs/2602.03794">2602.03794</a>) find debate below plain voting at every N, and Chen et al. (<a href="https://arxiv.org/abs/2604.18005">2604.18005</a>) see the same as "structural coupling" in ideation. Second, we sorted aggregation into three operators: averaging (voting; bounded by the error correlation, saturates by about ten agents); a priori selection (routing on the input, before the answer exists); a posteriori selection (verification on the output). Only the last one does not saturate, and only if a verifier exists, so "posterior max where available" is the only operator worth paying for. A mixture of experts is the first two fused: a router that chooses before seeing the result and a weighted sum of experts; it lacks exactly the a posteriori check and any memory that survives the pass. <a href="#fnref2">↩</a></li>
     </ol>
   </div>
 </section>
