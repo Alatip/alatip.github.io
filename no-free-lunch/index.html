@@ -130,8 +130,10 @@ hr.r{border:none; border-top:1px solid var(--rule); margin:0}
     <div class="sec-head"><div class="sec-num">1</div><h2>Where it started</h2></div>
     <p>For a month and a half I looked at how much intelligence a swarm of language
 models actually adds. Not with my own runs: I took the recorded per-instance
-answers of open models from the Open LLM Leaderboard and recomputed the
-error correlations on them, at zero inference cost. The answer turned out to
+answers of open models from the <a href="https://huggingface.co/spaces/open-llm-leaderboard-old/open_llm_leaderboard">Open LLM Leaderboard</a>
+and recomputed the error correlations on them, at zero inference cost
+(the method, with the tetrachoric correction, is in the previous note,
+<a href="../effective-independence/">Effective Independence</a>). The answer turned out to
 be dull. Twenty-four models
 from thirteen families on ARC-challenge carry the information of roughly one
 independent model, plus a little. Majority voting over a pool of uneven
@@ -195,8 +197,10 @@ Grokking yields an algorithm from part of a table. The definition must survive
 both counterexamples, so C_d has to include composition and generalization
 within a primitive. Honestly, the whole future note is this definition.</p>
 <p><strong>That combination does not extend C_d(S).</strong> The only non-tautological part.
-For RLVR, Yue measured it. For swarms we have our own sections 1 through 3 and
-those 20% of ARC where no model is right. We decided to prove it for a single
+For RLVR, Yue measured it. For swarms we have the three arguments from our
+internal notes (a function of the output cannot add information about the
+input; the contraction is strict and multiplies across steps; a chain of
+agents converges to the prior) and those 20% of ARC where no model is right. We decided to prove it for a single
 model; a swarm with a shared prior follows as a corollary via Griffiths, and a
 swarm with different priors is the same theorem for a mixture prior.</p>
 <p><strong>The shape of ε.</strong> This is not uniform guessing. ε is the residual mass of
