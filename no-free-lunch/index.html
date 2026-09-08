@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="A claim about the boundary of what a language model can solve: the closure of its training set under composition. Stated before any measurement, with the plan to test it.">
+<title>There Is No Free Lunch After All</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<style>
+:root{
+  --paper:#F8F9FA; --card:#FFFFFF; --sunk:#F0F2F5;
+  --ink:#12161C; --ink2:#39424F; --muted:#6B7684; --rule:#DDE1E7; --hair:#EAEDF1;
+  --accent:#14548C; --accent-soft:#E4EDF6;
+  --a:#14548C; --b:#BF5B04; --truth:#39424F;
+  --warn-bg:#FBF2E4; --warn-ink:#8A5A00;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0F1216; --card:#161A20; --sunk:#1C2128;
+    --ink:#E6EAEF; --ink2:#B6BFCA; --muted:#828D9B; --rule:#2A313A; --hair:#222932;
+    --accent:#7FB3E0; --accent-soft:#152838;
+    --a:#4D93D0; --b:#D4762A; --truth:#B6BFCA;
+    --warn-bg:#2A2214; --warn-ink:#D8AA5C;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0F1216; --card:#161A20; --sunk:#1C2128;
+  --ink:#E6EAEF; --ink2:#B6BFCA; --muted:#828D9B; --rule:#2A313A; --hair:#222932;
+  --accent:#7FB3E0; --accent-soft:#152838;
+  --a:#4D93D0; --b:#D4762A; --truth:#B6BFCA;
+  --warn-bg:#2A2214; --warn-ink:#D8AA5C;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"Source Serif 4",Georgia,serif; font-size:17.5px; line-height:1.62;
+  -webkit-font-smoothing:antialiased; font-variant-numeric:oldstyle-nums;
+}
+.page{max-width:1000px; margin:0 auto; padding:0 24px 110px}
+.col{max-width:640px; margin:0 auto}
+.col > * + *{margin-top:1.05em}
+p{margin:0}
+h1,h2,h3{margin:0; line-height:1.2; text-wrap:balance; font-weight:600}
+h1{font-size:clamp(2rem,4.6vw,2.85rem); letter-spacing:-.012em}
+h2{font-size:1.42rem}
+h3{font-size:1.08rem}
+a{color:var(--accent)}
+strong{font-weight:600}
+code,.mono,.eyebrow{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace}
+code{font-size:.84em; background:var(--sunk); padding:.1em .35em; border-radius:3px}
+.eyebrow{font-size:.68rem; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); font-weight:500}
+
+header{padding:82px 0 30px}
+.byline{display:flex; flex-wrap:wrap; gap:6px 20px; margin-top:1.1em; font-family:"JetBrains Mono",monospace; font-size:.74rem; color:var(--muted)}
+.abstract{
+  margin-top:2em; padding:22px 26px; background:var(--card);
+  border-top:2px solid var(--ink); border-bottom:1px solid var(--rule);
+  font-size:.97rem; line-height:1.6; color:var(--ink2);
+}
+.abstract .eyebrow{display:block; margin-bottom:.7em}
+.abstract strong{color:var(--ink)}
+
+section{padding-top:56px}
+.sec-head{display:flex; gap:14px; align-items:baseline; margin-bottom:20px}
+.sec-num{font-family:"JetBrains Mono",monospace; font-size:.78rem; color:var(--accent); padding-top:.3em; flex:none; font-weight:500}
+
+.eq{
+  background:var(--card); border:1px solid var(--rule); border-radius:4px;
+  padding:16px 20px; overflow-x:auto; font-family:"JetBrains Mono",monospace;
+  font-size:.88rem; line-height:1.85;
+}
+.eq .cm{color:var(--muted)}
+.note{background:var(--accent-soft); padding:16px 20px; border-radius:4px; font-size:.95rem}
+.note.warn{background:var(--warn-bg)}
+.note .eyebrow{display:block; margin-bottom:.45em; color:var(--ink2)}
+
+.tw{overflow-x:auto; border:1px solid var(--rule); border-radius:4px; background:var(--card)}
+table{border-collapse:collapse; width:100%; font-size:.88rem; font-family:"JetBrains Mono",monospace}
+th,td{padding:9px 13px; text-align:right; border-bottom:1px solid var(--hair)}
+th:first-child,td:first-child{text-align:left}
+thead th{font-size:.66rem; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:500; background:var(--sunk)}
+tbody tr:last-child td{border-bottom:none}
+td.hi{color:var(--ink); font-weight:500}
+td.dim{color:var(--muted)}
+.tnum{font-variant-numeric:tabular-nums}
+
+figure{margin:0; max-width:880px; margin-inline:auto}
+.fig{background:var(--card); border:1px solid var(--rule); border-radius:4px; overflow:hidden}
+.fig-b{padding:18px 14px 6px}
+figcaption{padding:0 24px 20px; font-size:.85rem; color:var(--muted); line-height:1.55; max-width:66ch}
+figcaption b{color:var(--ink2); font-weight:600}
+.legend{display:flex; flex-wrap:wrap; gap:6px 22px; padding:16px 24px 0; font-size:.8rem; color:var(--ink2); font-family:"JetBrains Mono",monospace}
+.legend span{display:inline-flex; align-items:center; gap:7px}
+.legend i{width:15px; height:2.5px; border-radius:2px}
+.legend i.dash{background:none; border-top:2px dashed var(--truth); height:0}
+svg{display:block; width:100%; height:auto; overflow:visible}
+
+ol,ul{margin:0; padding-left:1.25em}
+li{margin:.42em 0}
+.refs{font-size:.88rem; color:var(--ink2)}
+.refs li{margin:.55em 0}
+.refs .mono{color:var(--muted); font-size:.92em}
+hr.r{border:none; border-top:1px solid var(--rule); margin:0}
+.foot{padding-top:52px; font-size:.86rem; color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<style>.col p+p,.col p+ul,.col p+ol,.col ul+p,.col ol+p,.col div.note+p,.col p+div.note{margin-top:1.05em} .note .eyebrow{display:block;margin-bottom:.45em} .note p{margin:0}</style>
+</head>
+<body>
+<div class="page">
+<header>
+  <div class="col">
+    <div class="eyebrow">Working note · Limits of learning</div>
+    <h1 style="margin-top:.5em">There Is No Free Lunch After All</h1>
+    <p style="margin-top:.6em; font-size:1.12rem; color:var(--ink2)">Notes before writing down a theorem: the boundary of what a model can solve is the closure of its training set under composition.</p>
+    <div class="byline">
+      <span>8 September 2026</span><span>working note</span><span>nothing measured yet</span>
+    </div>
+    <div class="abstract">
+      <span class="eyebrow">Status</span>
+      Draft, September 8, 2026. State of things as they are: the claim is settled, nothing has been measured, most of the literature is unread. This is not a result. It is a public plan and a commitment to myself.
+    </div>
+  </div>
+</header>
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">1</div><h2>Where it started</h2></div>
+    <p>For a month and a half I measured how much intelligence a swarm of language
+models actually adds. The answer turned out to be dull. Twenty-four models
+from thirteen families on ARC-challenge carry the information of roughly one
+independent model, plus a little. Majority voting over a pool of uneven
+strength is worse than simply taking the best model. Selection with a perfect
+verifier gives ×1.25 over the strongest model on ARC and ×1.43 on GSM8K, and
+that is an upper bound. And 20% of ARC tasks are solved by no model in the
+pool, under any combination.</p>
+<p>A swarm turned out to be a slightly extended version of its strongest member.
+So the question shifted: if combining adds almost nothing, what sets the
+boundary of what a model can solve at all?</p>
+  </div>
+</section>
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">2</div><h2>The claim</h2></div>
+    <p>The formulation we arrived at on September 4.</p>
+<p>Let S be the set of primitives on which the model's prior has mass: what the
+training data taught it. Let C_d(S) be the closure of S under composition of
+depth d, reachable in a single pass. Then:</p>
+<div class="note"><span class="eyebrow">Claim</span>
+<p>If at least one step of a task T lies outside C_d(S), then pass@k of any
+combination of models sharing this prior (a swarm, a chain, a debate, short
+RLVR) does not exceed ε at any k realistic for the budget. The task can be
+solved only by accident. The boundary is extended only by an external
+source: data in which the missing primitive is present.</p>
+</div>
+<p>Working title: "There Is No Free Lunch After All." The nod to Wolpert 1996 is
+deliberate. The second half one is tempted to add, "the model memorizes its
+prior," is too strong; the honest version is "the model moves mass, it does
+not create it."</p>
+  </div>
+</section>
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">3</div><h2>Why this is almost a tautology</h2></div>
+    <p>Let me admit it upfront: the claim is stitched from three other people's
+results.</p>
+<ol>
+<li><strong>Griffiths &amp; Kalish 2007.</strong> A chain of Bayesian agents, each learning from
+   the output of the previous one, converges to the prior. Combining copies
+   of one model adds nothing to the prior.</li>
+<li><strong>Strong data processing inequality (Polyanskiy).</strong> Contraction at every
+   step is strict and multiplies across steps. A task is choked by its
+   weakest factor.</li>
+<li><strong>Yue et al. 2025 (2504.13837).</strong> At k in the hundreds, pass@k of the base
+   model is no lower than that of the RLVR model trained on top of it. RL
+   moves mass onto already existing correct paths and narrows the support;
+   only distillation extends it, because the teacher is a different model.</li>
+</ol>
+<p>Add the three and you get the claim. The content is not in the statement but
+in three places where it might fail to hold.</p>
+  </div>
+</section>
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">4</div><h2>Where the content is</h2></div>
+    <p><strong>A definition of C_d(S) that can be checked on data.</strong> The naive "this step
+was not in the training set" is false. Skill-Mix (Arora &amp; Goyal, 2310.17567)
+shows a model composing k skills that never co-occurred in the corpus.
+Grokking yields an algorithm from part of a table. The definition must survive
+both counterexamples, so C_d has to include composition and generalization
+within a primitive. Honestly, the whole future note is this definition.</p>
+<p><strong>That combination does not extend C_d(S).</strong> The only non-tautological part.
+For RLVR, Yue measured it. For swarms we have our own sections 1 through 3 and
+those 20% of ARC where no model is right. We decided to prove it for a single
+model; a swarm with a shared prior follows as a corollary via Griffiths, and a
+swarm with different priors is the same theorem for a mixture prior.</p>
+<p><strong>The shape of ε.</strong> This is not uniform guessing. ε is the residual mass of
+the prior near the required step, a decreasing function of the distance to
+C_d(S). Xie et al. 2022 (2111.02080) have the same thing in different
+clothing: concepts indistinguishable by KL give close outputs. Hence a testable
+prediction: if a primitive is removed from the corpus not binarily but
+gradually, leaving neighbors at varying distances, pass@k should decay
+smoothly, not as a step. A step would mean the closure is discrete.</p>
+  </div>
+</section>
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">5</div><h2>What hits the claim</h2></div>
+    <p>Three papers found by abstract and not yet read, so here I am arguing with
+abstracts.</p>
+<ul>
+<li><strong>ProRL (2505.24864).</strong> Long RL with KL control gives pass@k above the base
+  where the base is 0% at any k.</li>
+<li><strong>2510.04028.</strong> A second stage of mass dynamics after the narrowing.</li>
+<li><strong>Ariadne (2511.00710).</strong> Essentially our synthetic protocol with the
+  opposite result.</li>
+</ul>
+<p>All three fit inside the closure if d is not fixed but grows with the
+environment budget: a rewarded environment increases composition depth over
+the same primitives. The strong form then reads: nothing adds primitives
+outside S, and d grows only through the environment. The predictions have to
+split accordingly: short RLVR with binary reward narrows (Yue); long RL with
+KL control may extend along d. Ariadne will have to be reproduced and
+explained before we claim anything of our own.</p>
+  </div>
+</section>
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">6</div><h2>The corollary that makes this worth doing</h2></div>
+    <p>If benchmark gains are mass transfer inside the prior, and the mass of a task
+is the product of the masses of its steps, then there is one bottleneck: the
+weakest step. Train the step, not the task. What goes into the training set
+is not tasks with low pass@k but steps with low mass. The hypothesis: this
+yields the same performance on fewer weights and cheaper. Part of this is
+already visible in phi and R1-Distill, which were fed solution trajectories
+rather than raw corpus.</p>
+<p>The price is also known from the literature. Kirby, Cornish &amp; Smith 2008: a
+language collapses from 27 words to 2–5 in ten generations. In Yue, the share
+of tasks with zero accuracy grows after RL. A model trained on its weakest
+step will be good on the benchmark and brittle one step to the side. Both the
+gain and the price have to be measured.</p>
+  </div>
+</section>
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">7</div><h2>The plan</h2></div>
+    <p>Three measurements, all with status "not started."</p>
+<ol>
+<li><strong>Step spectrum.</strong> Feed the model a correct prefix up to step t, sample
+   continuations, compute the fraction that keeps the task solvable and the
+   spectrum of the embeddings. The step with the lowest fraction is the
+   bottleneck; a peaked spectrum at zero fraction means a wall, a flat one at
+   nonzero fraction means a rare move that best-of-N will find.</li>
+<li><strong>Step-targeted training.</strong> qwen2.5:0.5b on GSM8K, two training sets at
+   equal token budget: random tasks versus tasks containing the weakest step.
+   Measure pass@1 on the full test set, pass@1 on tasks without that step,
+   and pass@k at k = 64…256 as the width of the prior.</li>
+<li><strong>Synthetic testbed.</strong> Define the primitives ourselves, as in GINC (Xie) or
+   "Physics of Language Models." Train a small transformer from scratch,
+   remove one primitive, measure pass@k up to 1024 on tasks that need it.
+   Arms: a single model, a swarm of copies with different seeds, RLVR with
+   binary reward, a small dose of data containing the primitive. Plus graded
+   removal and tasks of depth d+1.</li>
+</ol>
+<p>The falsifier for the third item is direct. If a swarm or RLVR over the model
+without the primitive lifts pass@k well above ε with no data containing that
+primitive, combination extends the closure and the strong form is false. If
+the model is no worse at depth d+1 than at d, then d is not part of the
+boundary and the formulation should be simplified to C(S).</p>
+<p>None of this can be proved on frontier models: the corpus is unknown and "a
+step outside the training set" is contestable. The bridge from synthetics to
+real models is OLMo and Pythia with open data and infini-gram over the
+pretraining corpus. Weaker, because compositional closure cannot be caught by
+n-grams, but it is the only honest bridge.</p>
+  </div>
+</section>
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">8</div><h2>What is not done yet</h2></div>
+    <p>The foundations are unread: Griffiths &amp; Kalish 2007 itself with five companion
+fragments, Xie 2022, Faith and Fate (2305.18654), Comprehension Without
+Competence (2507.10624), RL vs Distillation (2505.14216), Yue 2025 in full.
+The opponents are unread: ProRL, Ariadne, 2510.04028. There is no step
+vocabulary, without which items 1 and 2 cannot start; there is only a sympy
+canonicalization for GSM8K as an attempt at one.</p>
+<p>The intended form is a technical note rather than a paper. There may be
+little scientific novelty in the claim. The novelty, if any, is in a
+definition of C_d that can be checked on data, and in measuring ε as a
+function of distance. If the testbed shows a step instead of a smooth decay,
+or a swarm lifts pass@k without data, I will write that up the same way.</p>
+  </div>
+</section>
+<section>
+  <div class="col">
+    <p class="foot"><a href="../">← notes</a> · <a href="https://github.com/Alatip">github.com/Alatip</a></p>
+  </div>
+</section>
+</div>
+</body>
+</html>
