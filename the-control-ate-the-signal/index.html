@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Majority-vote gain over the best member is a nonlinear function of member accuracies. A heterogeneous Condorcet model with no dependence term predicts it at Spearman 0.80 where a linearly residualized diversity metric reaches 0.20; the dependence estimate adds 0.01.">
+<title>The Control Ate the Signal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<style>
+:root{
+  --paper:#F8F9FA; --card:#FFFFFF; --sunk:#F0F2F5;
+  --ink:#12161C; --ink2:#39424F; --muted:#6B7684; --rule:#DDE1E7; --hair:#EAEDF1;
+  --accent:#14548C; --accent-soft:#E4EDF6;
+  --a:#14548C; --b:#BF5B04; --truth:#39424F;
+  --warn-bg:#FBF2E4; --warn-ink:#8A5A00;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0F1216; --card:#161A20; --sunk:#1C2128;
+    --ink:#E6EAEF; --ink2:#B6BFCA; --muted:#828D9B; --rule:#2A313A; --hair:#222932;
+    --accent:#7FB3E0; --accent-soft:#152838;
+    --a:#4D93D0; --b:#D4762A; --truth:#B6BFCA;
+    --warn-bg:#2A2214; --warn-ink:#D8AA5C;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0F1216; --card:#161A20; --sunk:#1C2128;
+  --ink:#E6EAEF; --ink2:#B6BFCA; --muted:#828D9B; --rule:#2A313A; --hair:#222932;
+  --accent:#7FB3E0; --accent-soft:#152838;
+  --a:#4D93D0; --b:#D4762A; --truth:#B6BFCA;
+  --warn-bg:#2A2214; --warn-ink:#D8AA5C;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"Source Serif 4",Georgia,serif; font-size:17.5px; line-height:1.62;
+  -webkit-font-smoothing:antialiased; font-variant-numeric:oldstyle-nums;
+}
+.page{max-width:1000px; margin:0 auto; padding:0 24px 110px}
+.col{max-width:640px; margin:0 auto}
+.col > * + *{margin-top:1.05em}
+p{margin:0}
+h1,h2,h3{margin:0; line-height:1.2; text-wrap:balance; font-weight:600}
+h1{font-size:clamp(2rem,4.6vw,2.85rem); letter-spacing:-.012em}
+h2{font-size:1.42rem}
+h3{font-size:1.08rem}
+a{color:var(--accent)}
+strong{font-weight:600}
+code,.mono,.eyebrow{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace}
+code{font-size:.84em; background:var(--sunk); padding:.1em .35em; border-radius:3px}
+.eyebrow{font-size:.68rem; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); font-weight:500}
+
+header{padding:82px 0 30px}
+.byline{display:flex; flex-wrap:wrap; gap:6px 20px; margin-top:1.1em; font-family:"JetBrains Mono",monospace; font-size:.74rem; color:var(--muted)}
+.abstract{
+  margin-top:2em; padding:22px 26px; background:var(--card);
+  border-top:2px solid var(--ink); border-bottom:1px solid var(--rule);
+  font-size:.97rem; line-height:1.6; color:var(--ink2);
+}
+.abstract .eyebrow{display:block; margin-bottom:.7em}
+.abstract strong{color:var(--ink)}
+
+section{padding-top:56px}
+.sec-head{display:flex; gap:14px; align-items:baseline; margin-bottom:20px}
+.sec-num{font-family:"JetBrains Mono",monospace; font-size:.78rem; color:var(--accent); padding-top:.3em; flex:none; font-weight:500}
+
+.eq{
+  background:var(--card); border:1px solid var(--rule); border-radius:4px;
+  padding:16px 20px; overflow-x:auto; font-family:"JetBrains Mono",monospace;
+  font-size:.88rem; line-height:1.85;
+}
+.eq .cm{color:var(--muted)}
+.note{background:var(--accent-soft); padding:16px 20px; border-radius:4px; font-size:.95rem}
+.note.warn{background:var(--warn-bg)}
+.note .eyebrow{display:block; margin-bottom:.45em; color:var(--ink2)}
+
+.tw{overflow-x:auto; border:1px solid var(--rule); border-radius:4px; background:var(--card)}
+table{border-collapse:collapse; width:100%; font-size:.88rem; font-family:"JetBrains Mono",monospace}
+th,td{padding:9px 13px; text-align:right; border-bottom:1px solid var(--hair)}
+th:first-child,td:first-child{text-align:left}
+thead th{font-size:.66rem; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:500; background:var(--sunk)}
+tbody tr:last-child td{border-bottom:none}
+td.hi{color:var(--ink); font-weight:500}
+td.dim{color:var(--muted)}
+.tnum{font-variant-numeric:tabular-nums}
+
+figure{margin:0; max-width:880px; margin-inline:auto}
+.fig{background:var(--card); border:1px solid var(--rule); border-radius:4px; overflow:hidden}
+.fig-b{padding:18px 14px 6px}
+figcaption{padding:0 24px 20px; font-size:.85rem; color:var(--muted); line-height:1.55; max-width:66ch}
+figcaption b{color:var(--ink2); font-weight:600}
+.legend{display:flex; flex-wrap:wrap; gap:6px 22px; padding:16px 24px 0; font-size:.8rem; color:var(--ink2); font-family:"JetBrains Mono",monospace}
+.legend span{display:inline-flex; align-items:center; gap:7px}
+.legend i{width:15px; height:2.5px; border-radius:2px}
+.legend i.dash{background:none; border-top:2px dashed var(--truth); height:0}
+svg{display:block; width:100%; height:auto; overflow:visible}
+
+ol,ul{margin:0; padding-left:1.25em}
+li{margin:.42em 0}
+.refs{font-size:.88rem; color:var(--ink2)}
+.refs li{margin:.55em 0}
+.refs .mono{color:var(--muted); font-size:.92em}
+hr.r{border:none; border-top:1px solid var(--rule); margin:0}
+.foot{padding-top:52px; font-size:.86rem; color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<style>.col p+p,.col p+ul,.col p+ol,.col ul+p,.col ol+p,.col div.note+p,.col p+div.note{margin-top:1.05em} .note .eyebrow{display:block;margin-bottom:.45em} .note p{margin:0}</style>
+</head>
+<body>
+<div class="page">
+<header>
+  <div class="col">
+    <div class="eyebrow">Technical note · Ensembles</div>
+    <h1 style="margin-top:.5em">The Control Ate the Signal</h1>
+    <p style="margin-top:.6em; font-size:1.12rem; color:var(--ink2)">Majority-vote gain over the best model is a nonlinear function of the members' accuracies. A jury model with no dependence term predicts it at ρ&nbsp;=&nbsp;0.80 where a capability-controlled diversity metric reaches 0.20. The dependence estimate adds 0.01.</p>
+    <div class="byline">
+      <span>2 October 2026</span><span>working note</span><span>pre-registered</span><span>zero inference cost</span>
+    </div>
+    <div class="abstract">
+      <span class="eyebrow">Abstract</span>
+      Kim (arXiv:2607.20768) audits five diversity measures as predictors of majority-vote gain over the best member across 31,900 subsets of 30 language models and finds that, once member accuracy is controlled for by linear residualization, almost nothing survives: a weak residual co-failure association, held-out AUC 0.60. We set out to test whether a <strong>marginal-free dependence estimate</strong>, the tetrachoric correlation of member errors per difficulty stratum, plugged into a heterogeneous-competence Condorcet model, would do better. It does, by 0.6 Spearman points, on four public correctness matrices. But the same Condorcet model with dependence forced to zero does equally well, within 0.01. <strong>The gain over the best member is, to first order, a known nonlinear function of the three accuracies</strong>; a linear rank residualization on best and mean accuracy cannot represent that function and removes most of the signal along with the confound. The "diversity metrics fail" result is partly a property of the control, not of the metrics. The dependence term is real but small at these sample sizes, and φ and tetrachoric are indistinguishable in it.
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">1</div><h2>The question as Kim posed it</h2></div>
+    <p>Take any three models, vote by correct count, compare the vote's accuracy with that of the best of the three. Call the difference the <em>gain</em>. Kim's finding is that the gain is positive in only 10% of size-3 subsets on MMLU-Pro, and that the measures ensemble practice uses to pick members, strict diversity, disagreement, double-fault, Jaccard error overlap, focal diversity, mostly re-express the members' accuracies: strict diversity is collinear with one minus mean accuracy at ρ&nbsp;=&nbsp;0.99, and the rest are 84–99% explained by ranked best and mean accuracy. The paper then residualizes each measure on those two accuracies in rank space and asks what is left. What is left is a residual pairwise co-failure term at Spearman −0.43, AUC 0.597 held out, weakening to −0.2 on hard items.</p>
+    <p>The audit is careful and the algebraic identities are correct. Our interest was in the estimation question it leaves open, and which the previous note on this site<sup id="fnref1"><a href="#fn1">1</a></sup> raised from the other side: binary contingency measures such as double-fault are bounded by the marginals, so they cannot separate dependence from accuracy. The estimator built to do that separation is the tetrachoric correlation, and the model that turns correlation plus heterogeneous accuracies into a predicted vote accuracy is the correlated Condorcet jury of Boland and Ladha. The hypothesis, written down before any number was computed, was that this pair would predict gain better than the residualized double-fault.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">2</div><h2>What a linear control cannot represent</h2></div>
+    <p>Before the data, the arithmetic. For three independent voters with accuracies p<sub>1</sub>&nbsp;≥&nbsp;p<sub>2</sub>&nbsp;≥&nbsp;p<sub>3</sub>, the majority is correct with probability</p>
+    <div class="eq">P<sub>maj</sub> = p<sub>1</sub>p<sub>2</sub> + p<sub>1</sub>p<sub>3</sub> + p<sub>2</sub>p<sub>3</sub> − 2·p<sub>1</sub>p<sub>2</sub>p<sub>3</sub>      <span class="cm">gain = P<sub>maj</sub> − p<sub>1</sub></span></div>
+    <p>The gain is positive when p<sub>2</sub> and p<sub>3</sub> are close to p<sub>1</sub> and negative when they fall away from it. It is a cubic in the three accuracies, with a maximum depending on p<sub>1</sub>, and it cannot be written as a·best + b·mean + c in any monotone transform of the two. Residualizing a predictor on ranked best and ranked mean accuracy therefore does not "remove capability": it removes the linear part of a nonlinear function and leaves the predictor to explain the curvature, which it does badly, with the sign that happens to correlate with the curvature. Dependence enters only afterwards, as a correction to P<sub>maj</sub> whose size is the question.</p>
+    <p>This is not a criticism Kim's own numbers hide. The paper reports that the surviving association "varies with difficulty", flips sign between control sets for strict diversity, and vanishes in a nine-model subpool. Those are the symptoms of a misspecified control. What was missing was a predictor that uses the right functional form, so that the dependence term could be measured against it rather than against a straight line.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">3</div><h2>The test</h2></div>
+    <p>Kim's correctness matrices are promised but not yet released. We used four public ones.<sup id="fnref2"><a href="#fn2">2</a></sup> Three come from Chen's co-failure release: MMLU-Pro, 52 models with full coverage on 200 items; MATH-Hard, 67 on 298; MATH-500, 52 on 200; all zero-shot at temperature 0, 2026 frontier models. The fourth is the archived Open LLM Leaderboard: 28 open base models on all 14,042 MMLU items, older and weaker, included because it has enough items to make difficulty strata stable.</p>
+    <p>Protocol, fixed in writing before the first run:</p>
+    <ol>
+      <li>Twenty seeds. Each splits items in half; everything that defines a predictor uses the first half, the target uses the second. The best member is chosen on the first half, as in Kim's held-out variant.</li>
+      <li>Each seed also splits models in half. One half defines item difficulty, by its mean correctness; subsets of size 3 are drawn from the other half. This is Kim's "non-circular split" and avoids defining difficulty with the voters themselves.</li>
+      <li>Target: held-out accuracy of the correct-count majority minus held-out accuracy of the chosen best member.</li>
+      <li>Predictors, all from the first half of the items. <strong>(b)</strong> per-stratum tetrachoric correlation matrix of the voters, projected to the nearest positive-semidefinite matrix, Gaussian-copula simulation with each model's per-stratum accuracy as its threshold, 20,000 draws per stratum, predicted gain = simulated majority accuracy minus the best member's accuracy. <strong>(c)</strong> Kim's measure: mean pairwise double-fault over the subset, rank-residualized on ranked best and ranked mean accuracy, sign flipped so that less shared error predicts more gain. <strong>(a)</strong> the Kish effective-vote count from mean pairwise φ, the quantity the previous note was about. Controls: minus best accuracy, mean accuracy.</li>
+      <li>Metric: Spearman correlation between predictor and held-out gain across subsets; AUC for gain&nbsp;&gt;&nbsp;0; seed percentiles and a model-level bootstrap for the difference between predictors.</li>
+    </ol>
+    <p>Falsification was fixed in advance: (b) had to beat (c) and (a) with a bootstrap interval excluding zero, and had to beat the accuracy-only controls, or the hypothesis failed. After a two-seed smoke test, and before the main run, two controls were added that the pre-registration should have contained from the start: <strong>(e)</strong> the identical Condorcet model with the latent correlation forced to the identity, and <strong>(f)</strong> the identical model with φ instead of tetrachoric as the latent correlation. Without (e) the headline below would have been misread.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">4</div><h2>Results</h2></div>
+    <p>Spearman correlation with held-out gain over the best member, size-3 subsets, mean over 20 seeds. Predictors are oriented so that positive means "predicts more gain".</p>
+  </div>
+  <div class="col" style="margin-top:22px">
+    <div class="tw">
+      <table>
+        <thead><tr><th>predictor</th><th>Chen MMLU-Pro</th><th>Chen MATH-Hard</th><th>Chen MATH-500</th><th>Leaderboard MMLU</th></tr></thead>
+        <tbody class="tnum">
+          <tr><td>(b) tetrachoric per stratum + Condorcet</td><td class="hi">+0.810</td><td class="hi">+0.778</td><td class="hi">+0.796</td><td class="hi">+0.992</td></tr>
+          <tr><td>(e) same model, independence</td><td>+0.799</td><td>+0.776</td><td>+0.798</td><td>+0.967</td></tr>
+          <tr><td>(f) same model, φ as latent R</td><td>+0.811</td><td>+0.783</td><td>+0.801</td><td>+0.986</td></tr>
+          <tr><td>(c) double-fault, residualized on best + mean</td><td>+0.195</td><td>+0.281</td><td>+0.259</td><td>+0.175</td></tr>
+          <tr><td class="dim">raw double-fault, sign flipped</td><td class="dim">+0.367</td><td class="dim">+0.594</td><td class="dim">+0.609</td><td class="dim">+0.370</td></tr>
+          <tr><td>(a) Kish n<sub>eff</sub> from φ</td><td>−0.422</td><td>−0.294</td><td>−0.151</td><td>−0.802</td></tr>
+          <tr><td class="dim">mean accuracy alone</td><td class="dim">+0.502</td><td class="dim">+0.654</td><td class="dim">+0.676</td><td class="dim">+0.609</td></tr>
+          <tr><td class="dim">minus best accuracy alone</td><td class="dim">+0.028</td><td class="dim">−0.130</td><td class="dim">−0.184</td><td class="dim">+0.039</td></tr>
+          <tr><td>AUC, gain &gt; 0: (b) / (c)</td><td>0.87 / 0.55</td><td>0.83 / 0.58</td><td>0.86 / 0.56</td><td>1.00 / 0.46</td></tr>
+          <tr><td class="dim">subsets per seed · gain &gt; 0 rate</td><td class="dim">2,600 · 8.7%</td><td class="dim">5,456 · 22%</td><td class="dim">2,600 · 14%</td><td class="dim">364 · 0.1%</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <figure style="margin-top:30px">
+    <div class="fig">
+      <div class="eyebrow" style="padding:18px 24px 0">Figure 1</div>
+      <div style="padding:0 24px"><h3 style="margin-top:.3em">Rank correlation with held-out gain, Chen MMLU-Pro, size 3</h3></div>
+      <div class="fig-b">
+        <svg viewBox="0 0 760 250" role="img" aria-label="Horizontal bars of Spearman correlation per predictor">
+          <g font-family="JetBrains Mono, monospace" font-size="12" fill="var(--ink2)">
+            <line x1="380" y1="10" x2="380" y2="215" stroke="var(--rule)"/>
+            <line x1="180" y1="10" x2="180" y2="215" stroke="var(--hair)" stroke-dasharray="3 4"/>
+            <line x1="580" y1="10" x2="580" y2="215" stroke="var(--hair)" stroke-dasharray="3 4"/>
+            <text x="180" y="236" text-anchor="middle" fill="var(--muted)">−0.5</text>
+            <text x="380" y="236" text-anchor="middle" fill="var(--muted)">0</text>
+            <text x="580" y="236" text-anchor="middle" fill="var(--muted)">+0.5</text>
+            <text x="780" y="236" text-anchor="end" fill="var(--muted)">+1</text>
+            <!-- bars: x = 380 + 400*rho -->
+            <rect x="380" y="18" width="324" height="22" fill="var(--a)"/><text x="372" y="34" text-anchor="end">tetrachoric + Condorcet</text><text x="710" y="34" fill="var(--ink)">+0.81</text>
+            <rect x="380" y="48" width="320" height="22" fill="var(--a)" opacity=".55"/><text x="372" y="64" text-anchor="end">independent Condorcet</text><text x="706" y="64" fill="var(--ink)">+0.80</text>
+            <rect x="380" y="78" width="201" height="22" fill="var(--truth)" opacity=".5"/><text x="372" y="94" text-anchor="end">mean accuracy</text><text x="587" y="94" fill="var(--ink)">+0.50</text>
+            <rect x="380" y="108" width="78" height="22" fill="var(--b)"/><text x="372" y="124" text-anchor="end">residualized double-fault (Kim)</text><text x="464" y="124" fill="var(--ink)">+0.20</text>
+            <rect x="380" y="138" width="11" height="22" fill="var(--truth)" opacity=".5"/><text x="372" y="154" text-anchor="end">minus best accuracy</text><text x="397" y="154" fill="var(--ink)">+0.03</text>
+            <rect x="211" y="168" width="169" height="22" fill="var(--b)" opacity=".6"/><text x="372" y="184" text-anchor="end" fill="var(--paper)" font-weight="500">Kish n_eff from φ</text><text x="205" y="184" text-anchor="end" fill="var(--ink)">−0.42</text>
+          </g>
+        </svg>
+      </div>
+      <figcaption><b>The jury model wins, and the version with no dependence term wins by the same margin.</b> Mean Spearman over 20 item-split seeds, 2,600 subsets of 26 evaluator models per seed. The effective-vote count anti-predicts gain.</figcaption>
+    </div>
+  </figure>
+  <div class="col" style="margin-top:30px">
+    <p>Model-level bootstrap of the differences on MMLU-Pro, 300 resamples of the evaluator models:</p>
+    <div class="tw" style="margin-top:14px">
+      <table>
+        <thead><tr><th>difference in Spearman</th><th>mean</th><th>95% interval</th></tr></thead>
+        <tbody class="tnum">
+          <tr><td>(b) − (c) residualized double-fault</td><td class="hi">+0.604</td><td>[+0.552, +0.653]</td></tr>
+          <tr><td>(b) − (a) Kish n<sub>eff</sub></td><td class="hi">+1.216</td><td>[+1.172, +1.268]</td></tr>
+          <tr><td>(b) − minus best accuracy</td><td>+0.771</td><td>[+0.716, +0.825]</td></tr>
+          <tr><td>(b) − (e) independent Condorcet</td><td class="hi">+0.011</td><td>[+0.005, +0.017]</td></tr>
+          <tr><td>(b) − (f) φ copula</td><td>−0.002</td><td>[−0.004, −0.000]</td></tr>
+          <tr><td>(b) − (b) without strata</td><td>+0.009</td><td>[+0.002, +0.015]</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top:1.1em">By the pre-registered criteria the hypothesis is confirmed: (b) beats (c), beats (a), beats the accuracy-only controls, intervals nowhere near zero, on all four datasets, at size 4, and under the circular protocol with all 52 models. It is also calibrated: predicted gain is on the accuracy scale, mean signed error below 0.01, R² between 0.70 and 0.99 against observed gain. <strong>And it is confirmed for the wrong reason.</strong> The independent jury, which contains no estimate of dependence at all, is 0.011 behind. The whole 0.6-point gap to Kim's metric is the functional form.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">5</div><h2>The dependence term</h2></div>
+    <p>What the dependence estimate adds, once the marginals are modelled properly, is +0.011 on MMLU-Pro, +0.001 on MATH-Hard, −0.004 on MATH-500 and +0.023 on the leaderboard pool. The sign and size line up with sample size: Chen's matrices give about 30 training items per difficulty tercile, the leaderboard gives over 2,000. Three details follow.</p>
+    <p><strong>φ and tetrachoric are interchangeable here.</strong> The previous note argued, and still holds, that φ substituted into Kish's formula overstates a panel's independent votes, because the formula's meaning rests on a latent model that prescribes the tetrachoric. In a copula that reproduces the marginals exactly, the choice of latent correlation moves the predicted gain by less than the Monte-Carlo noise. The estimator question matters for how many votes you <em>report</em>; it does not matter for predicting whether this trio beats its best member.</p>
+    <p><strong>Thirty items per stratum do not support a latent correlation matrix.</strong> On the Chen data the per-stratum tetrachoric matrices of 26–33 models are badly non-positive-definite; the projection changed entries by up to 1.0–1.2. The matrix that enters the simulation is a heavily shrunk version of the estimate, which is one reason (b) and (e) coincide. On the leaderboard pool the projection changed nothing. Per-stratum estimation is right in principle, and the strata do differ (φ about 0.2 on the hardest tercile, 0.03–0.09 on the others), but it needs thousands of items, not hundreds, and the strata contribute +0.003 to +0.009.</p>
+    <p><strong>The effective-vote count anti-predicts gain.</strong> Kish n<sub>eff</sub> correlates with held-out gain at −0.42 on MMLU-Pro and −0.80 on the leaderboard pool. A subset with low error correlation is, in a heterogeneous pool, a strong model paired with weak and dissimilar ones; its majority is dragged below the strong member. n<sub>eff</sub> is a property of a pool, and a confounded one, not a selection criterion for a committee. Kim's raw-correlation sign flips are the same phenomenon seen through a different statistic.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">6</div><h2>What this says about the audit, and what it does not</h2></div>
+    <div class="note">
+      <span class="eyebrow">Claim, narrowly</span>
+      <p>Kim's conclusion that diversity metrics mostly re-express capability stands. Kim's method of showing it, linear rank residualization on best and mean accuracy, cannot distinguish "the metric carries no information beyond accuracy" from "the metric carries information that a straight line through two accuracy ranks cannot absorb". A heterogeneous Condorcet prediction is the right null for the second reading, and against that null the dependence information in a pairwise statistic is worth about 0.01–0.02 Spearman points at Kim's sample sizes. The headline "AUC 0.60" belongs to the control, not to the metrics: the same data give AUC 0.87 to a predictor that uses nothing but the three accuracies.</p>
+    </div>
+    <p>It does not say majority voting is a good idea. Gain is positive in 9–22% of size-3 subsets on the Chen data and 0.1% on the leaderboard pool; being able to predict which subsets those are is useful for committee design and changes nothing about the base rate. It does not say that error dependence is unimportant for ensembles: the all-wrong floor, the subject of Chen's paper and the previous note, is a dependence quantity and is not touched by this analysis. And it does not say anything about Kim's own matrices, which were not available. Chen's MMLU-Pro slice reproduces Kim's qualitative findings, the positive raw double-fault sign, a weak residual, a 9% gain-positive rate against Kim's 10%, so the comparison is fair in kind, not in instance.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">7</div><h2>Limitations</h2></div>
+    <ul>
+      <li>Subsets overlap heavily; the only uncertainty statements are the seed percentiles and the model-level bootstrap, as in Kim. No per-subset p-values.</li>
+      <li>The leaderboard pool consists of 2023–24 base models at 24–77% MMLU accuracy; positive gain is almost never observed there, so its AUC is degenerate and its Spearman is the informative number.</li>
+      <li>The Gaussian copula is known to underprice tail co-failure (Chen). Here it is asked to predict a majority event, not a tail event, and is calibrated to within 0.01; the tail objection stands for other uses.</li>
+      <li>Twenty thousand copula draws per stratum put Monte-Carlo noise on the predicted gain near 0.003, below every difference reported except (b)&nbsp;−&nbsp;(f), which should be read as no difference.</li>
+      <li>One deviation from the pre-registration, the two added controls, is disclosed above. Nothing was removed and no criterion was changed.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">8</div><h2>Reproduction</h2></div>
+    <p>One numpy script, no scipy, no API calls. The estimators are the ones from the previous note, with the vectorised tetrachoric solver. Data: Chen's matrices from the Hugging Face dataset <code>josefchen/co-failure-67-models</code> (CC-BY 4.0, snapshot of 25 September 2026), and the per-instance leaderboard files already described in the previous note. The full run over four datasets, 20 seeds and a 300-resample bootstrap takes about twelve minutes on a laptop; the circular variant with all 22,100 subsets takes another twelve. When Kim's matrices appear the rerun is one command, and this note will be updated with the numbers on the data the audit was actually run on.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <hr class="r">
+    <ol class="refs" style="padding-left:1.1em; margin-top:1.2em">
+      <li id="fn1"><a href="../effective-independence/">Effective Independence</a>, 31 August 2026. The two open questions it left, how to estimate ρ for language-model errors and whether the 1/ρ ceiling survives majority voting over discrete answers, are the ones this note takes up. The answer to the second, on this evidence: the ceiling is a statement about averaging, and the quantity that governs majority-vote gain over the best member is not ρ but the spread of the accuracies. <a href="#fnref1">↩</a></li>
+      <li id="fn2">Chen, J. (2026). <em>When Does Combining Language Models Help? A Provable Co-Failure Ceiling Across 67 Frontier Models.</em> <a href="https://arxiv.org/abs/2606.27288">arXiv:2606.27288</a>; data at <a href="https://huggingface.co/datasets/josefchen/co-failure-67-models">josefchen/co-failure-67-models</a>. Kim, D. (2026). <em>Are Diversity Metrics Measuring Diversity? A Capability-Controlled Audit of Majority-Vote Gain in LLM Ensembles.</em> <a href="https://arxiv.org/abs/2607.20768">arXiv:2607.20768</a>. The closest prior use of the same machinery is Li &amp; Hai (2026), <em>State-dependent error correlations shape voting thresholds in committees of AI agents</em>, <a href="https://arxiv.org/abs/2607.23931">arXiv:2607.23931</a>: tetrachoric inversion into a heterogeneous Gaussian copula for k-of-n screening rules, without a comparison against diversity metrics or a gain-over-best target. Boland, P. J. (1989), <em>Majority systems and the Condorcet jury theorem</em>, and Ladha, K. K. (1992), <em>The Condorcet jury theorem, free speech, and correlated votes</em>, for the correlated heterogeneous jury. <a href="#fnref2">↩</a></li>
+    </ol>
+  </div>
+</section>
+<section>
+  <div class="col">
+    <p class="foot"><a href="../">← notes</a> · <a href="https://github.com/Alatip">github.com/Alatip</a></p>
+  </div>
+</section>
+</div>
+</body>
+</html>
