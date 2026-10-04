@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://alatip.github.io/sitemap.xml
