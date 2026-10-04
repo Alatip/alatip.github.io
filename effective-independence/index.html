@@ -125,7 +125,7 @@ hr.r{border:none; border-top:1px solid var(--rule); margin:0}
     <h1 style="margin-top:.5em">Effective Independence</h1>
     <p style="margin-top:.6em; font-size:1.12rem; color:var(--ink2)">Panels of language models carry fewer independent votes than the literature reports, and the gap is an estimator artefact rather than a disagreement about data.</p>
     <div class="byline">
-      <span>31 August 2026</span><span>working note</span><span>zero inference cost</span><span>fully reproducible</span>
+      <span>31 August 2026</span><span>working note</span><span>zero inference cost</span><span>fully reproducible</span><span><a href="https://doi.org/10.5281/zenodo.23132592">doi:10.5281/zenodo.23132592</a></span>
     </div>
     <div class="abstract">
       <span class="eyebrow">Abstract</span>
@@ -281,6 +281,7 @@ hr.r{border:none; border-top:1px solid var(--rule); margin:0}
     <div class="eq" style="margin-top:1em">python3 -m core.hfdata --list<br>python3 run.py v003          <span class="cm"># pools, both estimators, coverage</span><br>python3 run.py --verify      <span class="cm"># re-run all versions against recorded snapshots</span><br>python3 -m pytest tests/ -q  <span class="cm"># estimator recovery on known truth</span></div>
     <p style="margin-top:1.1em">The tetrachoric implementation is self-contained: the bivariate normal CDF is integrated numerically and the inverse normal uses Acklam's approximation, so the result depends on no external numerical library and every step is auditable. Per-model, per-item correctness is cached after a single download.</p>
     <p>Practical notes for anyone rebuilding the matrix: some archived runs are truncated to a handful of rows; the correctness column appears variously as <code>acc</code>, <code>acc_norm</code>, <code>mc1</code>, or a <code>metrics</code> struct, and occasionally as the strings <code>'True'</code>/<code>'False'</code>; and the prompt field is formatted differently across runs, so hashing it does not align models. Align positionally and verify the question text matches, or the matrix will be silently joined out of register.</p>
+    <p style="margin-top:1.1em">Archived with a DOI: <a href="https://doi.org/10.5281/zenodo.23132592">10.5281/zenodo.23132592</a>. Cite as: Latipov, A. (2026). <em>Effective Independence</em>. Zenodo. https://doi.org/10.5281/zenodo.23132592</p>
   </div>
 </section>
 
