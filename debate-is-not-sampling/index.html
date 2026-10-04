@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="The modal ceiling of test-time scaling does not transfer to multi-round debate: on 9,600 public traces three-agent debate beats the round-0 modal-hit rate on weak models and corrects 31–45% of problems where all agents started wrong. The correlation ceiling does transfer: the panel is one effective voter by round 3.">
+<title>Debate Is Not Sampling</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<style>
+:root{
+  --paper:#F8F9FA; --card:#FFFFFF; --sunk:#F0F2F5;
+  --ink:#12161C; --ink2:#39424F; --muted:#6B7684; --rule:#DDE1E7; --hair:#EAEDF1;
+  --accent:#14548C; --accent-soft:#E4EDF6;
+  --a:#14548C; --b:#BF5B04; --truth:#39424F;
+  --warn-bg:#FBF2E4; --warn-ink:#8A5A00;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0F1216; --card:#161A20; --sunk:#1C2128;
+    --ink:#E6EAEF; --ink2:#B6BFCA; --muted:#828D9B; --rule:#2A313A; --hair:#222932;
+    --accent:#7FB3E0; --accent-soft:#152838;
+    --a:#4D93D0; --b:#D4762A; --truth:#B6BFCA;
+    --warn-bg:#2A2214; --warn-ink:#D8AA5C;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0F1216; --card:#161A20; --sunk:#1C2128;
+  --ink:#E6EAEF; --ink2:#B6BFCA; --muted:#828D9B; --rule:#2A313A; --hair:#222932;
+  --accent:#7FB3E0; --accent-soft:#152838;
+  --a:#4D93D0; --b:#D4762A; --truth:#B6BFCA;
+  --warn-bg:#2A2214; --warn-ink:#D8AA5C;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"Source Serif 4",Georgia,serif; font-size:17.5px; line-height:1.62;
+  -webkit-font-smoothing:antialiased; font-variant-numeric:oldstyle-nums;
+}
+.page{max-width:1000px; margin:0 auto; padding:0 24px 110px}
+.col{max-width:640px; margin:0 auto}
+.col > * + *{margin-top:1.05em}
+p{margin:0}
+h1,h2,h3{margin:0; line-height:1.2; text-wrap:balance; font-weight:600}
+h1{font-size:clamp(2rem,4.6vw,2.85rem); letter-spacing:-.012em}
+h2{font-size:1.42rem}
+h3{font-size:1.08rem}
+a{color:var(--accent)}
+strong{font-weight:600}
+code,.mono,.eyebrow{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace}
+code{font-size:.84em; background:var(--sunk); padding:.1em .35em; border-radius:3px}
+.eyebrow{font-size:.68rem; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); font-weight:500}
+
+header{padding:82px 0 30px}
+.byline{display:flex; flex-wrap:wrap; gap:6px 20px; margin-top:1.1em; font-family:"JetBrains Mono",monospace; font-size:.74rem; color:var(--muted)}
+.abstract{
+  margin-top:2em; padding:22px 26px; background:var(--card);
+  border-top:2px solid var(--ink); border-bottom:1px solid var(--rule);
+  font-size:.97rem; line-height:1.6; color:var(--ink2);
+}
+.abstract .eyebrow{display:block; margin-bottom:.7em}
+.abstract strong{color:var(--ink)}
+
+section{padding-top:56px}
+.sec-head{display:flex; gap:14px; align-items:baseline; margin-bottom:20px}
+.sec-num{font-family:"JetBrains Mono",monospace; font-size:.78rem; color:var(--accent); padding-top:.3em; flex:none; font-weight:500}
+
+.eq{
+  background:var(--card); border:1px solid var(--rule); border-radius:4px;
+  padding:16px 20px; overflow-x:auto; font-family:"JetBrains Mono",monospace;
+  font-size:.88rem; line-height:1.85;
+}
+.eq .cm{color:var(--muted)}
+.note{background:var(--accent-soft); padding:16px 20px; border-radius:4px; font-size:.95rem}
+.note.warn{background:var(--warn-bg)}
+.note .eyebrow{display:block; margin-bottom:.45em; color:var(--ink2)}
+
+.tw{overflow-x:auto; border:1px solid var(--rule); border-radius:4px; background:var(--card)}
+table{border-collapse:collapse; width:100%; font-size:.88rem; font-family:"JetBrains Mono",monospace}
+th,td{padding:9px 13px; text-align:right; border-bottom:1px solid var(--hair)}
+th:first-child,td:first-child{text-align:left}
+thead th{font-size:.66rem; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:500; background:var(--sunk)}
+tbody tr:last-child td{border-bottom:none}
+td.hi{color:var(--ink); font-weight:500}
+td.dim{color:var(--muted)}
+.tnum{font-variant-numeric:tabular-nums}
+
+figure{margin:0; max-width:880px; margin-inline:auto}
+.fig{background:var(--card); border:1px solid var(--rule); border-radius:4px; overflow:hidden}
+.fig-b{padding:18px 14px 6px}
+figcaption{padding:0 24px 20px; font-size:.85rem; color:var(--muted); line-height:1.55; max-width:66ch}
+figcaption b{color:var(--ink2); font-weight:600}
+.legend{display:flex; flex-wrap:wrap; gap:6px 22px; padding:16px 24px 0; font-size:.8rem; color:var(--ink2); font-family:"JetBrains Mono",monospace}
+.legend span{display:inline-flex; align-items:center; gap:7px}
+.legend i{width:15px; height:2.5px; border-radius:2px}
+.legend i.dash{background:none; border-top:2px dashed var(--truth); height:0}
+svg{display:block; width:100%; height:auto; overflow:visible}
+
+ol,ul{margin:0; padding-left:1.25em}
+li{margin:.42em 0}
+.refs{font-size:.88rem; color:var(--ink2)}
+.refs li{margin:.55em 0}
+.refs .mono{color:var(--muted); font-size:.92em}
+hr.r{border:none; border-top:1px solid var(--rule); margin:0}
+.foot{padding-top:52px; font-size:.86rem; color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<style>.col p+p,.col p+ul,.col p+ol,.col ul+p,.col ol+p,.col div.note+p,.col p+div.note{margin-top:1.05em} .note .eyebrow{display:block;margin-bottom:.45em} .note p{margin:0}</style>
+</head>
+<body>
+<div class="page">
+<header>
+  <div class="col">
+    <div class="eyebrow">Technical note · Ensembles</div>
+    <h1 style="margin-top:.5em">Debate Is Not Sampling</h1>
+    <p style="margin-top:.6em; font-size:1.12rem; color:var(--ink2)">The modal ceiling of test-time scaling says a plurality vote cannot beat the rate at which the most common answer is right. Three-agent debate beats it on every weak model, and on 31–45% of the problems where all three agents started wrong. What survives is the other ceiling: after three rounds the panel is one voter.</p>
+    <div class="byline">
+      <span>4 October 2026</span><span>working note</span><span>pre-registered</span><span>zero inference cost</span>
+    </div>
+    <div class="abstract">
+      <span class="eyebrow">Abstract</span>
+      A 2026 theory of test-time scaling (arXiv:2606.28661) proves that plurality voting over n exchangeable samples converges to the <strong>modal-hit rate</strong> π<sub>mode</sub>, and anti-scales on problems whose most common answer is wrong. Multi-round refinement systems such as TUMIX (arXiv:2510.01279), in which agents read each other's answers and vote at the end, show the symptom the theory predicts, coverage far above accuracy, and ask for a stopping rule. We pre-registered three predictions that would follow if refinement were sampling in disguise, and tested them on 9,600 public debate traces (DebateLedger, arXiv:2609.35279; three copies of one model, three all-to-all rounds, sixteen model and task configurations). <strong>Two of three failed in the direction opposite to the theory.</strong> Final majority accuracy exceeds the round-0 modal-hit rate by 6 to 20 points on weak models with confidence intervals clear of the pre-set 3-point band; agents on wrong-mode problems recover rather than anti-scale on all 16 files; and on Qwen3-4B 31% of the 793 problems where <em>all three agents were wrong</em> at round 0 end with a correct majority. The exchangeability premise is what fails: debate moves the per-problem answer distribution between rounds, so π<sub>mode</sub> is not conserved and is not a ceiling. What does transfer is the <strong>correlation ceiling</strong>. Within-problem inter-agent correlation of correctness rises every round on every file, from 0.48–0.91 to 0.62–0.99, taking the effective number of voters in a 3-agent panel to 1.0–1.3; a same-model control in which each agent sees only its own previous answer leaves it flat. The stopping rule built on the plateau of that correlation fires too late on weak models; stopping each problem at unanimity keeps accuracy within 1.5 points of three fixed rounds at 1.0–1.95 rounds on all 16 files.
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">1</div><h2>Two papers and a bridge</h2></div>
+    <p>The first paper treats the n attempts a model makes at one problem as a cluster sample. With ρ the intraclass correlation of correctness, the effective sample size is n/[1+(n−1)ρ], bounded by 1/ρ; that is the <em>correlation ceiling</em>, and it was the subject of two earlier notes on this site.<sup id="fnref1"><a href="#fn1">1</a></sup> The paper adds a second result about selection. Plurality voting over exchangeable samples converges to the rate at which a problem's most common answer is correct, π<sub>mode</sub>, and on a problem whose mode is wrong every further sample makes the plurality more confidently wrong. Coverage rises; selection has a ceiling; the gap between them is the <em>identifiability gap</em>.</p>
+    <p>The second paper is TUMIX, a test-time scaling system: fifteen heterogeneous agents (text, code, search) answer a question in parallel, read each other's answers, answer again for a few rounds, an LLM judge decides when to stop, and a majority vote closes. On Humanity's Last Exam it reports the identifiability gap almost verbatim: at least one agent is right on 65% of questions while the final answer is right on 34%, and the authors note that over-refinement discards correct answers and ask for a principled stopping rule based on the marginal value of another round. They never measure the correlation between agents.</p>
+    <p>A literature-based-discovery pass over a graph of 125 papers paired the two and wrote the hypothesis down: in refinement, majority accuracy after round r is bounded by π<sub>mode</sub>; refinement helps only on problems whose first-round mode is correct and hurts on the rest; and a rule that stops when the effective sample size stops changing should match the judge. The non-obvious step was that the theory assumes exchangeable draws from a fixed distribution, while rounds of debate actively raise ρ, so each round would be a new cluster sample. That step is where the bridge breaks, and this note is about how.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">2</div><h2>What the modal ceiling needs</h2></div>
+    <p>The theorem is about aggregation. Fix a problem and a per-problem answer distribution; draw n answers; take the plurality. As n grows the plurality finds the mode of that distribution, and nothing else, because nothing else is there to find. Three things follow for a refinement process, if it is sampling in disguise:</p>
+    <ul>
+      <li>Round 0, where agents have not yet seen each other, is the only round whose answers come from the undisturbed distribution. If later rounds only aggregate, the final majority cannot do better than the round-0 modal-hit rate except by noise.</li>
+      <li>On problems whose round-0 mode is wrong, the agents should converge on the wrong mode: per-agent accuracy on that stratum should fall from round to round.</li>
+      <li>The correlation between agents should rise toward 1, and the effective number of voters toward 1, as the panel collapses onto its mode.</li>
+    </ul>
+    <p>The third is a prediction about ρ and is what the earlier notes would expect. The first two are predictions about π<sub>mode</sub>, and they hold only if the per-problem distribution is the same object in every round. In debate it is not: an agent in round 2 is answering a different prompt than in round 0, one that contains two other answers and, in most systems, their reasoning. Whether that difference matters is an empirical question, and the data to answer it already existed.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">3</div><h2>The test</h2></div>
+    <p>TUMIX has not released its logs. The closest public substitute is DebateLedger,<sup id="fnref2"><a href="#fn2">2</a></sup> released in September 2026 with a paper that counts <em>collapses</em> (a correct initial majority that ends wrong) and <em>corrections</em> (the reverse): three copies of one model answer an MMLU-Pro question independently (round 0), then for three rounds each agent sees all current answers and revises. The open tier keeps every parsed answer letter per agent per round and the gold label; model text is withheld. We used the primary cohort, 6,925 debates across Gemini 3-flash, GPT-5.4-mini, Llama-3.1-8B, Phi-4-mini, Qwen3-4B and Qwen3-8B, and three extension sets as robustness: three heterogeneous panels of three different models, three GSM8K runs with free-form answers, and four Qwen3 runs with reasoning on and off. Our loader reproduces the paper's own headline counts exactly (6,925 debates, 253 collapses).</p>
+    <p>The pre-registration, committed before any outcome was computed,<sup id="fnref3"><a href="#fn3">3</a></sup> fixed three hypotheses, each with a statistic, a cluster bootstrap over questions (2,000 resamples) and a decision rule over the six primary files:</p>
+    <ul>
+      <li><strong>H1, ceiling.</strong> D1 = MV<sub>3</sub> − MV<sub>0</sub>, the final majority accuracy minus the round-0 modal-hit rate, has its interval inside ±0.03 on at least 4 of 6 files. Falsified upward if the interval is entirely above +0.03 on 3 or more.</li>
+      <li><strong>H2, anti-scaling.</strong> On problems whose round-0 plurality is a wrong letter (S<sup>−</sup>), per-agent accuracy falls from round 1 to round 3: D2 = A<sub>3</sub>(S<sup>−</sup>) − A<sub>1</sub>(S<sup>−</sup>) &lt; 0 with interval clear of zero on 4 of 6. Round 0 itself is excluded from the comparison because conditioning on it caps A<sub>0</sub>(S<sup>−</sup>) at one third by construction. Falsified if D2 &gt; 0 with interval clear of zero on 3 or more.</li>
+      <li><strong>H3, correlation.</strong> (a) The one-way ANOVA intraclass correlation of agent correctness within a problem is non-decreasing over rounds 0–3 and its rise has an interval clear of zero. (b) A rule that stops after the first round where the implied n<sub>eff</sub> = 3/(1+2ρ) changes by less than 0.05 keeps majority accuracy within 0.01 of three fixed rounds while using at most two.</li>
+    </ul>
+    <p>One hypothesis in the discovery system's statement, that per-round majority accuracy tracks that round's mean π<sub>mode</sub>, was dropped before the run because for a single panel of three it is an identity: the modal-hit rate of a round <em>is</em> that round's majority correctness. The honest prior written down was 65% for H1, 55% for H2, 85% for H3a and 40% for H3b.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">4</div><h2>Results</h2></div>
+    <p>Majority accuracy by round and the three pre-registered statistics on the six primary files. Intervals are 95% cluster-bootstrap percentiles over questions. S<sup>−</sup> is the wrong-mode stratum; ICC is the within-problem inter-agent correlation of correctness; n<sub>eff</sub> is the effective number of voters in the panel of three.</p>
+  </div>
+  <div class="col" style="max-width:880px">
+    <div class="tw">
+      <table class="tnum">
+        <thead><tr><th>model</th><th>n</th><th>MV<sub>0</sub></th><th>MV<sub>1</sub></th><th>MV<sub>2</sub></th><th>MV<sub>3</sub></th><th>D1 = MV<sub>3</sub>−MV<sub>0</sub></th><th>n(S<sup>−</sup>)</th><th>D2 = A<sub>3</sub>−A<sub>1</sub> on S<sup>−</sup></th><th>ICC<sub>0</sub> → ICC<sub>3</sub></th><th>n<sub>eff</sub></th></tr></thead>
+        <tbody>
+          <tr><td>Gemini 3-flash</td><td>200</td><td>.845</td><td>.855</td><td>.855</td><td>.855</td><td class="dim">+.010 [+.000, +.025]</td><td>27</td><td class="dim">+.000 [.000, .000]</td><td>.914 → .987</td><td>1.06 → 1.01</td></tr>
+          <tr><td>GPT-5.4-mini</td><td>200</td><td>.705</td><td>.745</td><td>.750</td><td>.755</td><td>+.050 [+.020, +.085]</td><td>48</td><td>+.021 [−.013, +.058]</td><td>.736 → .946</td><td>1.21 → 1.04</td></tr>
+          <tr><td>Llama-3.1-8B</td><td>2,003</td><td>.468</td><td>.497</td><td>.496</td><td>.496</td><td>+.028 [+.014, +.041]</td><td>688</td><td>+.003 [−.007, +.014]</td><td>.504 → .615</td><td>1.49 → 1.34</td></tr>
+          <tr><td>Phi-4-mini</td><td>2,161</td><td>.468</td><td>.510</td><td>.530</td><td>.531</td><td class="hi">+.063 [+.049, +.078]</td><td>720</td><td class="hi">+.018 [+.004, +.032]</td><td>.517 → .812</td><td>1.48 → 1.14</td></tr>
+          <tr><td>Qwen3-4B</td><td>2,161</td><td>.435</td><td>.581</td><td>.626</td><td>.640</td><td class="hi">+.205 [+.185, +.224]</td><td>979</td><td class="hi">+.115 [+.097, +.133]</td><td>.646 → .920</td><td>1.31 → 1.06</td></tr>
+          <tr><td>Qwen3-8B<sup>*</sup></td><td>200</td><td>.245</td><td>.495</td><td>.595</td><td>.620</td><td class="hi">+.375 [+.305, +.445]</td><td>125</td><td class="hi">+.125 [+.076, +.176]</td><td>.479 → .853</td><td>1.53 → 1.11</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="font-size:.85rem; color:var(--muted); margin-top:10px; max-width:66ch"><sup>*</sup> This row's round-0 accuracy is 0.245 where the same model scores 0.615–0.630 at round 0 in the reasoning-on/off runs; see Limitations.</p>
+  </div>
+  <div class="col">
+    <p><strong>H1 is falsified upward.</strong> Three of six intervals lie entirely above +0.03; one of six lies inside the band. The excess is largest where round-0 accuracy is lowest: across all sixteen files the correlation between MV<sub>0</sub> and D1 is −0.74. On the strong model, on GSM8K (round-0 accuracy 0.95–0.96, D1 between −0.003 and +0.010) and on Qwen3-32B with reasoning on, the ceiling holds numerically, because there is almost nothing left to correct.</p>
+    <p><strong>H2 is falsified.</strong> No file shows anti-scaling. On the wrong-mode stratum, per-agent accuracy from round 1 to round 3 is non-negative on all sixteen files and positive with interval clear of zero on three of the six primary ones; the majority-correct rate on the same stratum, which the theory says should stay at zero, rises to 0.106 on Phi-4-mini, 0.370 on Qwen3-4B and 0.488 on Qwen3-8B.</p>
+    <p><strong>H3a is confirmed on all six files</strong>, and on all sixteen. The rise in ICC is monotone everywhere and its interval is clear of zero everywhere, with the smallest rise on the model that starts nearly saturated (Gemini, 0.914 → 0.987) and on Llama-3.1-8B, which barely revises (0.504 → 0.615).</p>
+  </div>
+  <figure style="margin-top:30px">
+    <div class="fig">
+      <div class="eyebrow" style="padding:18px 24px 0">Figure 1</div>
+      <div style="padding:0 24px"><h3 style="margin-top:.3em">Within-problem inter-agent correlation of correctness, by round</h3></div>
+      <div class="fig-b">
+        <svg viewBox="0 0 760 250" role="img" aria-label="Within-problem inter-agent correlation by debate round, six models">
+<g font-family="JetBrains Mono, monospace" font-size="12" fill="var(--ink2)">
+<line x1="70" y1="200.0" x2="570" y2="200.0" stroke="var(--hair)"/><text x="62" y="204.0" text-anchor="end" fill="var(--muted)">0.4</text>
+<line x1="70" y1="140.0" x2="570" y2="140.0" stroke="var(--hair)"/><text x="62" y="144.0" text-anchor="end" fill="var(--muted)">0.6</text>
+<line x1="70" y1="80.0" x2="570" y2="80.0" stroke="var(--hair)"/><text x="62" y="84.0" text-anchor="end" fill="var(--muted)">0.8</text>
+<line x1="70" y1="20.0" x2="570" y2="20.0" stroke="var(--hair)"/><text x="62" y="24.0" text-anchor="end" fill="var(--muted)">1.0</text>
+<text x="70.0" y="226" text-anchor="middle" fill="var(--muted)">round 0</text>
+<text x="236.7" y="226" text-anchor="middle" fill="var(--muted)">round 1</text>
+<text x="403.3" y="226" text-anchor="middle" fill="var(--muted)">round 2</text>
+<text x="570.0" y="226" text-anchor="middle" fill="var(--muted)">round 3</text>
+<polyline points="70.0,45.9 236.7,31.9 403.3,27.9 570.0,24.0" fill="none" stroke="var(--truth)" stroke-width="2.2" opacity=".45"/>
+<circle cx="70.0" cy="45.9" r="3" fill="var(--truth)" opacity=".45"/>
+<circle cx="236.7" cy="31.9" r="3" fill="var(--truth)" opacity=".45"/>
+<circle cx="403.3" cy="27.9" r="3" fill="var(--truth)" opacity=".45"/>
+<circle cx="570.0" cy="24.0" r="3" fill="var(--truth)" opacity=".45"/>
+<polyline points="70.0,99.3 236.7,48.9 403.3,38.7 570.0,36.1" fill="none" stroke="var(--truth)" stroke-width="2.2" opacity=".9"/>
+<circle cx="70.0" cy="99.3" r="3" fill="var(--truth)" opacity=".9"/>
+<circle cx="236.7" cy="48.9" r="3" fill="var(--truth)" opacity=".9"/>
+<circle cx="403.3" cy="38.7" r="3" fill="var(--truth)" opacity=".9"/>
+<circle cx="570.0" cy="36.1" r="3" fill="var(--truth)" opacity=".9"/>
+<polyline points="70.0,168.9 236.7,142.6 403.3,140.4 570.0,135.4" fill="none" stroke="var(--b)" stroke-width="2.2" opacity=".55"/>
+<circle cx="70.0" cy="168.9" r="3" fill="var(--b)" opacity=".55"/>
+<circle cx="236.7" cy="142.6" r="3" fill="var(--b)" opacity=".55"/>
+<circle cx="403.3" cy="140.4" r="3" fill="var(--b)" opacity=".55"/>
+<circle cx="570.0" cy="135.4" r="3" fill="var(--b)" opacity=".55"/>
+<polyline points="70.0,164.9 236.7,112.8 403.3,90.7 570.0,76.4" fill="none" stroke="var(--b)" stroke-width="2.2" opacity="1"/>
+<circle cx="70.0" cy="164.9" r="3" fill="var(--b)" opacity="1"/>
+<circle cx="236.7" cy="112.8" r="3" fill="var(--b)" opacity="1"/>
+<circle cx="403.3" cy="90.7" r="3" fill="var(--b)" opacity="1"/>
+<circle cx="570.0" cy="76.4" r="3" fill="var(--b)" opacity="1"/>
+<polyline points="70.0,126.2 236.7,77.4 403.3,55.3 570.0,44.0" fill="none" stroke="var(--a)" stroke-width="2.2" opacity=".55"/>
+<circle cx="70.0" cy="126.2" r="3" fill="var(--a)" opacity=".55"/>
+<circle cx="236.7" cy="77.4" r="3" fill="var(--a)" opacity=".55"/>
+<circle cx="403.3" cy="55.3" r="3" fill="var(--a)" opacity=".55"/>
+<circle cx="570.0" cy="44.0" r="3" fill="var(--a)" opacity=".55"/>
+<polyline points="70.0,176.3 236.7,121.6 403.3,79.8 570.0,64.0" fill="none" stroke="var(--a)" stroke-width="2.2" opacity="1"/>
+<circle cx="70.0" cy="176.3" r="3" fill="var(--a)" opacity="1"/>
+<circle cx="236.7" cy="121.6" r="3" fill="var(--a)" opacity="1"/>
+<circle cx="403.3" cy="79.8" r="3" fill="var(--a)" opacity="1"/>
+<circle cx="570.0" cy="64.0" r="3" fill="var(--a)" opacity="1"/>
+<text x="584" y="28.0" fill="var(--ink)" font-size="11">Gemini 3-flash 0.99</text>
+<text x="584" y="42.0" fill="var(--ink)" font-size="11">GPT-5.4-mini 0.95</text>
+<text x="584" y="56.0" fill="var(--ink)" font-size="11">Qwen3-4B 0.92</text>
+<text x="584" y="70.0" fill="var(--ink)" font-size="11">Qwen3-8B* 0.85</text>
+<text x="584" y="84.0" fill="var(--ink)" font-size="11">Phi-4-mini 0.81</text>
+<text x="584" y="139.4" fill="var(--ink)" font-size="11">Llama-3.1-8B 0.62</text>
+</g></svg>
+      </div>
+      <figcaption><b>Every panel collapses toward one voter.</b> One-way ANOVA ICC of agent correctness within a problem, six primary files, rounds 0–3. Round 0 is the between-problem difficulty share alone (agents have not seen each other); the rise after it is induced by sharing. Lines end at the round-3 value. The matching self-only control (Section 5) stays flat.</figcaption>
+    </div>
+  </figure>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">5</div><h2>Where the corrections come from</h2></div>
+    <p>A majority that was wrong at round 0 can become right in two ways. If one of the three agents had the right answer, the other two can be talked into it; that is persuasion by a correct minority, and it is compatible with a story in which the information was already in the panel and debate only aggregated it better than a vote. If none of the three had it, no aggregation of round-0 answers can produce it: the agents have to generate an answer that was not there. The split was not pre-registered; it is the first thing we looked at once H1 and H2 had failed.</p>
+  </div>
+  <div class="col" style="max-width:880px">
+    <div class="tw">
+      <table class="tnum">
+        <thead><tr><th>model</th><th>all three wrong at round 0</th><th>majority correct after round 3</th><th>one correct at round 0</th><th>majority correct after round 3</th><th>two correct at round 0</th><th>still correct after round 3</th></tr></thead>
+        <tbody>
+          <tr><td>Gemini 3-flash</td><td>26</td><td class="dim">.038 [.00, .13]</td><td>1</td><td class="dim">1.000</td><td>5</td><td>1.000</td></tr>
+          <tr><td>GPT-5.4-mini</td><td>39</td><td class="dim">.026 [.00, .09]</td><td>9</td><td>.444 [.12, .83]</td><td>16</td><td>1.000</td></tr>
+          <tr><td>Llama-3.1-8B</td><td>524</td><td class="dim">.011 [.00, .02]</td><td>164</td><td>.232 [.17, .30]</td><td>339</td><td>.861</td></tr>
+          <tr><td>Phi-4-mini</td><td>558</td><td>.047 [.03, .07]</td><td>162</td><td>.309 [.24, .38]</td><td>373</td><td>.847</td></tr>
+          <tr><td>Qwen3-4B</td><td>793</td><td class="hi">.308 [.28, .34]</td><td>186</td><td class="hi">.634 [.57, .70]</td><td>247</td><td>.862</td></tr>
+          <tr><td>Qwen3-8B<sup>*</sup></td><td>110</td><td class="hi">.445 [.36, .54]</td><td>15</td><td class="hi">.800 [.57, 1.00]</td><td>29</td><td>.966</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <figure style="margin-top:30px">
+    <div class="fig">
+      <div class="eyebrow" style="padding:18px 24px 0">Figure 2</div>
+      <div style="padding:0 24px"><h3 style="margin-top:.3em">Problems where all three agents were wrong at round 0 that end with a correct majority</h3></div>
+      <div class="fig-b">
+        <svg viewBox="0 0 760 230" role="img" aria-label="Share of all-wrong round-0 panels that end with a correct majority after round 3">
+<g font-family="JetBrains Mono, monospace" font-size="12" fill="var(--ink2)">
+<line x1="250" y1="10" x2="250" y2="195" stroke="var(--hair)" stroke-dasharray="3 4"/><text x="250" y="216" text-anchor="middle" fill="var(--muted)">0%</text>
+<line x1="298" y1="10" x2="298" y2="195" stroke="var(--hair)" stroke-dasharray="3 4"/><text x="298" y="216" text-anchor="middle" fill="var(--muted)">10%</text>
+<line x1="346" y1="10" x2="346" y2="195" stroke="var(--hair)" stroke-dasharray="3 4"/><text x="346" y="216" text-anchor="middle" fill="var(--muted)">20%</text>
+<line x1="394" y1="10" x2="394" y2="195" stroke="var(--hair)" stroke-dasharray="3 4"/><text x="394" y="216" text-anchor="middle" fill="var(--muted)">30%</text>
+<line x1="442" y1="10" x2="442" y2="195" stroke="var(--hair)" stroke-dasharray="3 4"/><text x="442" y="216" text-anchor="middle" fill="var(--muted)">40%</text>
+<line x1="490" y1="10" x2="490" y2="195" stroke="var(--hair)" stroke-dasharray="3 4"/><text x="490" y="216" text-anchor="middle" fill="var(--muted)">50%</text>
+<rect x="250" y="18" width="18.5" height="20" fill="var(--truth)" opacity=".45"/>
+<line x1="250.0" y1="28" x2="310.0" y2="28" stroke="var(--ink)" stroke-width="1.5"/>
+<text x="242" y="33" text-anchor="end">Gemini 3-flash  n=26</text><text x="318.0" y="33" fill="var(--ink)">3.8%</text>
+<rect x="250" y="47" width="12.3" height="20" fill="var(--truth)" opacity=".9"/>
+<line x1="250.0" y1="57" x2="292.7" y2="57" stroke="var(--ink)" stroke-width="1.5"/>
+<text x="242" y="62" text-anchor="end">GPT-5.4-mini  n=39</text><text x="300.7" y="62" fill="var(--ink)">2.6%</text>
+<rect x="250" y="76" width="5.5" height="20" fill="var(--b)" opacity=".55"/>
+<line x1="251.8" y1="86" x2="260.2" y2="86" stroke="var(--ink)" stroke-width="1.5"/>
+<text x="242" y="91" text-anchor="end">Llama-3.1-8B  n=524</text><text x="268.2" y="91" fill="var(--ink)">1.1%</text>
+<rect x="250" y="105" width="22.4" height="20" fill="var(--b)" opacity="1"/>
+<line x1="264.3" y1="115" x2="281.8" y2="115" stroke="var(--ink)" stroke-width="1.5"/>
+<text x="242" y="120" text-anchor="end">Phi-4-mini  n=558</text><text x="289.8" y="120" fill="var(--ink)">4.7%</text>
+<rect x="250" y="134" width="147.7" height="20" fill="var(--a)" opacity=".55"/>
+<line x1="382.1" y1="144" x2="412.9" y2="144" stroke="var(--ink)" stroke-width="1.5"/>
+<text x="242" y="149" text-anchor="end">Qwen3-4B  n=793</text><text x="420.9" y="149" fill="var(--ink)">30.8%</text>
+<rect x="250" y="163" width="213.8" height="20" fill="var(--a)" opacity="1"/>
+<line x1="420.6" y1="173" x2="508.2" y2="173" stroke="var(--ink)" stroke-width="1.5"/>
+<text x="242" y="178" text-anchor="end">Qwen3-8B*  n=110</text><text x="516.2" y="178" fill="var(--ink)">44.5%</text>
+</g></svg>
+      </div>
+      <figcaption><b>Under aggregation this number is zero by construction.</b> Share of problems with no correct agent at round 0 whose round-3 majority is correct, six primary files; bars are point estimates, black ticks the 95% cluster-bootstrap interval. The three heterogeneous panels and the three GSM8K runs, not shown, are at 0–4%.</figcaption>
+    </div>
+  </figure>
+  <div class="col">
+    <p>The weak models dig themselves out of unanimous error at rates the modal ceiling says are zero: 31% of 793 such problems on Qwen3-4B, 45% of 110 on Qwen3-8B. That is not aggregation. It is re-sampling under a changed prompt, in which three identical wrong letters evidently prompt a model to reason again, and the per-problem distribution it samples from in round 1 is not the one it sampled from in round 0. Collapses exist on the same models, 14–15% of two-against-one correct panels lose the correct majority on Llama and Phi, but they are outnumbered by corrections wherever round-0 accuracy is low.</p>
+    <p>Whether the peers matter, or any second look would do, has a control in the same dataset: Qwen3-8B runs in which each agent revises for three rounds seeing only its own previous answer. Same model, same 200 questions, same rounds.</p>
+  </div>
+  <div class="col" style="max-width:880px">
+    <div class="tw">
+      <table class="tnum">
+        <thead><tr><th>Qwen3-8B run</th><th>MV<sub>0</sub></th><th>MV<sub>3</sub></th><th>ΔMV</th><th>ICC<sub>0</sub> → ICC<sub>3</sub></th><th>unanimity<sub>0</sub> → <sub>3</sub></th><th>all-wrong corrected</th><th>one-correct corrected</th></tr></thead>
+        <tbody>
+          <tr><td>reasoning on, sees peers</td><td>.615</td><td>.655</td><td class="hi">+.040</td><td class="hi">.724 → .971</td><td>.715 → .970</td><td>.098 (n=51)</td><td>.400 (n=15)</td></tr>
+          <tr><td>reasoning on, sees only itself</td><td>.665</td><td>.680</td><td>+.015</td><td>.726 → .740</td><td>.680 → .740</td><td>.043 (n=46)</td><td>.000 (n=9)</td></tr>
+          <tr><td>reasoning off, sees peers</td><td>.630</td><td>.665</td><td class="hi">+.035</td><td class="hi">.587 → .948</td><td>.555 → .930</td><td>.000 (n=46)</td><td>.500 (n=8)</td></tr>
+          <tr><td>reasoning off, sees only itself</td><td>.605</td><td>.615</td><td>+.010</td><td>.650 → .662</td><td>.595 → .600</td><td>.000 (n=49)</td><td>.100 (n=10)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="col">
+    <p>Self-revision alone is worth one to one and a half points of majority accuracy and does nothing to the correlation. Seeing the peers is worth three and a half to four points and takes the correlation from 0.72 to 0.97. On this properly configured Qwen3-8B the all-wrong stratum is corrected at 0–10% in either mode, which is the number to carry, not the 45% from the anomalous primary row; the one-correct stratum is where peer visibility does its work, 40–50% against 0–10% without it.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">6</div><h2>What transfers: one voter, and when to stop</h2></div>
+    <p>The correlation ceiling is intact and sharper than in the sampling case. By round 3 the effective number of voters in a panel of three is 1.0–1.3 on every file (last column of the table in Section 4; 1.02–1.20 on the extensions). The panel is one voter; further rounds cannot add votes, only re-samples, and the three heterogeneous panels, which the earlier notes would expect to decorrelate, end at ICC 0.75–0.78 from 0.37–0.47, the largest rises in the data. Heterogeneity buys a lower starting correlation and the same destination.</p>
+    <p>TUMIX asked for a stopping rule based on the marginal value of another round. The pre-registered candidate was the plateau of n<sub>eff</sub>: stop when it changes by less than ε between rounds. It is label-free, which is its merit, and on the weak models it does not fire, because the correlation is still climbing at round 3 (Figure 1). On three of six primary files it stops at round 3, which is no rule at all; where it stops earlier it loses at most 0.005. The rule that works is the one every debate paper already uses, applied per problem: stop when the three agents agree.</p>
+  </div>
+  <div class="col" style="max-width:880px">
+    <div class="tw">
+      <table class="tnum">
+        <thead><tr><th>model</th><th>fixed 1 round</th><th>fixed 3 rounds</th><th>stop at unanimity</th><th>n<sub>eff</sub> plateau, ε = 0.05</th><th>best round per problem</th></tr></thead>
+        <tbody>
+          <tr><td>Gemini 3-flash</td><td>.855 / 1.00</td><td>.855 / 3.00</td><td>.855 / 1.07</td><td>.855 / 1.00</td><td class="dim">.855</td></tr>
+          <tr><td>GPT-5.4-mini</td><td>.745 / 1.00</td><td>.755 / 3.00</td><td>.755 / 1.17</td><td>.750 / 2.00</td><td class="dim">.755</td></tr>
+          <tr><td>Llama-3.1-8B</td><td>.497 / 1.00</td><td>.496 / 3.00</td><td>.499 / 1.95</td><td>.496 / 2.00</td><td class="dim">.528</td></tr>
+          <tr><td>Phi-4-mini</td><td>.510 / 1.00</td><td>.531 / 3.00</td><td>.534 / 1.68</td><td>.531 / 3.00</td><td class="dim">.571</td></tr>
+          <tr><td>Qwen3-4B</td><td>.581 / 1.00</td><td>.640 / 3.00</td><td>.625 / 1.37</td><td>.640 / 3.00</td><td class="dim">.660</td></tr>
+          <tr><td>Qwen3-8B<sup>*</sup></td><td>.495 / 1.00</td><td>.620 / 3.00</td><td>.610 / 1.57</td><td>.620 / 3.00</td><td class="dim">.645</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="font-size:.85rem; color:var(--muted); margin-top:10px; max-width:66ch">Majority accuracy at the stopping round / mean rounds used. "Best round per problem" is an oracle upper bound. Across all sixteen files unanimity is within −0.015 of three fixed rounds and above it on three.</p>
+  </div>
+  <div class="col">
+    <div class="note">
+      <span class="eyebrow">What the result says</span>
+      <p>"More sampling hurts when the mode is wrong" is a theorem about aggregation, and it is correct. Multi-round debate is not aggregation. It is iterated re-sampling under a prompt that changes every round, and on weak models it escapes unanimous error at a rate the modal ceiling puts at zero, so the round-0 modal-hit rate is neither a bound nor a good predictor of what refinement will return. The ceiling that does carry over is the correlation one: sharing drives the panel to a single effective voter within two or three rounds, and the cheapest stopping rule is to notice when it has become one.</p>
+    </div>
+    <p>It does not say debate is a good idea. The gain is 1–6 points on the models anyone would deploy, zero on GSM8K, and scales inversely with how badly round 0 went. It does not say TUMIX's 34% is not a selection ceiling; it says the ceiling is not π<sub>mode</sub> of the first round, and the system's own observation that coverage falls while accuracy rises is the correlation ceiling at work. And it does not touch the question the first paper actually studied, independent samples from one session, where the theorem applies as stated.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">7</div><h2>Limitations</h2></div>
+    <ul>
+      <li>The primary Qwen3-8B row is anomalous: round-0 majority accuracy 0.245 against 0.615–0.630 for the same model at round 0 in the reasoning runs (the dataset paper's own table lists it at 28%). Round 0 there was probably under-elicited; the open tier has no text to check. Without that file, two of five primary intervals lie above +0.03, which is "not within the band, not formally falsified" for H1. H2's rejection and the all-wrong corrections on Qwen3-4B (n = 2,161) do not depend on it.</li>
+      <li>Round 0 and rounds 1–3 use different prompts (no peer block against a peer block), so part of the round-1 jump may be elicitation rather than information. The self-only control bounds the pure self-revision share at +0.010 to +0.015 on one model. A generation-matched independent re-sample control does not exist in the data; it is the next experiment.</li>
+      <li>Three homogeneous agents on multiple-choice letters, three rounds, no LLM judge. TUMIX has fifteen heterogeneous tool agents, up to six rounds and a judge. The three heterogeneous panels here (200 debates each) behave like the strong homogeneous ones. The judge rule could not be scored.</li>
+      <li>Three rounds means a plateau can be detected at round 2 or 3 at best; the n<sub>eff</sub> rule was given little room.</li>
+      <li>Answers and gold labels are DebateLedger's parsed fields. Our plurality with their tie-break disagrees with their stored majority on 18 of about 27,700 round majorities; not investigated.</li>
+      <li>Two post-hoc additions, the all-wrong/one-correct split and the self-only control, are labelled as such above and were not part of the pre-registration. Nothing pre-registered was removed or re-thresholded. The reformulation of the degenerate per-round hypothesis is in the committed pre-registration.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">8</div><h2>Reproduction</h2></div>
+    <p>Code, pre-registration and every reported number: <a href="https://github.com/Alatip/tech-note-4">Alatip/tech-note-4</a>. One numpy script plus two post-hoc scripts, no scipy, no API calls; the full run with a 2,000-resample bootstrap over sixteen files takes about fifteen seconds. Data: the open tier of <code>XINLI1997/DebateLedger</code> on Hugging Face (CC-BY 4.0, snapshot of 30 September 2026), fetched by <code>data/fetch.sh</code>. If TUMIX releases per-agent, per-round logs, the same three statistics apply with n = 15 and up to six rounds, and this note will be updated with the numbers on the system the bridge was actually about.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <hr class="r">
+    <ol class="refs" style="padding-left:1.1em; margin-top:1.2em">
+      <li id="fn1"><a href="../effective-independence/">Effective Independence</a>, 31 August 2026, and <a href="../the-control-ate-the-signal/">The Control Ate the Signal</a>, 2 October 2026. The second left the question of whether the 1/ρ ceiling survives majority voting over discrete answers; this note's answer for refinement is that it does, with the panel reaching the ceiling in two or three rounds, while the separate selection ceiling of the sampling theory does not. <a href="#fnref1">↩</a></li>
+      <li id="fn2">Li, X., Liu, M., Yuen, C. (2026). <em>Measuring Collapse and Correction in Homogeneous-Panel LLM Debate.</em> NeurIPS 2026 Datasets &amp; Benchmarks, <a href="https://arxiv.org/abs/2609.35279">arXiv:2609.35279</a>; data at <a href="https://huggingface.co/datasets/XINLI1997/DebateLedger">XINLI1997/DebateLedger</a>. The theory: <em>When More Sampling Hurts: The Modal Ceiling and Correlation Ceiling of Test-Time Scaling</em>, <a href="https://arxiv.org/abs/2606.28661">arXiv:2606.28661</a>. The system: Chen et al. (2025), <em>TUMIX: Multi-Agent Test-Time Scaling with Tool-Use Mixture</em>, <a href="https://arxiv.org/abs/2510.01279">arXiv:2510.01279</a>. The closest prior result on the correlation half is <em>The Ringelmann Effect in Multi-Agent LLM Systems</em>, <a href="https://arxiv.org/abs/2606.02646">arXiv:2606.02646</a>, which reports pairwise agreement rising over debate rounds and an ICC-based effective team size on other data, with fixed rounds and no per-problem split; Section 4's H3a is a replication of it with a different estimator. <a href="#fnref2">↩</a></li>
+      <li id="fn3">The pre-registration (PREDICTION.md) and the prior-art check (ALREADY-DONE.md) are in the companion repository with the commit that precedes the first run. The bridge itself was proposed by a literature-based-discovery pipeline over a corpus of agent-swarm papers, judged 6/10 by an LLM judge before testing; that pipeline is the subject of a later note. <a href="#fnref3">↩</a></li>
+    </ol>
+  </div>
+</section>
+<section>
+  <div class="col">
+    <p class="foot"><a href="../">← notes</a> · <a href="https://github.com/Alatip">github.com/Alatip</a></p>
+  </div>
+</section>
+</div>
+</body>
+</html>
