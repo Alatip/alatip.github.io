@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="A ledger of what multiplying LLM agents buys on 240 hard problems: plurality over seven model families never beats the best member, debate never escapes unanimous error, personas add no independence. What the swarm does buy is a verifier: a panel of five weak judges out-picks the best judge and the solver majority, and peer disagreement flags errors better than self-resampling.">
+<title>Where the Swarm Pays</title>
+<link rel="canonical" href="https://alatip.github.io/where-the-swarm-pays/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Where the Swarm Pays">
+<meta property="og:description" content="A ledger of what multiplying LLM agents buys on 240 hard problems: plurality over seven model families never beats the best member, debate never escapes unanimous error, personas add no independence. What the swarm does buy is a verifier: a panel of five weak judges out-picks the best judge and the solver majority, and peer disagreement flags errors better than self-resampling.">
+<meta property="og:url" content="https://alatip.github.io/where-the-swarm-pays/">
+<meta name="author" content="Aziz Latipov">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"Where the Swarm Pays","datePublished":"2026-10-08","author":{"@type":"Person","name":"Aziz Latipov","url":"https://alatip.github.io/"},"url":"https://alatip.github.io/where-the-swarm-pays/"}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<style>
+:root{
+  --paper:#F8F9FA; --card:#FFFFFF; --sunk:#F0F2F5;
+  --ink:#12161C; --ink2:#39424F; --muted:#6B7684; --rule:#DDE1E7; --hair:#EAEDF1;
+  --accent:#14548C; --accent-soft:#E4EDF6;
+  --a:#14548C; --b:#BF5B04; --truth:#39424F;
+  --warn-bg:#FBF2E4; --warn-ink:#8A5A00;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0F1216; --card:#161A20; --sunk:#1C2128;
+    --ink:#E6EAEF; --ink2:#B6BFCA; --muted:#828D9B; --rule:#2A313A; --hair:#222932;
+    --accent:#7FB3E0; --accent-soft:#152838;
+    --a:#4D93D0; --b:#D4762A; --truth:#B6BFCA;
+    --warn-bg:#2A2214; --warn-ink:#D8AA5C;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0F1216; --card:#161A20; --sunk:#1C2128;
+  --ink:#E6EAEF; --ink2:#B6BFCA; --muted:#828D9B; --rule:#2A313A; --hair:#222932;
+  --accent:#7FB3E0; --accent-soft:#152838;
+  --a:#4D93D0; --b:#D4762A; --truth:#B6BFCA;
+  --warn-bg:#2A2214; --warn-ink:#D8AA5C;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"Source Serif 4",Georgia,serif; font-size:17.5px; line-height:1.62;
+  -webkit-font-smoothing:antialiased; font-variant-numeric:oldstyle-nums;
+}
+.page{max-width:1000px; margin:0 auto; padding:0 24px 110px}
+.col{max-width:640px; margin:0 auto}
+.col > * + *{margin-top:1.05em}
+p{margin:0}
+h1,h2,h3{margin:0; line-height:1.2; text-wrap:balance; font-weight:600}
+h1{font-size:clamp(2rem,4.6vw,2.85rem); letter-spacing:-.012em}
+h2{font-size:1.42rem}
+h3{font-size:1.08rem}
+a{color:var(--accent)}
+strong{font-weight:600}
+code,.mono,.eyebrow{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace}
+code{font-size:.84em; background:var(--sunk); padding:.1em .35em; border-radius:3px}
+.eyebrow{font-size:.68rem; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); font-weight:500}
+
+header{padding:82px 0 30px}
+.byline{display:flex; flex-wrap:wrap; gap:6px 20px; margin-top:1.1em; font-family:"JetBrains Mono",monospace; font-size:.74rem; color:var(--muted)}
+.abstract{
+  margin-top:2em; padding:22px 26px; background:var(--card);
+  border-top:2px solid var(--ink); border-bottom:1px solid var(--rule);
+  font-size:.97rem; line-height:1.6; color:var(--ink2);
+}
+.abstract .eyebrow{display:block; margin-bottom:.7em}
+.abstract strong{color:var(--ink)}
+
+section{padding-top:56px}
+.sec-head{display:flex; gap:14px; align-items:baseline; margin-bottom:20px}
+.sec-num{font-family:"JetBrains Mono",monospace; font-size:.78rem; color:var(--accent); padding-top:.3em; flex:none; font-weight:500}
+
+.eq{
+  background:var(--card); border:1px solid var(--rule); border-radius:4px;
+  padding:16px 20px; overflow-x:auto; font-family:"JetBrains Mono",monospace;
+  font-size:.88rem; line-height:1.85;
+}
+.eq .cm{color:var(--muted)}
+.note{background:var(--accent-soft); padding:16px 20px; border-radius:4px; font-size:.95rem}
+.note.warn{background:var(--warn-bg)}
+.note .eyebrow{display:block; margin-bottom:.45em; color:var(--ink2)}
+
+.tw{overflow-x:auto; border:1px solid var(--rule); border-radius:4px; background:var(--card)}
+table{border-collapse:collapse; width:100%; font-size:.88rem; font-family:"JetBrains Mono",monospace}
+th,td{padding:9px 13px; text-align:right; border-bottom:1px solid var(--hair)}
+th:first-child,td:first-child{text-align:left}
+thead th{font-size:.66rem; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:500; background:var(--sunk)}
+tbody tr:last-child td{border-bottom:none}
+td.hi{color:var(--ink); font-weight:500}
+td.dim{color:var(--muted)}
+.tnum{font-variant-numeric:tabular-nums}
+
+figure{margin:0; max-width:880px; margin-inline:auto}
+.fig{background:var(--card); border:1px solid var(--rule); border-radius:4px; overflow:hidden}
+.fig-b{padding:18px 14px 6px}
+figcaption{padding:0 24px 20px; font-size:.85rem; color:var(--muted); line-height:1.55; max-width:66ch}
+figcaption b{color:var(--ink2); font-weight:600}
+.legend{display:flex; flex-wrap:wrap; gap:6px 22px; padding:16px 24px 0; font-size:.8rem; color:var(--ink2); font-family:"JetBrains Mono",monospace}
+.legend span{display:inline-flex; align-items:center; gap:7px}
+.legend i{width:15px; height:2.5px; border-radius:2px}
+.legend i.dash{background:none; border-top:2px dashed var(--truth); height:0}
+svg{display:block; width:100%; height:auto; overflow:visible}
+
+ol,ul{margin:0; padding-left:1.25em}
+li{margin:.42em 0}
+.refs{font-size:.88rem; color:var(--ink2)}
+.refs li{margin:.55em 0}
+.refs .mono{color:var(--muted); font-size:.92em}
+hr.r{border:none; border-top:1px solid var(--rule); margin:0}
+.foot{padding-top:52px; font-size:.86rem; color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<style>.col p+p,.col p+ul,.col p+ol,.col ul+p,.col ol+p,.col div.note+p,.col p+div.note{margin-top:1.05em} .note .eyebrow{display:block;margin-bottom:.45em} .note p{margin:0}</style>
+
+</head>
+<body>
+<div class="page">
+<header>
+  <div class="col">
+    <div class="eyebrow">Technical note · Ensembles</div>
+    <h1 style="margin-top:.5em">Where the Swarm Pays</h1>
+    <p style="margin-top:.6em; font-size:1.12rem; color:var(--ink2)">Seven model families, 240 hard problems, every cheap way of multiplying agents: voting, resampling, debate, roles, synthesis. None of them adds intelligence to the answer. One of them adds a verifier.</p>
+    <div class="byline">
+      <span>8 October 2026</span><span>working note</span><span>measured, not pre-registered</span><span>≈ $50 of inference</span>
+    </div>
+    <div class="abstract">
+      <span class="eyebrow">Abstract</span>
+      Two earlier notes argued that a group of LLM agents is bounded by its effective number of independent voters, and that debate raises correlation rather than escaping it. This note is the ledger: one corpus of answer traces built so that most of the questions could be asked of the same data. Seven reasoning models of 2026 (Claude Opus, Sonnet 5.5, Haiku 4.5, DeepSeek V3.2, GLM 5.3, Qwen 3.7, Mistral Large) answer 240 problems from MMLU-Pro, GPQA Diamond, GSM-Hard and the 2024–25 olympiads; three of them also draw 16 answers at temperature 1; six of them debate for three rounds; DeepSeek runs the same debate as six copies of itself, with and without seeing its peers, and under four role prompts; and five of them judge each other's candidates. <strong>On the answer side every operator stays inside the same box.</strong> Plurality over the seven families is 0.8–1.6 points below the best single model on every layer; the seven are 1.2–2.0 effective voters because a single latent difficulty factor reproduces the rate at which all of them fail. Debate across families gains 4.8 points of majority accuracy and fixes 1 of 12 problems that every agent got wrong; six copies of one model gain 2.9, of which 1.3 come from re-reading one's own answer with no peers; the information half triples the number of unanimously wrong problems. Role prompts leave the error correlation where temperature put it. A synthesiser reading six debate transcripts recovers 0 of 15 all-wrong problems. <strong>On the verifier side the swarm pays.</strong> Asked to pick the correct candidate from the models' disagreeing answers, a majority of five weak judges reaches 0.867 against 0.82 for the best single judge and 0.80 for the solvers' own plurality, because judges' picking errors correlate at φ = 0.21 where solvers' errors correlate at 0.50. Disagreement with five other families predicts a model's error at AUROC 0.92; disagreement among its own resamples, 0.82. Asked instead to certify a single candidate as correct, the same judges accept their own wrong answers 50–100% of the time and their false acceptances correlate like solver errors again. The swarm is a comparator, not a checker, and not a second brain. Decomposition into subtasks, the thing industrial agent systems actually do, is a different operator and is not measured here.
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">1</div><h2>One corpus for many questions</h2></div>
+    <p>The agent-swarm literature of 2025–26 contains hundreds of claims of the form "N agents beat one". A literature-based-discovery pass over 1,000 of those papers<sup id="fnref1"><a href="#fn1">1</a></sup> produced 947 candidate hypotheses, of which 140 were judged strong enough to test. Reading them, it became clear that most ask for the same five or six measurements on the same kind of data: a correctness matrix across model families, resamples of one model, multi-round debate traces with every intermediate answer kept, a judge panel, and tokens per call. Instead of testing bridges one at a time we built that data once and let each hypothesis be read against it.</p>
+    <p>The items are 240 problems with a single checkable answer, sixty from each of four layers chosen because the 2026 models have not saturated them: MMLU-Pro, GPQA Diamond, GSM-Hard, and the 2024–25 AIME and HMMT olympiads. MATH-500, GSM8K and easy logic puzzles were dropped after a first pass showed every model above 0.95 on them; a layer where nobody errs cannot say anything about shared errors. All seven models are reasoning models and were allowed to think; temperature was 0 for the matrix and 1 for everything resampled. Answers were graded by typed graders (letter, number, set) with an LLM arbiter for olympiad expressions, and truncated answers were dropped rather than counted wrong.</p>
+    <div class="tw">
+      <table class="tnum">
+        <thead><tr><th>stage</th><th>what</th><th>rows</th></tr></thead>
+        <tbody>
+          <tr><td>matrix</td><td>one answer per model, T = 0, 7 families (plus 5 more models on subsets)</td><td>1,576 items × 12</td></tr>
+          <tr><td>samples</td><td>16 draws at T = 1: DeepSeek, GLM; Haiku 16 (8 on the two hardest layers)</td><td>8,300</td></tr>
+          <tr><td>debate</td><td>6 families, 3 synchronous rounds, each agent sees all others' last answers and a reasoning excerpt</td><td>4,120</td></tr>
+          <tr><td>homogeneous debate</td><td>6 DeepSeek copies, round 0 = its own draws; plain / self-only / "defer to the majority"</td><td>12,900</td></tr>
+          <tr><td>personas</td><td>DeepSeek under 4 role prompts × 4 draws</td><td>3,000</td></tr>
+          <tr><td>judge panel</td><td>5 judges pick the correct candidate among the matrix answers; then certify each candidate separately, with one planted wrong answer</td><td>1,200 + 1,360</td></tr>
+          <tr><td>aggregators</td><td>DeepSeek synthesises a final answer from 6 debate transcripts, or from 5 of its own draws</td><td>470</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Everything below is one table or another computed from these rows; the companion repository rebuilds all of them from the stored answers in about two minutes with no API calls. Nothing was pre-registered. This is a measurement note, and the hypotheses it answers were written by other people before the data existed.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">2</div><h2>Voting across families</h2></div>
+    <p>The first question is the oldest one: does the plurality of seven different models beat the best of them? On every layer it does not.</p>
+    <div class="tw">
+      <table class="tnum">
+        <thead><tr><th>layer</th><th>items</th><th>best single</th><th>plurality of 7</th><th>Δ</th><th>any model correct</th><th>mean pairwise φ</th><th>n<sub>eff</sub> of 7</th></tr></thead>
+        <tbody>
+          <tr><td>MMLU-Pro</td><td>499</td><td>.930</td><td>.914</td><td>−.016</td><td>.952</td><td>.62</td><td>1.49</td></tr>
+          <tr><td>GPQA Diamond</td><td>92</td><td>.978</td><td>.967</td><td>−.011</td><td>.989</td><td>.43</td><td>1.95</td></tr>
+          <tr><td>GSM-Hard</td><td>133</td><td>.887</td><td>.880</td><td>−.008</td><td>.895</td><td>.83</td><td>1.17</td></tr>
+          <tr><td>olympiad</td><td>29</td><td>.931</td><td>.931</td><td>.000</td><td>.931</td><td>.66</td><td>1.41</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Items are those all seven answered; the matrix layers are larger than the 60-item debate subsets. Plurality is by answer identity. n<sub>eff</sub> = 7/[1+6φ] with φ the mean pairwise correlation of correctness.</p>
+    <p>Two things in this table matter more than the sign of Δ. The last column says that seven model families bought between 1.2 and 2.0 independent votes. The "any model correct" column is the ceiling that any selection scheme could reach and no voting scheme can exceed; it sits 2–4 points above the best model, and that gap is the whole prize the rest of this note is about. If the seven erred independently, the all-wrong rate at these accuracies would be below 10<sup>−4</sup>; observed it is 1–10%. A one-factor Gaussian copula in which every model's error loads on a single latent "item difficulty" reproduces the observed all-wrong rate within a few tenths of a point on every layer at a latent correlation of 0.85–0.95.<sup id="fnref2"><a href="#fn2">2</a></sup> There is one shared axis of failure, and family membership does not move a model off it: among the 35 triples of models the plurality gain over the best member is negative on average on every layer, and it correlates with the triple's mean φ at Spearman +0.5 on the two multiple-choice layers, which is the wrong sign for a diversity story.</p>
+    <p>Resampling one model has the same shape. Sixteen draws of DeepSeek at temperature 1 correlate with each other at φ = 0.45–0.83 depending on the layer, 1.2–2.1 effective draws out of sixteen; plurality over them adds one point on MMLU-Pro and GSM-Hard, seven on GPQA and fifteen on the olympiad problems, where the single greedy answer is unusually poor. The hard-state mass, the share of problems a model solves in 0 of 16 draws, is 2–17% and bounds what any amount of resampling can reach. Role prompts do not change this: four DeepSeek personas, a skeptic, a formalist, a teacher and an engineer, correlate with each other at φ = 0.72–0.92, the same as or above four plain draws at the same temperature, and their plurality is within a point of the plain one. A persona is a temperature setting with a hat on.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">3</div><h2>Debate</h2></div>
+    <p>The previous note found on public traces that debate is not sampling: it moves answers between rounds and can escape unanimous error on weak models. Here the agents are strong, the families are mixed, and the full text of every turn was kept.</p>
+    <div class="tw">
+      <table class="tnum">
+        <thead><tr><th>round</th><th>mean agent acc</th><th>majority</th><th>unanimous</th><th>unanimous &amp; wrong</th><th>φ between agents</th><th>n<sub>eff</sub> of 6</th><th>fixed</th><th>broken</th></tr></thead>
+        <tbody>
+          <tr><td>0</td><td>.787</td><td>.873</td><td>129</td><td>4</td><td>.50</td><td>1.71</td><td>–</td><td>–</td></tr>
+          <tr><td>1</td><td>.865</td><td>.895</td><td>177</td><td>12</td><td>.68</td><td>1.36</td><td>8</td><td>3</td></tr>
+          <tr><td>2</td><td>.896</td><td>.921</td><td>201</td><td>13</td><td>.80</td><td>1.20</td><td>12</td><td>1</td></tr>
+          <tr><td>3</td><td>.906</td><td>.921</td><td>208</td><td>15</td><td>.81</td><td>1.19</td><td>12</td><td>1</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>229 items with all six agents in all rounds. "Fixed" and "broken" count items whose round-0 majority was wrong and is now right, and the reverse.</p>
+    <p>The majority gains 4.8 points, fixes outnumber breaks twelve to one, and the panel goes from 1.7 effective voters to 1.2. Every one of those numbers has a reading in which debate is pure aggregation of what was already in the panel, and the stored texts let us check. Of the 12 problems where <em>all six</em> agents were wrong at round 0, one ends with a correct majority. Of the 9 where exactly one agent was right, five end with a correct majority; of the 14 where two were right, twelve. The gain lives entirely in the stratum where the answer was already on the table and a minority held it. Split by difficulty instead, using DeepSeek's own solve rate from the sixteen draws, nine of the twelve fixes fall on problems DeepSeek solves less than a quarter of the time, and nothing at all happens above 0.75. Debate is a mechanism for a correct minority to win, and that is the whole of it.</p>
+    <p>What it costs is the correlation. The number of unanimously wrong problems nearly quadruples, 4 to 15, while the number of unanimous problems grows from 129 to 208, so unanimity after three rounds is a weaker certificate than it was before them. The flip table says how: an agent that is right and faces four or five peers with a different answer abandons its answer 22–23% of the time; facing one or two, 2–3%. The models differ in spine. Alone against five, Sonnet 5.5 kept its correct answer 14 times out of 16 and Mistral Large 4 of 4; Qwen 1 of 3, DeepSeek 2 of 4.</p>
+    <p>Two controls separate the information in debate from the act of thinking twice. Six copies of DeepSeek, seeded with six of its own draws, debate the same 240 problems three ways: plain; <em>self-only</em>, in which each copy re-reads its own previous answer and nobody else's; and <em>pressure</em>, in which the system prompt tells the copy that the others are usually right.</p>
+    <div class="tw">
+      <table class="tnum">
+        <thead><tr><th>arm</th><th>majority r0 → r3</th><th>Δ</th><th>unanimous &amp; wrong r0 → r3</th><th>all-wrong at r0</th><th>of those, fixed</th><th>φ r0 → r3</th></tr></thead>
+        <tbody>
+          <tr><td>plain</td><td>.817 → .846</td><td>+.029</td><td>11 → 31</td><td>26</td><td>0</td><td>.66 → .93</td></tr>
+          <tr><td>self-only (no peers)</td><td>.825 → .838</td><td>+.013</td><td>11 → 10</td><td>24</td><td>0</td><td>.66 → .65</td></tr>
+          <tr><td>"defer to the majority"</td><td>.817 → .854</td><td>+.037</td><td>11 → 25</td><td>26</td><td>0</td><td>.66 → .94</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Half of the homogeneous gain, 1.3 points of 2.9, is self-revision with no peers at all, and it leaves the correlation and the wrong-unanimity exactly where they were. The other half, the information, triples the wrong-unanimous count. Telling the copies to defer changes nothing they were not already doing. And the all-wrong stratum is 0 for 26 in every arm: on a strong model talking to itself the escape rate the previous note measured on weak models is zero, which is the number that note said to carry.</p>
+    <p>Mixed families gain more than copies, 4.8 against 2.9 points, and the per-layer split says why: debate's gain over the best single agent is positive only on the two layers where the agents start least correlated, GPQA (φ = 0.31, +8.9 points) and the olympiad (0.32, +3.7), and negative on MMLU-Pro and GSM-Hard, where φ starts at 0.67–0.79 and the best agent was already past what the panel can reach. A low starting correlation is a necessary condition for debate to pay, not a thing debate produces; it consumes it.</p>
+    <p>One practical number falls out of the same rows. Stopping each problem at its first unanimous round, and taking round 3 otherwise, gives majority accuracy 0.921, identical to three fixed rounds, at 0.76 rounds per problem on average, because 129 of 229 problems were unanimous before anyone spoke. Three rounds of six agents cost about 22,000 completion tokens per problem on top of the first answers; the stopping rule spends a quarter of that for the same result.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">4</div><h2>Synthesis does not leave the box either</h2></div>
+    <p>The generative objection to all of the above is that voting is the wrong aggregator: a model that <em>reads</em> six answers can write a seventh. We gave DeepSeek the six round-3 transcripts of the mixed debate and asked for a single final answer, and separately gave it five of its own draws. Over the transcripts the synthesiser scored 0.917 against 0.922 for the plurality of the same six answers, produced a novel answer once (it was right), and recovered 0 of the 15 problems where none of its inputs was correct. Over its own draws it scored 0.825 against 0.812 for their plurality and recovered 0 of 27. The ceiling of "some input was correct" is 0.935 and 0.887 respectively; the aggregator sits a point or two under it, exactly where a good vote sits.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">5</div><h2>Where the swarm pays: as a comparator</h2></div>
+    <p>Everything so far asks the group to produce the answer. The ceiling in Section 2 says the prize is in selection: on 2–4% of problems some model is right and the plurality is not, and a verifier that could find that model would collect it. The previous notes predicted that an LLM verifier cannot, because its errors are the solvers' errors (ρ<sub>v</sub> → 1). That prediction turns out to be half right, and the half that is wrong is the useful one.</p>
+    <p>On the 84 problems where the seven matrix answers disagree and at least one is correct, each of five models was shown the distinct candidates with a reasoning excerpt and asked to pick one.</p>
+    <div class="tw">
+      <table class="tnum">
+        <thead><tr><th>judge</th><th>picks the correct candidate</th><th>solves the item itself</th><th>picks its own answer</th></tr></thead>
+        <tbody>
+          <tr><td>Sonnet 5.5</td><td>.82</td><td>.87</td><td>.76</td></tr>
+          <tr><td>Haiku 4.5</td><td>.76</td><td>.62</td><td>.63</td></tr>
+          <tr><td>Qwen 3.7</td><td>.69</td><td>.58</td><td>.56</td></tr>
+          <tr><td>DeepSeek V3.2</td><td>.57</td><td>.52</td><td>.43</td></tr>
+          <tr><td>GLM 5.3</td><td>.55</td><td>.44</td><td>.30</td></tr>
+          <tr><td><em>plurality of the solvers</em></td><td>.80</td><td></td><td></td></tr>
+          <tr><td><em>majority of the 5 judges</em></td><td><strong>.867</strong></td><td></td><td></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>No single judge beats the solvers' own plurality except Sonnet, by two points, and Sonnet solves these items better than it judges them. The weak judges pick better than they solve, Haiku by 14 points, but not well. What is new is the last row. The five judges' picking errors correlate at φ = 0.21 (tetrachoric 0.36), against 0.50 for the solvers' errors on the same problems: five judges are 2.7 effective voters where six solvers were 1.7. Their majority reaches 0.867, above the best judge, above the solvers' plurality, and halfway from the plurality to the oracle. Comparing candidates is a different task from producing them, and on it the models disagree in ways that are useful to each other.</p>
+    <p>The same independence shows up as an error detector. For DeepSeek's own answer, the number of the other five families that disagree with it predicts whether it is wrong at AUROC 0.917; the disagreement among three of its own temperature-1 draws, the usual self-consistency signal, reaches 0.823. Other models know when you are wrong better than you do.</p>
+    <p>The half of the prediction that holds is the other judging task. Shown one candidate at a time and asked "is this correct?", with one planted wrong answer per problem, the same five judges behave like solvers again.</p>
+    <div class="tw">
+      <table class="tnum">
+        <thead><tr><th>judge</th><th>accepts a wrong candidate</th><th>accepts the planted decoy</th><th>accepts <em>its own</em> wrong answer</th><th>accepts others' wrong answers</th></tr></thead>
+        <tbody>
+          <tr><td>Sonnet 5.5</td><td>.09</td><td>.01</td><td>.50 (n=20)</td><td>.07</td></tr>
+          <tr><td>GLM 5.3</td><td>.29</td><td>.17</td><td>.67 (n=12)</td><td>.27</td></tr>
+          <tr><td>Qwen 3.7</td><td>.31</td><td>.11</td><td>1.00 (n=11)</td><td>.30</td></tr>
+          <tr><td>Haiku 4.5</td><td>.41</td><td>.23</td><td>.88 (n=40)</td><td>.34</td></tr>
+          <tr><td>DeepSeek V3.2</td><td>.47</td><td>.29</td><td>.62 (n=37)</td><td>.53</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Self-preference is the dominant term: a judge accepts its own wrong answer two to three times as often as someone else's. The false acceptances of the five judges correlate at φ = 0.51, the solver number, so a committee does not fix it: requiring all five to accept keeps precision at 0.86 with recall 0.74, and no committee threshold reaches a 5% false-acceptance rate. And on the 13 problems where no candidate was correct, in the picking task, the judges said "none" once in 65 tries. The swarm can rank; it cannot certify, and it cannot abstain.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="note">
+      <span class="eyebrow">What the ledger says</span>
+      <p>On the answer, multiplying agents moves accuracy inside a box whose walls are the best member and the "someone was right" ceiling, and the walls are two to four points apart on hard problems because the models fail together on one latent axis. Voting lands below the first wall; resampling, debate, roles and synthesis land between the walls and never above the second. Debate is a procedure for a correct minority to win, and it pays only while the panel is still decorrelated, which it stops being within two rounds. On verification the picture inverts: asked to compare candidates, five mediocre models are 2.7 independent judges and their vote beats both the best judge and the solvers; asked to certify one candidate, they are solvers again, with a self-preference term on top.</p>
+    </div>
+    <p>Three things this does not say. It does not say that a swarm of agents working on <em>different</em> subtasks, with tools, memory and a plan, adds nothing; that is a different operator, its gains would come from context and parallel time rather than from independent errors, and the right control for it, one agent doing the same decomposition sequentially at the same token budget, is not in this corpus. It does not say anything about base or non-reasoning models, where error correlation may be lower and voting may pay; every model here thinks before answering. And it does not say the comparator result is large: it is 0.867 against 0.80 on 84 contested problems from one corpus, and it needs a second dataset before it is a rule.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">6</div><h2>Limitations</h2></div>
+    <ul>
+      <li>Sixty problems per layer, 240 in all, and 84 contested ones for the judging results. Confidence intervals on the small strata are wide; the all-wrong escape rate of 1/12 has a Wilson interval of [0.01, 0.35]. The directions agree across layers, the magnitudes do not deserve more than one decimal.</li>
+      <li>Only reasoning models of one vintage. The homogeneous debate uses one family, DeepSeek V3.2, and the persona result rests on it alone.</li>
+      <li>The matrix round 0 used temperature 0 and the debate rounds temperature 1, as in the public traces of the previous note; the self-only arm of the homogeneous debate is the control for the part of the round-1 jump that is re-elicitation.</li>
+      <li>Mistral Large dropped out of 10 of the 240 debates on provider rate limits; the tables use the 229 complete ones, and a five-agent recount without Mistral gives the same numbers to within half a point.</li>
+      <li>Tetrachoric correlations use the cos-π approximation, which is biased upward at high accuracy; read them as "far above φ", not as precise values. φ itself is exact.</li>
+      <li>GSM-Hard's gold labels contain known errors; its all-wrong rate (10%) is partly label noise, which inflates the shared-error estimate on that layer only.</li>
+      <li>The judges saw candidate answers with a 700-character reasoning excerpt, anonymised; a judge could in principle recognise its own style. The self-preference numbers are therefore an upper bound on what anonymisation removes, not a lower bound on what remains.</li>
+      <li>Nothing here was pre-registered. The stages were designed to serve hypotheses extracted from the literature, and the three verdict passes that read 140 of those hypotheses against these tables are in the discovery repository, not in this note.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">7</div><h2>Reproduction</h2></div>
+    <p>Every table in this note, and about twenty more that it quotes from, is rebuilt by <a href="https://github.com/Alatip/tech-note-5">Alatip/tech-note-5</a> from the stored answers: <code>python3 run.py</code>, standard library only, about two minutes. The repository holds every row of every stage with the answer, its correctness and the token counts, but not the model texts; GPQA Diamond answers are hashed and no question text or gold label is included, per the dataset's terms. The collection scripts, graders and the discovery pipeline that proposed the hypotheses live in a separate repository and will be the subject of a later note. Inference cost about $50 on OpenRouter plus subscription calls for the Claude models.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <hr class="r">
+    <ol class="refs" style="padding-left:1.1em; margin-top:1.2em">
+      <li id="fn1">The earlier notes: <a href="../effective-independence/">Effective Independence</a> (31 August 2026), <a href="../the-control-ate-the-signal/">The Control Ate the Signal</a> (2 October 2026) and <a href="../debate-is-not-sampling/">Debate Is Not Sampling</a> (4 October 2026). The discovery pipeline pairs one paper's stated limitation with another paper's result when the two do not cite each other and are not otherwise similar, in the manner of Swanson's literature-based discovery; each pair is scored by an LLM judge and the strongest are tested. <a href="#fnref1">↩</a></li>
+      <li id="fn2">One-factor Gaussian copula: each model <em>i</em> is correct when <em>z<sub>i</sub></em> = √ρ·<em>F</em> + √(1−ρ)·<em>e<sub>i</sub></em> falls below Φ<sup>−1</sup>(acc<sub>i</sub>), with <em>F</em> shared across models within a problem. At the tetrachoric ρ the simulated all-wrong rate is 0.048 / 0.009 / 0.095 / 0.051 against observed 0.050 / 0.011 / 0.105 / 0.074 on MMLU-Pro / GPQA / GSM-Hard / olympiad; the ρ that matches each observed rate exactly is 0.90 / 0.85 / 0.95 / 0.95. The Kish design-effect formula with 1/φ, used in the earlier notes, <em>under</em>-predicts the plurality on the layers where φ is lowest; it is a lower bound on the vote, not an upper one, which corrects a claim in the first note. <a href="#fnref2">↩</a></li>
+    </ol>
+  </div>
+</section>
+<section>
+  <div class="col">
+    <p class="foot"><a href="../">← notes</a> · <a href="https://github.com/Alatip">github.com/Alatip</a></p>
+  </div>
+</section>
+</div>
+</body>
+</html>

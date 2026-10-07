@@ -43,6 +43,12 @@ a{color:var(--accent)}
   <p class="sub">Senior software engineer working on AI security. Notes on measurement, ensembles of language models, and what their failure modes mean for the agents built on them.</p>
 
   <div class="post">
+    <div class="date">8 October 2026</div>
+    <h2><a href="where-the-swarm-pays/">Where the Swarm Pays</a></h2>
+    <p>One corpus of answer traces, seven reasoning-model families, 240 hard problems, every cheap way of multiplying agents. On the answer nothing leaves the box between the best member and the "someone was right" ceiling: plurality is below the best model on every layer, debate fixes 1 of 12 unanimously wrong problems and half of its gain is re-reading one's own answer, personas add no independence, synthesis recovers nothing. On verification the swarm pays: five weak judges out-pick the best judge and the solvers' plurality (0.867 vs 0.82 vs 0.80) because their picking errors barely correlate, and peer disagreement flags errors at AUROC 0.92 against 0.82 for self-resampling. Asked to certify a single candidate they are solvers again. Measured, not pre-registered; ≈ $50 of inference. <span style="white-space:nowrap"><a href="https://github.com/Alatip/tech-note-5">code</a></span></p>
+  </div>
+
+  <div class="post">
     <div class="date">4 October 2026</div>
     <h2><a href="debate-is-not-sampling/">Debate Is Not Sampling</a></h2>
     <p>The modal ceiling of test-time scaling says plurality voting cannot beat the rate at which the most common answer is right. On 9,600 public debate traces, three-agent refinement beats the round-0 modal-hit rate on every weak model and corrects 31–45% of problems where all three agents started wrong; the exchangeability premise is what fails. The correlation ceiling does transfer: inter-agent correlation rises every round and the panel is one effective voter by round 3; stopping at unanimity beats the n_eff-plateau rule. Pre-registered, zero inference cost. <span style="white-space:nowrap"><a href="https://github.com/Alatip/tech-note-4">code</a> · <a href="https://doi.org/10.5281/zenodo.23133060">doi</a></span></p>
