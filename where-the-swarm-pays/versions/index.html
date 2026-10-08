@@ -53,7 +53,7 @@ ins{background:var(--ins-bg);color:var(--ins);text-decoration:none}
 <header><div class="col">
   <div class="eyebrow">Technical note · Ensembles · versions</div>
   <h1>Where the Swarm Pays: every version</h1>
-  <p>The note was revised twice on the day it was published, each time after an external reading found errors. Each version is kept as a frozen page, the current one lives at <a href="../">the main address</a>, and the tool below shows the text of any two versions against each other, paragraph by paragraph with word-level marks. The comparison is computed in the browser from the archived pages; nothing is sent anywhere.</p>
+  <p>The note was revised three times on the day it was published, each time after a reading found errors; the third reading set the text against the code. Each version is kept as a frozen page, the current one lives at <a href="../">the main address</a>, and the tool below shows the text of any two versions against each other, paragraph by paragraph with word-level marks. The comparison is computed in the browser from the archived pages; nothing is sent anywhere.</p>
 </div></header>
 
 <div class="col">
@@ -63,15 +63,16 @@ ins{background:var(--ins-bg);color:var(--ins);text-decoration:none}
     <tbody>
       <tr><td class="mono">v1</td><td>8 Oct 2026</td><td>First version. The items on which all seven models were scored wrong had not been audited; a cut-off answer was scored as a wrong vote; the Kish majority rounded n<sub>eff</sub> to an integer.</td><td><a href="../v1/">v1</a></td></tr>
       <tr><td class="mono">v2</td><td>8 Oct 2026</td><td>Label audit of the all-wrong items (relabels, exclusions, re-grading with the normalising grader); tables rebuilt; note rewritten around the audited tables; tie analysis and whole-set accounting for the judge panel.</td><td><a href="../v2/">v2</a></td></tr>
-      <tr><td class="mono">v3</td><td>8 Oct 2026</td><td>A cut-off answer is a missing vote, not a wrong one (old tables kept in a sub-section of Section 10); audit bookkeeping corrected (48 items, 21/22/3/2) and unaudited items named; matrix ceiling stated with and without the token-cap filter; judge coverage and matched tie rules; exact Kish estimator; candidate identity within the grader's tolerance; GPQA answer tokens made non-invertible in the companion data.</td><td><a href="../v3/">v3</a> · <a href="../">current</a></td></tr>
+      <tr><td class="mono">v3</td><td>8 Oct 2026</td><td>A cut-off answer is a missing vote, not a wrong one (old tables kept in a sub-section of Section 10); audit bookkeeping corrected (48 items, 21/22/3/2) and unaudited items named; matrix ceiling stated with and without the token-cap filter; judge coverage and matched tie rules; exact Kish estimator; candidate identity within the grader's tolerance; GPQA answer tokens made non-invertible in the companion data.</td><td><a href="../v3/">v3</a></td></tr>
+      <tr><td>v4</td><td>8 Oct 2026</td><td>A reading of the code against the text: the solvers' tie rule in the judge section (the panel's lead is 11 to 5, eight points, not 8 to 5); a cut-off agent no longer counts as having folded in the flip table; letters outside the candidate list are not named picks; a planted decoy that the audit had made correct is removed from the decoy counts; the role correlation uses every draw pair rather than one draw per role; the triple gains are pluralities; the sample table shows every item under the missing-vote policy; audit sensitivity (MMLU-Pro relabels reverted) added to Section 7; every quoted number moved into the companion script; GPQA tokens drawn per item.</td><td><a href="../v4/">v4</a> · <a href="../">current</a></td></tr>
     </tbody>
   </table>
-  <p class="mono" style="color:var(--muted)">Zenodo: v1 <a href="https://doi.org/10.5281/zenodo.23229043">10.5281/zenodo.23229043</a>, v3 <a href="https://doi.org/10.5281/zenodo.23235028">10.5281/zenodo.23235028</a>, all versions <a href="https://doi.org/10.5281/zenodo.23229042">10.5281/zenodo.23229042</a> (v2 was not deposited). Git history: <a href="https://github.com/Alatip/alatip.github.io/commits/main/where-the-swarm-pays/index.html">github.com/Alatip/alatip.github.io</a>.</p>
+  <p class="mono" style="color:var(--muted)">Zenodo: v1 <a href="https://doi.org/10.5281/zenodo.23229043">10.5281/zenodo.23229043</a>, v3 <a href="https://doi.org/10.5281/zenodo.23235028">10.5281/zenodo.23235028</a>, all versions <a href="https://doi.org/10.5281/zenodo.23229042">10.5281/zenodo.23229042</a> (v2 was not deposited; v4 to be deposited as a new version). Git history: <a href="https://github.com/Alatip/alatip.github.io/commits/main/where-the-swarm-pays/index.html">github.com/Alatip/alatip.github.io</a>.</p>
 
   <h2>Compare two versions</h2>
   <div class="ctl">
-    <label>from <select id="a"><option value="1">v1</option><option value="2" selected>v2</option><option value="3">v3</option></select></label>
-    <label>to <select id="b"><option value="1">v1</option><option value="2">v2</option><option value="3" selected>v3</option></select></label>
+    <label>from <select id="a"><option value="1">v1</option><option value="2">v2</option><option value="3" selected>v3</option><option value="4">v4</option></select></label>
+    <label>to <select id="b"><option value="1">v1</option><option value="2">v2</option><option value="3">v3</option><option value="4" selected>v4</option></select></label>
     <button id="go">compare</button>
     <label><input type="checkbox" id="ctx"> show unchanged paragraphs</label>
     <label><input type="checkbox" id="tables" checked> include table rows</label>
