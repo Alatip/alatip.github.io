@@ -6,6 +6,7 @@
 <meta name="description" content="A ledger of what multiplying LLM agents buys on 240 hard problems across seven reasoning-model families, revised twice: after a label audit (on the problems where all seven models were scored wrong, the gold label or the grader was at fault about four times in five) and after a truncation audit (an answer cut off by a token cap had been counted as a wrong vote). Plurality does not beat the best member; debate's gain is mostly a second chance for agents that ran out of tokens, and it manufactures wrong unanimity; roles add no measurable independence; synthesis recovers nothing. What the swarm buys is a comparator: five judges picking among candidates match the best single solver, and their strict majority is right 95% of the time where it exists.">
 <title>Where the Swarm Pays</title>
 <link rel="canonical" href="https://alatip.github.io/where-the-swarm-pays/">
+<meta name="robots" content="noindex">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Where the Swarm Pays">
 <meta property="og:description" content="A ledger of what multiplying LLM agents buys on 240 hard problems across seven reasoning-model families, revised twice: after a label audit (where all seven models were scored wrong, the gold label or the grader was at fault about four times in five) and after a truncation audit (an answer cut off by a token cap had been counted as a wrong vote). Plurality does not beat the best member; debate's gain is mostly a second chance for agents that ran out of tokens; roles add no measurable independence; synthesis recovers nothing. What the swarm buys is a comparator: five judges picking among candidates match the best single solver.">
@@ -120,13 +121,14 @@ hr.r{border:none; border-top:1px solid var(--rule); margin:0}
 </head>
 <body>
 <div class="page">
+<div style="font-family:'JetBrains Mono',monospace;font-size:.74rem;color:var(--muted);padding:12px 0 0;border-bottom:1px solid var(--hair);max-width:none"><div class="col" style="padding-bottom:10px">Archived snapshot, <b>version 3</b> (8 October 2026; v3: truncation policy, audit bookkeeping, judge coverage, Kish estimator corrected). Versions: <a href="../v1/">v1</a> · <a href="../v2/">v2</a> · <b>v3</b> · <a href="../">current</a> · <a href="../versions/">all versions and a side-by-side comparison</a></div></div>
 <header>
   <div class="col">
     <div class="eyebrow">Technical note · Ensembles</div>
     <h1 style="margin-top:.5em">Where the Swarm Pays</h1>
     <p style="margin-top:.6em; font-size:1.12rem; color:var(--ink2)">Seven model families, 240 hard problems, every cheap way of multiplying agents: voting, resampling, debate, roles, synthesis. On the answer the group does not beat its best member once a cut-off answer is counted as what it is. What it adds is a comparator, a second chance for a model that ran out of tokens, and a lesson about gold labels.</p>
     <div class="byline">
-      <span>8 October 2026 · v3: label audit, then truncation policy, audit bookkeeping and judge coverage corrected</span><span>working note</span><span>measured, not pre-registered</span><span>≈ $50 on OpenRouter + ≈ $335 of Claude calls at list price</span><span><a href="https://doi.org/10.5281/zenodo.23229043">doi:10.5281/zenodo.23229043</a></span><span><a href="versions/">earlier versions and a comparison</a></span>
+      <span>8 October 2026 · v3: label audit, then truncation policy, audit bookkeeping and judge coverage corrected</span><span>working note</span><span>measured, not pre-registered</span><span>≈ $50 on OpenRouter + ≈ $335 of Claude calls at list price</span><span><a href="https://doi.org/10.5281/zenodo.23229043">doi:10.5281/zenodo.23229043</a></span>
     </div>
     <div class="abstract">
       <span class="eyebrow">Abstract</span>
@@ -700,14 +702,14 @@ hr.r{border:none; border-top:1px solid var(--rule); margin:0}
   <div class="col">
     <hr class="r">
     <ol class="refs" style="padding-left:1.1em; margin-top:1.2em">
-      <li id="fn1">The earlier notes: <a href="../effective-independence/">Effective Independence</a> (31 August 2026), <a href="../the-control-ate-the-signal/">The Control Ate the Signal</a> (2 October 2026) and <a href="../debate-is-not-sampling/">Debate Is Not Sampling</a> (4 October 2026). The pipeline follows Swanson's literature-based discovery: paper A states an open question or limitation, paper B reports a result that bears on it, A and B do not cite each other and are otherwise dissimilar, and the pair is a candidate hypothesis. Candidates were sieved by embedding similarity between A's stated needs and B's stated offers and scored 0–10 by an LLM judge (Claude Opus 5.5, with a second opinion from Claude Fable 5.1 on the strongest). Papers and foundations, from Condorcet and Kish to the 2025–26 preprints, were summarised into fixed-schema cards first; the cards, not the papers, were what the judge read. <a href="#fnref1">↩</a></li>
+      <li id="fn1">The earlier notes: <a href="../../effective-independence/">Effective Independence</a> (31 August 2026), <a href="../../the-control-ate-the-signal/">The Control Ate the Signal</a> (2 October 2026) and <a href="../../debate-is-not-sampling/">Debate Is Not Sampling</a> (4 October 2026). The pipeline follows Swanson's literature-based discovery: paper A states an open question or limitation, paper B reports a result that bears on it, A and B do not cite each other and are otherwise dissimilar, and the pair is a candidate hypothesis. Candidates were sieved by embedding similarity between A's stated needs and B's stated offers and scored 0–10 by an LLM judge (Claude Opus 5.5, with a second opinion from Claude Fable 5.1 on the strongest). Papers and foundations, from Condorcet and Kish to the 2025–26 preprints, were summarised into fixed-schema cards first; the cards, not the papers, were what the judge read. <a href="#fnref1">↩</a></li>
       <li id="fn2">One-factor Gaussian copula: model <em>i</em> is correct on an item when <em>z<sub>i</sub></em> = √ρ·<em>F</em> + √(1−ρ)·<em>e<sub>i</sub></em> &lt; Φ<sup>−1</sup>(acc<sub>i</sub>), with <em>F</em> shared across models within the item and <em>e<sub>i</sub></em> private, both standard normal. Simulated with 20,000 items per layer. At the tetrachoric ρ the all-wrong rate is 0.011 / 0.003 / 0.004 against observed 0.002 / 0.000 / 0.000 (MMLU-Pro / GPQA / GSM-Hard), and the simulated majority-correct rate is 0.941 / 0.957 / 0.975 against observed 0.946 / 0.967 / 0.984. The model has no answer identities, so its "plurality" is a majority of correct votes; the observed figures in this footnote are on the same definition and differ slightly from the answer-identity plurality of Section 7. In the first version of this note the same model matched all-wrong rates of 1–10% to within a few tenths of a point; those rates were label noise, and the match was a fit to noise. <a href="#fnref2">↩</a></li>
     </ol>
   </div>
 </section>
 <section>
   <div class="col">
-    <p class="foot"><a href="../">← notes</a> · <a href="https://github.com/Alatip">github.com/Alatip</a></p>
+    <p class="foot"><a href="../../">← notes</a> · <a href="https://github.com/Alatip">github.com/Alatip</a></p>
   </div>
 </section>
 </div>
