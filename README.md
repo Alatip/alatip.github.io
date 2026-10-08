@@ -9,6 +9,7 @@ Each note is archived on Zenodo with a DOI (CERN-hosted, timestamped by DataCite
 | Note | DOI | Code DOI | First snapshot (UTC) | Archive |
 |---|---|---|---|---|
 | Index | — | — | 2026-10-04 06:32 | https://web.archive.org/web/20261004063248/https://alatip.github.io/ |
+| Where the Swarm Pays | [10.5281/zenodo.23229043](https://doi.org/10.5281/zenodo.23229043) | — (dataset release pending) | — | — |
 | Debate Is Not Sampling | [10.5281/zenodo.23133060](https://doi.org/10.5281/zenodo.23133060) | [23133114](https://doi.org/10.5281/zenodo.23133114) | 2026-10-04 06:33 | https://web.archive.org/web/20261004063311/https://alatip.github.io/debate-is-not-sampling/ |
 | The Control Ate the Signal | [10.5281/zenodo.23133020](https://doi.org/10.5281/zenodo.23133020) | [23133111](https://doi.org/10.5281/zenodo.23133111) | 2026-10-04 06:33 | https://web.archive.org/web/20261004063333/https://alatip.github.io/the-control-ate-the-signal/ |
 | There Is No Free Lunch After All | [10.5281/zenodo.23132912](https://doi.org/10.5281/zenodo.23132912) | — | 2026-10-04 06:33 | https://web.archive.org/web/20261004063355/https://alatip.github.io/no-free-lunch/ |
