@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Sakana's trained orchestrators (Trinity, the Conductor, Fugu) beat the best model in their pool without a verifier at inference: the ground truth is in the training reward of a coordinator that learns to route and to stop. On the papers' own ablations the gain is one to ten points toward the per-question-best ceiling and, where the ceiling is reported, never past it; AB-MCTS, the one member with a checker in the loop, measured a ten-point gap between having a correct answer and submitting it. A reading of the Fable 5 comparison made during the export-control window.">
+<title>What a Model Orchestrator Can and Cannot Add</title>
+<link rel="canonical" href="https://alatip.github.io/orchestrator-can-and-cannot-add/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="What a Model Orchestrator Can and Cannot Add">
+<meta property="og:description" content="Sakana's trained orchestrators (Trinity, the Conductor, Fugu) beat the best model in their pool without a verifier at inference: the ground truth is in the training reward of a coordinator that learns to route and to stop. On the papers' own ablations the gain is one to ten points toward the per-question-best ceiling and, where the ceiling is reported, never past it; AB-MCTS, the one member with a checker in the loop, measured a ten-point gap between having a correct answer and submitting it. A reading of the Fable 5 comparison made during the export-control window.">
+<meta property="og:url" content="https://alatip.github.io/orchestrator-can-and-cannot-add/">
+<meta name="author" content="Aziz Latipov">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"What a Model Orchestrator Can and Cannot Add","datePublished":"2026-10-09","author":{"@type":"Person","name":"Aziz Latipov","url":"https://alatip.github.io/"},"url":"https://alatip.github.io/orchestrator-can-and-cannot-add/"}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<style>
+:root{
+  --paper:#F8F9FA; --card:#FFFFFF; --sunk:#F0F2F5;
+  --ink:#12161C; --ink2:#39424F; --muted:#6B7684; --rule:#DDE1E7; --hair:#EAEDF1;
+  --accent:#14548C; --accent-soft:#E4EDF6;
+  --a:#14548C; --b:#BF5B04; --truth:#39424F;
+  --warn-bg:#FBF2E4; --warn-ink:#8A5A00;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0F1216; --card:#161A20; --sunk:#1C2128;
+    --ink:#E6EAEF; --ink2:#B6BFCA; --muted:#828D9B; --rule:#2A313A; --hair:#222932;
+    --accent:#7FB3E0; --accent-soft:#152838;
+    --a:#4D93D0; --b:#D4762A; --truth:#B6BFCA;
+    --warn-bg:#2A2214; --warn-ink:#D8AA5C;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0F1216; --card:#161A20; --sunk:#1C2128;
+  --ink:#E6EAEF; --ink2:#B6BFCA; --muted:#828D9B; --rule:#2A313A; --hair:#222932;
+  --accent:#7FB3E0; --accent-soft:#152838;
+  --a:#4D93D0; --b:#D4762A; --truth:#B6BFCA;
+  --warn-bg:#2A2214; --warn-ink:#D8AA5C;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"Source Serif 4",Georgia,serif; font-size:17.5px; line-height:1.62;
+  -webkit-font-smoothing:antialiased; font-variant-numeric:oldstyle-nums;
+}
+.page{max-width:1000px; margin:0 auto; padding:0 24px 110px}
+.col{max-width:640px; margin:0 auto}
+.col > * + *{margin-top:1.05em}
+p{margin:0}
+h1,h2,h3{margin:0; line-height:1.2; text-wrap:balance; font-weight:600}
+h1{font-size:clamp(2rem,4.6vw,2.85rem); letter-spacing:-.012em}
+h2{font-size:1.42rem}
+h3{font-size:1.08rem}
+a{color:var(--accent)}
+strong{font-weight:600}
+code,.mono,.eyebrow{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace}
+code{font-size:.84em; background:var(--sunk); padding:.1em .35em; border-radius:3px}
+.eyebrow{font-size:.68rem; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); font-weight:500}
+
+header{padding:82px 0 30px}
+.byline{display:flex; flex-wrap:wrap; gap:6px 20px; margin-top:1.1em; font-family:"JetBrains Mono",monospace; font-size:.74rem; color:var(--muted)}
+.abstract{
+  margin-top:2em; padding:22px 26px; background:var(--card);
+  border-top:2px solid var(--ink); border-bottom:1px solid var(--rule);
+  font-size:.97rem; line-height:1.6; color:var(--ink2);
+}
+.abstract .eyebrow{display:block; margin-bottom:.7em}
+.abstract strong{color:var(--ink)}
+
+section{padding-top:56px}
+.sec-head{display:flex; gap:14px; align-items:baseline; margin-bottom:20px}
+.sec-num{font-family:"JetBrains Mono",monospace; font-size:.78rem; color:var(--accent); padding-top:.3em; flex:none; font-weight:500}
+
+.eq{
+  background:var(--card); border:1px solid var(--rule); border-radius:4px;
+  padding:16px 20px; overflow-x:auto; font-family:"JetBrains Mono",monospace;
+  font-size:.88rem; line-height:1.85;
+}
+.eq .cm{color:var(--muted)}
+.note{background:var(--accent-soft); padding:16px 20px; border-radius:4px; font-size:.95rem}
+.note.warn{background:var(--warn-bg)}
+.note .eyebrow{display:block; margin-bottom:.45em; color:var(--ink2)}
+
+.tw{overflow-x:auto; border:1px solid var(--rule); border-radius:4px; background:var(--card)}
+table{border-collapse:collapse; width:100%; font-size:.88rem; font-family:"JetBrains Mono",monospace}
+th,td{padding:9px 13px; text-align:right; border-bottom:1px solid var(--hair)}
+th:first-child,td:first-child{text-align:left}
+thead th{font-size:.66rem; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:500; background:var(--sunk)}
+tbody tr:last-child td{border-bottom:none}
+td.hi{color:var(--ink); font-weight:500}
+td.dim{color:var(--muted)}
+.tnum{font-variant-numeric:tabular-nums}
+
+figure{margin:0; max-width:880px; margin-inline:auto}
+.fig{background:var(--card); border:1px solid var(--rule); border-radius:4px; overflow:hidden}
+.fig-b{padding:18px 14px 6px}
+figcaption{padding:0 24px 20px; font-size:.85rem; color:var(--muted); line-height:1.55; max-width:66ch}
+figcaption b{color:var(--ink2); font-weight:600}
+.legend{display:flex; flex-wrap:wrap; gap:6px 22px; padding:16px 24px 0; font-size:.8rem; color:var(--ink2); font-family:"JetBrains Mono",monospace}
+.legend span{display:inline-flex; align-items:center; gap:7px}
+.legend i{width:15px; height:2.5px; border-radius:2px}
+.legend i.dash{background:none; border-top:2px dashed var(--truth); height:0}
+svg{display:block; width:100%; height:auto; overflow:visible}
+
+ol,ul{margin:0; padding-left:1.25em}
+li{margin:.42em 0}
+.refs{font-size:.88rem; color:var(--ink2)}
+.refs li{margin:.55em 0}
+.refs .mono{color:var(--muted); font-size:.92em}
+hr.r{border:none; border-top:1px solid var(--rule); margin:0}
+.foot{padding-top:52px; font-size:.86rem; color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<style>.col p+p,.col p+ul,.col p+ol,.col ul+p,.col ol+p,.col div.note+p,.col p+div.note{margin-top:1.05em} .note .eyebrow{display:block;margin-bottom:.45em} .note p{margin:0}</style>
+</head>
+<body>
+<div class="page">
+<header>
+  <div class="col">
+    <div class="eyebrow">Technical note · Ensembles · Reading note</div>
+    <h1 style="margin-top:.5em">What a Model Orchestrator Can and Cannot Add</h1>
+    <p style="margin-top:.6em; font-size:1.12rem; color:var(--ink2)">Sakana's orchestrators learn in training which model to trust and when to stop, and check nothing when they answer. That lifts them above the best model in their pool, and never above what the pool can do together.</p>
+    <div class="byline">
+      <span>9 October 2026</span><span>reading note</span><span>nothing measured</span><span>zero inference on the tasks</span>
+    </div>
+    <div class="abstract">
+      <span class="eyebrow">Abstract</span>
+      
+      
+      
+      
+      Sakana introduced three orchestrators (Trinity, the Conductor and Fugu/Fugu-Ultra) that learned in training, from problems with known solutions, which model to send a question to, whether to rewrite it first, and when to stop. It works: on the papers' own tables the orchestrator beats the best single model in its pool by one to nine points. For Trinity the gain comes from picking the right model for each kind of task. For the Conductor about half of it comes from the prompts it writes for each step. On hard held-out tasks the Conductor gains more than picking a model could give. Trinity and Fugu are routers: they choose which model in the pool answers and pass the question on. A router has an upper limit, the share of questions that at least one model in the pool gets right. Trinity, the only one whose paper measures that limit, ends below it on every task, because it sometimes sends a question to a model that gets it wrong while another would have got it right. Fugu's report does not measure the limit, but on several benchmarks Fugu scores below the best model in its own pool, which a router can only do by choosing wrong. The Conductor and Fugu-Ultra are not routers: they split a task into steps and build the answer from the work of several models, so the router's limit does not apply to them. On hard tasks outside its training data the Conductor does rise above what any router could reach, nine points over the best model in its pool. That result comes from a setting in which every model in the pool was cut to short answers, so that Claude solves 35% of AIME there instead of its usual 74%; the Conductor beats weakened workers, and how much of the gain survives at full strength the paper does not show. Neither the Conductor nor Fugu-Ultra measures its own limit. The June 2026 claim of parity with Fable 5 rests on provider-reported scores, a pool from the previous generation, and a table in which Fugu loses to Fable 5 on three of the eight benchmarks compared. Fugu leads by 0.5 to 3.4 points on question answering and contest coding (GPQA Diamond, LiveCodeBench, Terminal Bench, CharXiv, CTI-REALM) and trails by 1.5 to 6.3 on repository-level software engineering, scientific code and the hardest exam (SWE-Bench Pro, SciCode, Humanity's Last Exam).
+    
+    
+    
+    
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><h2>Introduction</h2></div>
+    <p>On 22 June 2026, ten days after Anthropic withdrew Fable 5 and Mythos for everyone in response to a US export directive, Sakana AI released Fugu, "a multi-agent system that behaves like a single model", and said its models stand <strong>shoulder-to-shoulder with Fable 5 and Mythos Preview</strong> while delivering "frontier capability without the risk of export controls". This note reads the four papers behind that claim (AB-MCTS, arXiv:2503.04412; Trinity, arXiv:2512.04695; the Conductor, arXiv:2512.04388; the Fugu technical report, arXiv:2606.21228) with one question: how does a system with no ground-truth verifier at inference time beat the best model it is built from? In the three trained systems the answer is that the verifier was moved to training. Each orchestrator, fewer than twenty thousand trainable parameters on a 0.6B backbone in Trinity, a 7B model in the Conductor, undisclosed in Fugu, is trained by evolution strategies or GRPO against a <strong>ground-truth reward</strong>, binary or three-valued, on tasks with checkable answers; at inference it emits a routing decision or a natural-language workflow, and whatever "verification" happens is one pooled LLM reading another, with no measured false-accept rate in any of the papers. The gain over the best worker is real and ranges with the setting: Trinity averages 70.4 against 69.1 for the best fixed model per benchmark under the same protocol, and sits <strong>below the per-question-best oracle on every task</strong> (0.41 against 0.61 on RLPR); the Conductor is 3.9 points above the best worker per benchmark in its controlled in-distribution setting and 9.4 above on held-out tasks under the same cost cap, about 6.7 of them from a 20-point lead on thirty AIME problems. Trinity's ablations put most of its gain in per-question routing, which is close to per-task routing (88% of LiveCodeBench selections go to GPT-5, 82% of MATH500 to Gemini, 74% of MMLU to Claude). The Conductor's split it between routing and the subtask prompts it writes, and on the capped held-out tasks its gain is more than any choice of one model per task could give. The one measured number about final-answer selection is from AB-MCTS, the untrained search that opens the family: on ARC-AGI-2, with a partial checker scoring every node, a correct program is in the tree for over 30% of tasks after 250 calls and <strong>a correct one is submitted for 19.2%</strong>. The Fable 5 comparison is made against provider-reported scores, with a named pool of Opus 4.8, GPT-5.5 and Gemini 3.1 Pro, and the Fable 5 / Mythos column leads Fugu-Ultra on three of eight benchmarks; Fugu itself trails its own pool on several. The September follow-up moves to benchmarks that do not appear in the June report. Nothing here is measured; the note is a reading, with every number located in its source.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">1</div><h2>The claim and the window</h2></div>
+    <p>The timeline matters because the release text leans on it. On Friday 12 June 2026 the US administration directed Anthropic to limit Fable 5 and Mythos to US citizens, a rule that would have reached Anthropic's own foreign-national employees; Anthropic withdrew both models for all users. On 22 June Sakana AI released Fugu with the sentence quoted above and a paragraph on "recent disruptions in the AI landscape" and "AI sovereignty". Around 1 July the restriction on Fable 5 was lifted; Mythos stayed limited to a short list of US organisations. On 11 September Sakana released Fugu Max and Fugu Ultra v2, the second described as reaching its scores "without Fable 5, Fable 5.1, or GPT-6-Astra in its agent pool".<sup id="fnref1"><a href="#fn1">1</a></sup> The press calls the restricted model Mythos or Mythos 5; Sakana's comparisons name Mythos Preview, the April build that press reports describe as limited to a select group of companies; the technical report does not say which build its numbers refer to.</p>
+    <p>Three sentences from the technical report's first figure fix what the comparison is. "All scores other than Fugu's are reported by the model providers." "For Fable 5 and Mythos Preview, we report the max of the two if both scores are available on the same benchmark." "Neither of them is in Fugu's agent pool as they are not publicly accessible." The pool that is named "includes" Gemini 3.1 Pro, Claude Opus 4.8 and GPT-5.5 (Sec. 4.1.1), with a larger pool for Fugu-Ultra whose members are not listed. So the claim is: a learned coordinator over a pool built from the previous generation's public models, run by Sakana on its own harnesses with up to 500 or 1,000 environment steps per task, lands near the provider-published numbers of the next generation. Section 5 puts the numbers side by side. The rest of the note is about the mechanism, because the mechanism decides whether the claim could be true in general.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">2</div><h2>The stack, in four papers</h2></div>
+    <p>The product page says Fugu is "grounded in two ICLR 2026 papers", Trinity and the Conductor; AB-MCTS precedes both and is the only member of the family with an explicit score at inference and no training. Read in order they are one idea being made cheaper.</p>
+    <p><strong>AB-MCTS</strong> (NeurIPS 2025, spotlight) is tree search with no learned component. At each node Thompson sampling chooses between generating a new answer ("wider") and refining an existing one ("deeper"); the multi-LLM variant adds a third choice, which model to call, with a per-model estimate of quality updated as the search runs. The score that drives the search is external: public test cases on LiveCodeBench and CodeContest, the fraction of demonstration pairs solved on ARC-AGI, a validation split on MLE-Bench. The final answer is the highest-scoring node. The paper's limitations paragraph says it in one line: the method "assumes the existence of a reliable score evaluator".</p>
+    <p><strong>Trinity</strong> (ICLR 2026) replaces the search with a coordinator: Qwen3-0.6B, frozen except for singular values in one layer, plus a linear head, fewer than 20,000 trainable parameters in total. At each of up to five turns the head's logits pick one of seven models and one of three roles, Thinker, Worker or Verifier; the coordinator's own generated text is discarded. The loop stops at the first Verifier ACCEPT or at the turn cap, and the output at that turn is the answer. Training is separable CMA-ES on a binary terminal reward, correct or not against the benchmark label, on the training splits of MATH500, MMLU, RLPR and LiveCodeBench, with evaluation on their test splits (LiveCodeBench v1 for training, v6 for test); the authors report that REINFORCE failed on the same reward (Table 4: 0.25 against 0.62 on LiveCodeBench), that single-step supervised labels come within four points of it (0.661 against 0.703 on average), and that supervised labels for multi-turn coordination would cost on the order of 10<sup>11</sup> queries.</p>
+    <p><strong>The Conductor</strong> (ICLR 2026) makes the coordinator a 7B model that writes the plan in words: for each of up to five steps, a subtask prompt, a worker id, and an access list of earlier outputs that worker may see. The last worker's output is the answer. Training is GRPO on 960 problems from the same four sources, with a three-level reward quoted here exactly: "setting r<sub>i</sub> to 0 for responses from which the Python lists of subtasks, worker ids, and access lists cannot be parsed", and "setting r<sub>i</sub> to 1 if the final output from executing a well-formatted agentic workflow o<sub>i</sub> matches the solution s<sub>i</sub> and to 0.5 otherwise" (Sec. 3). Planner steps, targeted subtasks and verification or debate rounds are reported as emergent. A separately fine-tuned variant may name itself as a worker: it reads the workflow's final answer and decides whether to launch a corrective workflow, which the paper calls recursive test-time scaling.</p>
+    <p><strong>Fugu</strong> (technical report, June 2026) ships both designs. Fugu proper is Trinity without roles: "Unlike Trinity, which additionally assigns one of several roles to the selected model, Fugu always dispatches the query to the selected model as a worker", and "a key design choice is that Fugu uses the orchestrator's logits rather than its generated text" (Sec. 3.1.1). It is trained first by distilling, for verifiable single-step tasks with a ground-truth solution, the mean reward of each worker over n runs into a soft target, then by CMA-ES on end-to-end trajectories from Claude Code, Codex and OpenCode against a terminal reward R(τ) ∈ {0, 1} (Sec. 3.1.3); in a multi-turn task it re-selects the worker at every turn. Fugu-Ultra is the Conductor recipe with the same 0 / 0.5 / 1 reward and GRPO without a KL term, plus two engineering rules: workers inside a workflow do not see each other's tool trajectories, to prevent what the report calls "orchestration collapse", where "the first agent to interact with the environment sets the trajectory for all future agents"; and a shared memory persists across workflows within a conversation (Sec. 3.2.2). A workflow has up to five steps; in training, "for multi-turn tasks, any agent is permitted unlimited interaction with the user environment" (Sec. 3.2.3), and in evaluation the caps are 1,000 steps on SWE-Bench Pro and 500 on Terminal Bench (Appendix A).</p>
+    <div class="tw">
+      <table class="tnum">
+        <thead><tr><th>paper</th><th>orchestrator</th><th>trained on</th><th>checks at inference</th><th>stops when</th></tr></thead>
+        <tbody>
+          <tr><td>AB-MCTS</td><td>none (Thompson sampling)</td><td>nothing</td><td>external score: public tests, demo pairs, validation split</td><td>call budget</td></tr>
+          <tr><td>Trinity</td><td>0.6B frozen + &lt;20K params</td><td>binary reward, sep-CMA-ES</td><td>a pooled LLM says ACCEPT</td><td>first ACCEPT or 5 turns</td></tr>
+          <tr><td>Conductor</td><td>7B, GRPO</td><td>0 / 0.5 / 1 reward on 960 problems</td><td>whatever step the plan calls "verify"; the recursive variant re-reads its own answer</td><td>plan ends, ≤5 steps</td></tr>
+          <tr><td>Fugu</td><td>backbone (size undisclosed) + selection head, logits only</td><td>soft labels, then binary reward, CMA-ES</td><td>nothing: one worker per turn</td><td>the worker stops</td></tr>
+          <tr><td>Fugu-Ultra</td><td>Conductor recipe, size undisclosed</td><td>0 / 0.5 / 1 reward, GRPO</td><td>a pooled LLM, in narrated cases</td><td>plan ends, ≤5 steps, hundreds of environment steps inside each</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">3</div><h2>Where the verifier went</h2></div>
+    <p>The earlier notes on this site end on the same point from different data: a pool of LLM agents beats its best member only through selection, and selection needs something that is right about correctness more often than the solvers are. On the trace corpus of the last note, five judges picking among candidates led the solvers' plurality by a margin within a tie rule of zero, and the same judges asked to certify a single candidate accepted their own wrong answers 36–100% of the time. So the question for Sakana's stack is not whether it votes, it does not, but where the correctness signal lives.</p>
+    <p>In the three trained systems it lives in training, and only there. Trinity's reward is "R(τ) ∈ {0, 1}", correctness of the final output against the label; the grader is never described, and for RLPR, a benchmark whose own paper is titled as extending RLVR "without verifiers", the scoring rule is not stated. The Conductor's and Fugu-Ultra's reward is the 0 / 0.5 / 1 rule above, where "matches the solution s<sub>i</sub>" is the whole definition. Fugu's first stage distills per-worker success rates on tasks each of which "is verifiable and has a ground-truth solution". At inference none of them consults anything with that property. Trinity's Verifier is one of the seven pooled models prompted to emit ACCEPT or REVISE; the Conductor's verifier is a subtask string, and its recursive variant, the closest thing to an inference-time check in the family, is the same 7B model reading the final answer and deciding whether it looks wrong; Fugu has no roles at all; Fugu-Ultra's verification appears in Sec. 4.4 as narrated cases, "Opus being deployed at crucial moments to reverify quality", an aggregator reconciling two attempts.</p>
+    <div class="note warn">
+      <span class="eyebrow">What is not in the three trained-orchestrator papers</span>
+      <p>None of them reports how often the inference-time verifier accepts a wrong answer or rejects a right one, how many runs end by ACCEPT rather than by the turn cap, or what final-answer selection costs against an oracle. The release page lists "verification" among the things Fugu "manages internally"; the technical report defines no verifier for Fugu or Fugu-Ultra, and the word appears there only as framing (Sec. 2, Sec. 3).</p>
+    </div>
+    <p>The one member of the family that does report the cost of selection is the one that still has a score in the loop. On ARC-AGI-2 (Appendix D of the AB-MCTS paper; 120 public-evaluation tasks, 250 LLM calls each), repeated sampling with o4-mini finds a correct program somewhere in its 250 attempts on 23% of tasks, single-model AB-MCTS on 27.5%, and the three-model search (o4-mini, Gemini 2.5 Pro, DeepSeek-R1-0528) on "over 30%". When the system has to hand in two answers, picked by "a simple rule-based method … prioritizing code with a high reward generated later in the search", it scores <strong>19.2%</strong>, a figure the authors call preliminary. The paper: "a significant gap of over 10 percentage points remains compared to the 30% Pass@250 rate", to be closed by "more sophisticated final-answer selection algorithms", "more accurate reward models or integrating an LLM-as-a-Judge". This is the identifiability gap of the modal-ceiling paper and the coverage-minus-accuracy gap of TUMIX, measured on Sakana's own system, with a partial checker still scoring every node. It is the price of an imperfect checker plus a crude selection rule, not of no checker at all; and the Pass@2 figure is reported only for the three-model search, so at the level of the submitted answer the paper does not show a gain over the best single model. On ARC-AGI-1, where the search has the same demonstration-pair score, plain repeated sampling is level with or ahead of AB-MCTS on both models tested, while AB-MCTS leads it on LiveCodeBench and CodeContest (Table 1). The three later papers do not report the analogous pair of numbers, because they have no tree to count coverage in; the coordinator commits to one trajectory, and the training reward is the only thing that ever saw whether it was right.</p>
+    <p>What the training reward can do is teach a prior: which model to call for which kind of question, and when another turn is more likely to help than to hurt. That prior is what the coordinator carries into tasks without labels, and the zero-shot results in Section 4 measure how far it carries. It is a different object from a verifier, and the cost of the substitution is that nothing at inference can tell the system that its prior was wrong on this question.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">4</div><h2>Where the gain comes from</h2></div>
+    <p>Three of the four papers have ablations; the technical report has none, and AB-MCTS's are about the search prior. Trinity's Table 2 is the most useful object in the family, because it holds the pool fixed and removes one thing at a time, all models capped at 4,096 output tokens and minimal reasoning effort.</p>
+    <div class="tw">
+      <table class="tnum">
+        <thead><tr><th>Trinity, Table 2 (in-distribution)</th><th>LiveCodeBench</th><th>MATH500</th><th>MMLU</th><th>RLPR</th><th>average</th></tr></thead>
+        <tbody>
+          <tr><td>Trinity</td><td class="hi">61.46</td><td class="hi">88.00</td><td>91.56</td><td>40.72</td><td class="hi">70.44</td></tr>
+          <tr><td>without Thinker role</td><td>57.80</td><td>86.20</td><td class="hi">92.75</td><td>38.00</td><td>68.69</td></tr>
+          <tr><td>without the three roles (routing kept)</td><td>58.28</td><td>82.00</td><td>91.64</td><td>36.15</td><td>67.02</td></tr>
+          <tr><td>GPT-5 only (roles kept)</td><td>59.54</td><td>75.66</td><td>90.74</td><td>37.87</td><td>65.95</td></tr>
+          <tr><td>Gemini 2.5 Pro only (roles kept)</td><td>46.51</td><td>83.05</td><td>79.41</td><td class="hi">43.00</td><td>62.99</td></tr>
+          <tr><td class="dim">best single call per task (Fig. 3)</td><td class="dim">57</td><td class="dim">85</td><td class="dim">92</td><td class="dim">40</td><td class="dim">—</td></tr>
+          <tr><td class="dim">per-question-best oracle (Fig. 3)</td><td class="dim">65</td><td class="dim">91</td><td class="dim">97</td><td class="dim">61</td><td class="dim">—</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="font-size:.85rem; color:var(--muted); margin-top:10px; max-width:66ch">The last two rows are read from Figure 3, whose caption defines the oracle as the union of correct answers over the seven models, that is, one minus the pool's co-failure rate; whether the union is over one seed or several is not stated. "Gemini only" is Gemini inside the role protocol with the model fixed; its 79.41 on MMLU against 0.92 for a single Gemini call is the protocol's cost on that task.</p>
+    <p>Four readings. First, <strong>routing is the largest piece</strong>: keeping the roles but fixing the model to GPT-5 costs 4.5 points on average, about two-thirds of it on MATH500, where GPT-5 under the cap is weak and Gemini is strong. Figure 15 shows how much of that routing is really per-task: 87.9% of LiveCodeBench selections go to GPT-5, 82.2% of MATH500 selections to Gemini, 74.3% of MMLU selections to Claude Sonnet 4, 59.4% of RLPR to Gemini. A lookup table from benchmark name to model would recover much of this; the paper does not test that control. Second, <strong>the role protocol is worth about 3.4 points</strong> on average and is negative on MMLU, where the plain router scores higher than Trinity, the router without a Thinker higher still, and Gemini alone loses twelve points by being put through the roles. Third, <strong>against the best fixed model per benchmark</strong> Trinity's margin is 1.4 points (the best "only" row per column averages 69.08), and on RLPR it is behind "Gemini only". Fourth, <strong>Trinity is below the per-question-best oracle on every task</strong>, by 3 to 5 points on three of them and by 20 on RLPR. Empirically, nothing in the paper exceeds the union of its members' correct answers. The paper's own counter is Figure 4: more turns help, 0.823 at two turns to 0.863 at six on uncapped LiveCodeBench, which the authors read as going "beyond naive routing"; it is also consistent with a router that gets more draws at the same union.</p>
+    <p>Two baselines the paper does run are worth more than its headline. Gemini 2.5 Pro with a five-sample majority vote scores 91.57 on MMLU (Table 7); Trinity scores 91.56. And the "LLM as coordinator" baseline, Gemini prompted to pick model and role each turn, is reported twice: 53.76 in Table 8 and "64.14 vs 70.44" in the prose of the same section, so the trained head's lead is either seventeen points or six; the prose figure equals Gemini's single-call average in Figure 3, so it is most likely a slip and the lead is seventeen, but the paper does not resolve it. Either way it is the strongest evidence in the family that the training signal, and not the protocol, is doing the work. The record the blog post leads with, 86.2% on LiveCodeBench, against 83.8% for GPT-5 in the paper's Figure 4, comes from removing the output caps after training without retraining (Fig. 4, own runs), on 175 problems, a difference of about four. Trinity also spends two to eighteen times the output tokens of a single GPT-5 call, and two to three times those of Gemini on three of the four tasks (Table 9 against Table 12), so one hidden-state pass is the cost of the coordinator, not of the system. The multi-agent baselines the paper runs, MoA, RouterDC and Smoothie, all land below the best single model, and the compute-matched rows, five times the context or five turns of self-reflection for each frontier model, stay within a point of the single call (Fig. 3). On the four held-out tasks (Table 1) Trinity averages 54.21 against 52.34 for Gemini 2.5 Pro and 51.07 for GPT-5; on AIME the lead is one problem of thirty (50.00 against 46.67), and on BigCodeBench it ties Claude. This is the paper's evidence that the prior carries to tasks it was not trained on: it does, by about two points.</p>
+    <p>The Conductor does not tell quite the same story, and its numbers depend on which table one reads. In the controlled in-distribution setting, workers capped at 4,096 tokens, the margin over the best single worker averaged across the four tasks is 8.2 points (72.35 against Gemini's 64.14, Table 7); against the best worker <em>per benchmark</em>, which is the fair bar for a router, it is 3.9 (the per-benchmark bests in Table 7 average 68.48). Removing the subtask prompts and keeping the routing leaves 70.46 (Table 9), so about half of those 3.9 points are routing and half are the prompts the Conductor writes. On the held-out tasks under the same cost cap (Table 8) the margin is 9.4 points, 61.93 against 52.57 for the best worker per benchmark, about 6.7 of them from a 20-point lead on AIME 2025, six problems of thirty, with the capped workers very weak there (Claude 35.3 capped against 74.3 uncapped). A router that picks one model per task cannot exceed 52.57 on that table, so the whole of that gain is something other than routing. On MMLU the Conductor beats Gemini's five-sample consensus, 93.14 against 91.60, at about half the cost (Table 5), the one place in the family where an orchestrator beats one model's resamples rather than matching them. The ablations that isolate routing from workflow are in the unconstrained setting, where the baseline rows are the best of the authors' runs and leaderboards: fixing every worker to GPT-5 while keeping the Conductor's workflows (Table 10, three held-out tasks) gives 69.81 against 72.89 for the free Conductor and 68.62 for GPT-5 alone, so routing adds about 3 points and the workflow around a single model about 1, most of it on AIME where an own run is set against a leaderboard number; against the best worker per benchmark in that table (71.04) the Conductor's lead is 1.9. A frontier model prompted to write the same kind of workflow over the three frontier models (Table 11, LiveCodeBench plus the three held-out tasks, with unlimited retries and a doubled token limit for the prompted conductors) averages 70.05 as GPT-5 and 71.59 as Gemini, against 75.65 for the trained Conductor. Recursion moves the three-task average from 61.93 to 63.00 (Table 2), about five questions, most of them on BigCodeBench, at up to twice the calls. The cost comparison that favours the Conductor is against Mixture-of-Agents: $0.024 and 1,820 tokens per sample against $0.049 and 11,200 (Table 6); two of the routers in the same table are cheaper than it.</p>
+    <p>Fugu's report carries over none of this. There is no fixed-worker row, no oracle, no majority vote, no single-vendor pool, no leave-one-out, no best-of-N at matched calls; Section 4.2 shows histograms of which worker each benchmark was routed to and notes "deployed distributions agreeing with our SOTA capability priors", which is the Figure 15 observation without the ablation. The report's "beyond the best of its individual workers" (Sec. 4.1.2) is therefore the raw system-against-single-call comparison of Table 1, between a workflow of up to five steps with hundreds of environment steps inside each and a provider's single published run. The right bar for such a system is the best single model given the same budget, and that bar is not run. The product page prices Fugu-Ultra v2 at $5 per million input tokens and $30 per million output, and says that when several agents are active "you are charged a single rate based on the top tier model involved": the buyer pays as for one model, and the compute behind the answer is several.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">5</div><h2>Reading the Fable 5 comparison</h2></div>
+    <p>Figure 1 of the technical report is the source of the release-day claim. Its numbers, with the Fable 5 or Mythos Preview column as the report labels it (the higher of the two where both exist):</p>
+    <div class="tw">
+      <table class="tnum">
+        <thead><tr><th>benchmark (Fig. 1)</th><th>Fugu-Ultra</th><th>Fugu</th><th>Fable 5 / Mythos Preview</th><th>best of the pool</th></tr></thead>
+        <tbody>
+          <tr><td>Terminal Bench 2.1</td><td class="hi">82.1</td><td>80.2</td><td>80.4 (Fable 5 in Fig. 1, Mythos in Fig. 4)</td><td>78.2 (GPT-5.5)</td></tr>
+          <tr><td>CharXiv Reasoning</td><td class="hi">86.6</td><td>85.1</td><td>86.1 (Mythos)</td><td>84.2 (Opus 4.8)</td></tr>
+          <tr><td>GPQA Diamond</td><td class="hi">95.5</td><td class="hi">95.5</td><td>94.6 (Mythos; Fable 5 92.6 in Fig. 4)</td><td>94.3 (Gemini 3.1)</td></tr>
+          <tr><td>LiveCodeBench</td><td class="hi">93.2</td><td>92.9</td><td>89.8 (Fable 5)</td><td>88.5 (Gemini 3.1)</td></tr>
+          <tr><td>CTI-REALM</td><td>69.4</td><td>67.5</td><td>68.5 (Mythos)</td><td class="hi">69.6 (Opus 4.8)</td></tr>
+          <tr><td>SciCode</td><td>58.7</td><td>60.1</td><td class="hi">60.2 (Fable 5)</td><td>58.9 (Gemini 3.1)</td></tr>
+          <tr><td>SWE-Bench Pro</td><td>73.7</td><td>59.0</td><td class="hi">80.0 (Fable 5)</td><td>69.2 (Opus 4.8)</td></tr>
+          <tr><td>Humanity's Last Exam (text)</td><td>50.0</td><td>48.5</td><td class="hi">53.3 (Fable 5)</td><td>45.7 (Opus 4.8)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="font-size:.85rem; color:var(--muted); margin-top:10px; max-width:66ch">All non-Fugu numbers are provider-reported or taken from third-party leaderboards (Appendix A names vals.ai, Artificial Analysis, tbench.ai); the baselines Sakana ran itself are LiveCodeBench Pro and Opus 4.8 on CharXiv; CTI-REALM has no entry in Appendix A. Fugu's own runs use mini-SWE-agent with up to 1,000 steps on SWE-Bench Pro, Terminus 2 under EvalScope with 500 steps on Terminal Bench, and EvalScope elsewhere. The Table 1 "Model Card" uses the full multimodal HLE set and gives Fugu 47.2 and Opus 49.8 there, against 48.5 and 45.7 for the text subset in Figure 1; Fugu-Ultra is 50.0 on both.</p>
+    <p>Read as a table rather than a sentence: Fugu-Ultra is above the Fable 5 / Mythos column on five of eight benchmarks, by 0.5 to 3.4 points, and below it on three, by 1.5 to 6.3; on one of the five Opus alone is above everything. The two largest deficits, SWE-Bench Pro and HLE, are the two benchmarks where the gap between the pool's best model and Fable 5 is largest, 10.8 and 7.6 points; on SciCode the gap is 1.3 and Fugu-Ultra still trails, with plain Fugu and Gemini both above it. The first pattern is what a router would predict: a router over a pool recovers toward the pool's per-question-best, and where the next-generation model is ahead because it solves problems none of the pool solves, there is nothing to route to; where it is ahead by a few points of consistency on problems the pool can also solve, many calls and a learned prior can close the gap, and on GPQA Diamond and LiveCodeBench they appear to. With eight benchmarks and three misses this is a reading, not a test: the harnesses differ from the providers', and on SWE-Bench Pro plain Fugu's 59.0 against Opus's 69.2 is a routing error, not a ceiling. The figure the report uses for the sentence "exceed the capabilities of the Mythos Preview and Fable 5 model class" (Fig. 4) shows GPQA, CharXiv and Terminal Bench, on truncated axes.</p>
+    <p>The comparison that bears most directly on "beyond the best of its individual workers" is not with Fable 5 but with the pool. Fugu, the fast variant, scores 59.0 on SWE-Bench Pro against 69.2 for Opus 4.8, and 86.6 on MRCRv2 against 94.8 for GPT-5.5 (Table 1); on the full HLE set Opus is above it, 49.8 against 47.2. Fugu-Ultra is below the best pool member on SciCode, Long Context Reasoning and MRCRv2 (Table 1) and on CTI-REALM (Fig. 1), and below plain Fugu on three rows (SciCode, τ³ Banking, Long Context Reasoning); plain Fugu is also below the pool on LiveCodeBench Pro and MRCRv2. A router that picks the wrong worker on a benchmark lands under that benchmark's best worker, and on several rows one of the two Fugu models does. On the AutoResearch task the report highlights, Fugu-Ultra's 0.9774 bits per byte against 0.9781 for the best baseline is inside one standard deviation at three seeds (Table 2).</p>
+    <p>The September release moves the comparison to ground the reader cannot check. Fugu Ultra v2, reached "without Fable 5, Fable 5.1, or GPT-6-Astra in its agent pool", is reported "best or joint-best on five of eight benchmarks: GDP.pdf, Chartography, SWEFish, DeepSWE, and Toolathon", with one number against Fable 5 (Chartography: 48.3 against 29.5); none of the five appears in the June report, and SWEFish is described as "our internal benchmark". The page links to the June technical report; no report specific to v2 accompanies the release as of this reading.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">6</div><h2>What this says</h2></div>
+    <div class="note">
+      <span class="eyebrow">Reading</span>
+      <p>Sakana's trained stack is a learned router with a learned protocol around the calls. The router is trained against ground truth and is good: it recovers most of the per-task best model and some of the per-question best, and a trained head beats a frontier model prompted to do the same job. The protocol, roles in Trinity, subtask prompts and recursion in the Conductor, is a prior about how to arrange the calls, not a check of whether this answer is right. The router is bounded by the union of the pool's correct answers, and the one paper that reports that bound is under it on every task. A workflow whose last worker writes a new answer from the others' work is not bound by it in principle, and for the Conductor, where that part of the gain is largest, no oracle is reported. None of this requires a verifier, and none of it does what a verifier would do; the one member of the family that could measure the difference, with a partial checker still in the loop, found the gap between having a correct answer and submitting it to be ten points on thirty.</p>
+    </div>
+    <p>It does not say the engineering is hollow. A coordinator with fewer than twenty thousand trainable parameters that routes well across seven models is a real result, and the Conductor's prompt-writing is a real result on LiveCodeBench, where removing it costs 5.7 points (Table 9). On held-out tasks under a cost cap the Conductor's nine points over the best worker per benchmark is more than a router could give, with the caveats of Section 4. The trajectory-level training of Fugu on Claude Code and Codex sessions is a sensible way to learn a notion of worker capability that single-call benchmarks miss. The cost argument against Mixture-of-Agents holds.</p>
+    <p>It does say three things about the release claim. The comparison is to published numbers, not to runs under one harness. The pool is built from the previous generation's public models, and the benchmarks where the comparator is furthest ahead are the ones where the orchestrator loses. And where the stack measures its own ceiling it is under it, so "frontier capability without the frontier model" can be true where the frontier model's margin is consistency on problems the pool can already solve, and cannot be true where its margin is problems the pool cannot. Which of the two a given benchmark is, the report does not measure; the co-failure rate of Fugu's pool on Fugu's benchmarks is the number that would tell, and the report does not give it.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">7</div><h2>Against the earlier notes</h2></div>
+    <p>The earlier notes on this site end on four claims: a pool of LLM agents carries one to three effective independent votes; its plurality rarely beats the best member, and when it does the gain is a function of the members' accuracies rather than of their diversity; debate raises the pool's correlation rather than escaping it; and selection pays only as far as the selector is right about correctness more often than the solvers are. Sakana's papers were not written to test any of these, but their tables bear on each, and none of them contradicts the picture.</p>
+    <ul>
+      <li><strong>The ceiling.</strong> Trinity is the only paper in the family to report the per-question-best oracle, and it sits under it on every task (Fig. 3; 0.41 against 0.61 on RLPR). That is the co-failure ceiling of Chen (2026), which <a href="../where-the-swarm-pays/">Where the Swarm Pays</a> audited on its own corpus, here measured on Sakana's system: a coordinator recovers part of the gap between the best member and the union of correct answers, and nothing reported in the family exceeds the union, though only Trinity reports it.</li>
+      <li><strong>Routing first.</strong> Trinity's 1.4 points over the best fixed model, and about half of the Conductor's 3.9 in its controlled setting, come from sending each question to the model that is best on its kind of question, and Trinity's Figure 15 shows that choice to be nearly per-task. It is a different operator from the judges of the last note, who chose among finished answers and led the solvers' plurality by a margin within a tie rule of zero: a router chooses before any answer exists. Both are limited by what the pool can produce; the judge at least sees what it did produce.</li>
+      <li><strong>Pooling against one model.</strong> Where the Swarm Pays found plurality over seven models below the best member on three layers and level on the fourth. Here Gemini's own five-sample majority on MMLU, 91.57, equals Trinity's 91.56 (Table 7), while the Conductor's router beats the same baseline by 1.5 points at half the cost (Table 5): on the one task where both papers run it, one model's resamples are as good as the pool once, and worse than the trained router once.</li>
+      <li><strong>Coverage against selection.</strong> AB-MCTS's 30% in the tree against 19.2% submitted is the identifiability gap of <a href="../debate-is-not-sampling/">Debate Is Not Sampling</a> and of the modal-ceiling paper it tested (arXiv:2606.28661), which TUMIX showed as 65% coverage against 34% accuracy, here on a system that still has a partial external checker in the loop.</li>
+    </ul>
+    <p>Two things in these papers lie outside what the earlier notes measured, and the agreement above should not be read as covering them.</p>
+    <ul>
+      <li><strong>Decomposition and roles.</strong> The trace corpus of Where the Swarm Pays holds voting, resampling, debate, personas, synthesis and judging; it has no decomposition into subtasks and no tools, which that note set aside as a separate axis. The Conductor and Fugu-Ultra do exactly that: they split a problem, write a prompt per piece and hand the pieces to different models, on coding benchmarks with a harness. Removing the subtask prompts costs the Conductor 5.7 points on LiveCodeBench (Table 9), and running its workflows with every worker fixed to GPT-5 still edges GPT-5 alone (Table 10, about one point, most of it on thirty AIME problems); on the capped held-out tasks the Conductor's 9.4 points over the best worker exceed what any one-model-per-task choice could reach (Table 8). That is a gain the earlier notes have no data on, produced by an operator they did not run, and for which these papers report no ceiling.</li>
+      <li><strong>A trained selector.</strong> The judges and synthesisers in the earlier notes were frontier models prompted to select. Sakana's coordinators are trained against ground truth, and the difference shows: Gemini prompted to pick model and role each turn averages 53.76 or 64.14 against 70.44 for the evolved head (Trinity Table 8 and its prose), and GPT-5 or Gemini prompted to write Conductor-style workflows average 70.05 and 71.59 against 75.65 for the trained Conductor (Table 11). Part of what the earlier notes measured as the weakness of selection may be the weakness of a prompted selector. The trained one still ends under the oracle, so the ceiling stands; what moves is how much of the distance to it a selector can close.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">8</div><h2>Limitations of this note</h2></div>
+    <ul>
+      <li>Nothing is measured here. Every number is read from the four papers and the release pages; each is located by table, figure or section so that it can be checked. The Fugu weights and evaluation logs are closed, so the compute-matched comparison that would settle Section 4 for Fugu cannot be run by a reader.</li>
+      <li>The papers were first summarised into structured claim cards and referee reports by Claude Opus 5.5, and every number carried into this text was then re-read in the arXiv text; a second pass by a separate session recomputed every table and corrected eight numbers and several attributions in the first draft. Numbers that exist only as plotted curves (AB-MCTS Figures 4, 6 and 13) are quoted as the papers' text states them.</li>
+      <li>Most tables in the four papers carry no intervals, and the number of runs behind their averages is not stated: Trinity's Table 2 and Figure 3, the Conductor's Tables 2, 8, 10 and 11, Fugu's Figure 1 and Table 1 give point values; Trinity's Figure 4 and Table 7 and the Conductor's Table 7 carry ± over repeated evaluations, and the Conductor repeats each evaluation up to sixteen times. Where sample sizes are small the gaps are a few problems: AIME 2025 has 30, MATH500 in both papers 100, LiveCodeBench v6 in Trinity 175; a 1.8-point Thinker effect on MATH500 is two problems.</li>
+      <li>The Trinity and Conductor results that make ablation possible are under a 4,096-token output cap and minimal reasoning effort for every model, which handicaps reasoning models unevenly; the Conductor's unconstrained Table 1 mixes own runs with leaderboard numbers. Neither paper reports the per-question-best oracle with the caps removed, so the ceiling reading rests on the capped setting.</li>
+      <li>Fugu's second training stage uses trajectories from coding harnesses (Claude Code, Codex, OpenCode) and its Ultra training data includes "publicly available data"; the report calls its benchmarks "unseen by our models during training" but gives no overlap analysis against LiveCodeBench, SWE-Bench Pro or Humanity's Last Exam, the benchmarks where Fugu-Ultra's lead over its pool is largest and, for LiveCodeBench, the oldest.</li>
+      <li>The export-control timeline is from press reports (Semafor, 13 June 2026; Bloomberg Law, 1 July 2026) and Sakana's own release text, snapshotted on 8 October 2026; the government's reasons are disputed in those reports and are not the subject here. "One generation behind" is this note's description of the pool, not a source's.</li>
+      <li>The Trinity paper's pool and tasks were selected to maximise complementarity (Appendix A.6), which inflates headroom over the best single model relative to a pool chosen in advance.</li>
+      <li>The AB-MCTS ARC-AGI-2 result is on 120 tasks with no run count stated; the ten-point gap is about thirteen tasks, the three-model search's lead over single-model AB-MCTS at least four, and the authors call the Pass@2 figure preliminary.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">9</div><h2>Sources</h2></div>
+    <p>Papers: Inoue, Misaki et al., <em>Wider or Deeper? Scaling LLM Inference-Time Compute with Adaptive Branching Tree Search</em>, NeurIPS 2025 spotlight, <a href="https://arxiv.org/abs/2503.04412">arXiv:2503.04412</a> (v5, November 2025; ARC-AGI-2 in Appendix D). Xu, Sun et al., <em>TRINITY: An Evolved LLM Coordinator</em>, ICLR 2026, <a href="https://arxiv.org/abs/2512.04695">arXiv:2512.04695</a> (v3, April 2026). Nielsen, Cetin et al., <em>Learning to Orchestrate Agents in Natural Language with the Conductor</em>, ICLR 2026, <a href="https://arxiv.org/abs/2512.04388">arXiv:2512.04388</a>. Sakana AI, <em>Sakana Fugu Technical Report</em>, <a href="https://arxiv.org/abs/2606.21228">arXiv:2606.21228</a> (v2, 23 June 2026).</p>
+    <p>Release pages, snapshotted 8 October 2026: <a href="https://sakana.ai/fugu-release/">sakana.ai/fugu-release</a> (22 June 2026), <a href="https://sakana.ai/fugu-max-release/">sakana.ai/fugu-max-release</a> (11 September 2026), <a href="https://sakana.ai/fugu/">sakana.ai/fugu</a> (product page), <a href="https://sakana.ai/ab-mcts/">sakana.ai/ab-mcts</a> (1 July 2025), <a href="https://sakana.ai/trinity/">sakana.ai/trinity</a>, <a href="https://sakana.ai/learning-to-orchestrate/">sakana.ai/learning-to-orchestrate</a>. Context: Semafor, <em>White House move to limit Anthropic linked to concerns about Chinese access to Mythos</em>, 13 June 2026; Bloomberg Law, <em>US Limits on Anthropic's Mythos Keep Foreign Firms in Limbo</em>, 1 July 2026.</p>
+    <p>Earlier notes this one leans on: <a href="../where-the-swarm-pays/">Where the Swarm Pays</a> (judges as comparators, the certify-alone failure, the co-failure audit), <a href="../debate-is-not-sampling/">Debate Is Not Sampling</a> (the identifiability gap), <a href="../the-control-ate-the-signal/">The Control Ate the Signal</a> (vote gain as a function of accuracies), <a href="../no-free-lunch/">There Is No Free Lunch After All</a> (why pooling moves mass inside the pool's boundary) and <a href="../effective-independence/">Effective Independence</a> (how few independent votes a pool carries). The co-failure ceiling is Chen (2026), <a href="https://arxiv.org/abs/2606.27288">arXiv:2606.27288</a>; the modal and correlation ceilings are <a href="https://arxiv.org/abs/2606.28661">arXiv:2606.28661</a>.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <hr class="r">
+    <ol class="refs" style="padding-left:1.1em; margin-top:1.2em">
+      <li id="fn1">Dates and quotations: Semafor, 13 June 2026 ("The Trump administration on Friday directed Anthropic to limit access to Mythos, and its consumer version, known as Fable 5, to US citizens. That meant that even Anthropic employees who are foreign nationals would have been prohibited from using the models. Anthropic chose to remove the models from the market completely"); Bloomberg Law, 1 July 2026 ("Global users can access Fable 5 … starting Wednesday", Mythos 5 still restricted); Sakana release page, 22 June 2026 ("Our Fugu Ultra model stands shoulder-to-shoulder with leading models like Fable 5 and Mythos Preview"), and Fugu Max page, 11 September 2026, quoted in Sections 1 and 5. <a href="#fnref1">↩</a></li>
+    </ol>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <p class="foot"><a href="../">← notes</a> · <a href="https://github.com/Alatip">github.com/Alatip</a></p>
+  </div>
+</section>
+</div>
+</body>
+</html>
