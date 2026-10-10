@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="One model that plans, solves the parts and assembles buys budget, and only budget: the gain lands on the problems where its single pass is cut off by the token cap and on no others; what it cannot solve whole it cannot solve in pieces. Three other models solving the parts cost 2–17× more in dollars at the same token cap and solve no more. The last swarm operator the earlier notes had not measured: split a problem into subtasks and solve them one by one, with the same model or with three others, at the same token budget as one whole attempt. Pre-registered on 97 problems chosen by how often each model already solved them in sixteen whole attempts. On the twenty problems DeepSeek v3.2 solves four times in sixteen or fewer, decomposition adds nothing on the fourteen numeric ones: pass@4 0.21 against 0.21, none of the seven never-solved problems solved in eight tries; on the six multiple-choice ones it 'solves' never-solved items at the 25% guessing rate. On GLM's 38 problems that fail because one long pass runs out of tokens, decomposition gains 34 points, above the model's own pass@16: a budget effect. DeepSeek loses 41 points on medium and easy problems because it does not shorten its steps. Handing subtasks to other models is never better than splitting within one. In dollars a split attempt costs DeepSeek 3.5–9 whole draws and at equal spend the single model ties or wins everywhere. Cost $5.73.">
+<title>Decomposition Buys Budget at Best, Nothing Usually</title>
+<link rel="canonical" href="https://alatip.github.io/decomposition-buys-budget/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Decomposition Buys Budget at Best, Nothing Usually">
+<meta property="og:description" content="One model that plans, solves the parts and assembles buys budget, and only budget: the gain lands on the problems where its single pass is cut off by the token cap and on no others; what it cannot solve whole it cannot solve in pieces. Three other models solving the parts cost 2–17× more in dollars at the same token cap and solve no more. The last swarm operator the earlier notes had not measured: split a problem into subtasks and solve them one by one, with the same model or with three others, at the same token budget as one whole attempt. Pre-registered on 97 problems chosen by how often each model already solved them in sixteen whole attempts. On the twenty problems DeepSeek v3.2 solves four times in sixteen or fewer, decomposition adds nothing on the fourteen numeric ones: pass@4 0.21 against 0.21, none of the seven never-solved problems solved in eight tries; on the six multiple-choice ones it 'solves' never-solved items at the 25% guessing rate. On GLM's 38 problems that fail because one long pass runs out of tokens, decomposition gains 34 points, above the model's own pass@16: a budget effect. DeepSeek loses 41 points on medium and easy problems because it does not shorten its steps. Handing subtasks to other models is never better than splitting within one. In dollars a split attempt costs DeepSeek 3.5–9 whole draws and at equal spend the single model ties or wins everywhere. Cost $5.73.">
+<meta property="og:url" content="https://alatip.github.io/decomposition-buys-budget/">
+<meta name="author" content="Aziz Latipov">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"Decomposition Buys Budget at Best, Nothing Usually","datePublished":"2026-10-10","author":{"@type":"Person","name":"Aziz Latipov","url":"https://alatip.github.io/"},"url":"https://alatip.github.io/decomposition-buys-budget/"}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<style>
+:root{
+  --paper:#F8F9FA; --card:#FFFFFF; --sunk:#F0F2F5;
+  --ink:#12161C; --ink2:#39424F; --muted:#6B7684; --rule:#DDE1E7; --hair:#EAEDF1;
+  --accent:#14548C; --accent-soft:#E4EDF6;
+  --a:#14548C; --b:#BF5B04; --truth:#39424F;
+  --warn-bg:#FBF2E4; --warn-ink:#8A5A00;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0F1216; --card:#161A20; --sunk:#1C2128;
+    --ink:#E6EAEF; --ink2:#B6BFCA; --muted:#828D9B; --rule:#2A313A; --hair:#222932;
+    --accent:#7FB3E0; --accent-soft:#152838;
+    --a:#4D93D0; --b:#D4762A; --truth:#B6BFCA;
+    --warn-bg:#2A2214; --warn-ink:#D8AA5C;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0F1216; --card:#161A20; --sunk:#1C2128;
+  --ink:#E6EAEF; --ink2:#B6BFCA; --muted:#828D9B; --rule:#2A313A; --hair:#222932;
+  --accent:#7FB3E0; --accent-soft:#152838;
+  --a:#4D93D0; --b:#D4762A; --truth:#B6BFCA;
+  --warn-bg:#2A2214; --warn-ink:#D8AA5C;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"Source Serif 4",Georgia,serif; font-size:17.5px; line-height:1.62;
+  -webkit-font-smoothing:antialiased; font-variant-numeric:oldstyle-nums;
+}
+.page{max-width:1000px; margin:0 auto; padding:0 24px 110px}
+.col{max-width:640px; margin:0 auto}
+.col > * + *{margin-top:1.05em}
+p{margin:0}
+h1,h2,h3{margin:0; line-height:1.2; text-wrap:balance; font-weight:600}
+h1{font-size:clamp(2rem,4.6vw,2.85rem); letter-spacing:-.012em}
+h2{font-size:1.42rem}
+h3{font-size:1.08rem}
+a{color:var(--accent)}
+strong{font-weight:600}
+code,.mono,.eyebrow{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace}
+code{font-size:.84em; background:var(--sunk); padding:.1em .35em; border-radius:3px}
+.eyebrow{font-size:.68rem; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); font-weight:500}
+
+header{padding:82px 0 30px}
+.byline{display:flex; flex-wrap:wrap; gap:6px 20px; margin-top:1.1em; font-family:"JetBrains Mono",monospace; font-size:.74rem; color:var(--muted)}
+.abstract{
+  margin-top:2em; padding:22px 26px; background:var(--card);
+  border-top:2px solid var(--ink); border-bottom:1px solid var(--rule);
+  font-size:.97rem; line-height:1.6; color:var(--ink2);
+}
+.abstract .eyebrow{display:block; margin-bottom:.7em}
+.abstract strong{color:var(--ink)}
+
+section{padding-top:56px}
+.sec-head{display:flex; gap:14px; align-items:baseline; margin-bottom:20px}
+.sec-num{font-family:"JetBrains Mono",monospace; font-size:.78rem; color:var(--accent); padding-top:.3em; flex:none; font-weight:500}
+
+.eq{
+  background:var(--card); border:1px solid var(--rule); border-radius:4px;
+  padding:16px 20px; overflow-x:auto; font-family:"JetBrains Mono",monospace;
+  font-size:.88rem; line-height:1.85;
+}
+.eq .cm{color:var(--muted)}
+.note{background:var(--accent-soft); padding:16px 20px; border-radius:4px; font-size:.95rem}
+.note.warn{background:var(--warn-bg)}
+.note .eyebrow{display:block; margin-bottom:.45em; color:var(--ink2)}
+
+.tw{overflow-x:auto; border:1px solid var(--rule); border-radius:4px; background:var(--card)}
+table{border-collapse:collapse; width:100%; font-size:.88rem; font-family:"JetBrains Mono",monospace}
+th,td{padding:9px 13px; text-align:right; border-bottom:1px solid var(--hair)}
+th:first-child,td:first-child{text-align:left}
+thead th{font-size:.66rem; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:500; background:var(--sunk)}
+tbody tr:last-child td{border-bottom:none}
+td.hi{color:var(--ink); font-weight:500}
+td.dim{color:var(--muted)}
+.tnum{font-variant-numeric:tabular-nums}
+
+figure{margin:0; max-width:880px; margin-inline:auto}
+.fig{background:var(--card); border:1px solid var(--rule); border-radius:4px; overflow:hidden}
+.fig-b{padding:18px 14px 6px}
+figcaption{padding:0 24px 20px; font-size:.85rem; color:var(--muted); line-height:1.55; max-width:66ch}
+figcaption b{color:var(--ink2); font-weight:600}
+.legend{display:flex; flex-wrap:wrap; gap:6px 22px; padding:16px 24px 0; font-size:.8rem; color:var(--ink2); font-family:"JetBrains Mono",monospace}
+.legend span{display:inline-flex; align-items:center; gap:7px}
+.legend i{width:15px; height:2.5px; border-radius:2px}
+.legend i.dash{background:none; border-top:2px dashed var(--truth); height:0}
+svg{display:block; width:100%; height:auto; overflow:visible}
+
+ol,ul{margin:0; padding-left:1.25em}
+li{margin:.42em 0}
+.refs{font-size:.88rem; color:var(--ink2)}
+.refs li{margin:.55em 0}
+.refs .mono{color:var(--muted); font-size:.92em}
+hr.r{border:none; border-top:1px solid var(--rule); margin:0}
+.foot{padding-top:52px; font-size:.86rem; color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<style>.col p+p,.col p+ul,.col p+ol,.col ul+p,.col ol+p,.col div.note+p,.col p+div.note{margin-top:1.05em} .note .eyebrow{display:block;margin-bottom:.45em} .note p{margin:0}</style>
+</head>
+<body>
+<div class="page">
+<header>
+  <div class="col">
+    <div class="eyebrow">Technical note · Ensembles · Decomposition</div>
+    <h1 style="margin-top:.5em">Decomposition Buys Budget at Best, Nothing Usually</h1>
+    <p style="margin-top:.6em; font-size:1.12rem; color:var(--ink2)">Cut a problem into steps and let the same model solve them one at a time. The gain lands on the problems where its single pass was cut off, and nowhere else; what it could not solve whole it still cannot. Hand the steps to three other models and it costs more and solves no more.</p>
+    <div class="byline">
+      <span>10 October 2026</span><span>pre-registered</span><span>97 problems, 560 runs, $5.73</span>
+    </div>
+    <div class="abstract">
+      <span class="eyebrow">Abstract</span>
+      Decomposition, a problem cut into subtasks and solved one at a time, is the one swarm operator the earlier notes had not measured against a single pass at equal cost. This note runs it on 97 problems from the earlier corpus (AIME, GPQA Diamond, GSM-Hard), chosen by how often each base model already solved them in sixteen whole attempts, with two arms: the same model plans, solves each part and assembles, or hands the parts to Qwen 3.7 plus, Kimi K2.5 and Mistral Large. Every attempt is capped at the 8,192 tokens of one whole draw. Three findings. <strong>Where the model cannot solve the problem whole, pieces do not solve it either</strong>: on DeepSeek v3.2's fourteen numeric problems solved four times in sixteen or fewer, decomposition pass@4 equals the single model's (0.21 against 0.21) and eight attempts add no problem to its pass@16; on the six multiple-choice ones it "solves" never-solved items at the 25% guessing rate. The gain, where there is one, lands on the problems whose single pass is cut off by the token cap and on no others: on GLM-5.3-flash's thirty-eight such problems decomposition gains 34 points and ends above the model's own pass@16, for half the money, because four short calls fit where one long one did not. Where the model was fine, pieces can cost: DeepSeek loses 41 points on medium and easy problems, and in dollars a split attempt costs it three to nine whole draws, so at equal spend the single model ties or wins on every stratum. Handing the parts to other models is never better than splitting within one outside GPQA, where the difference is inside the noise, and costs two to seventeen times more in dollars than one whole draw; a planner over cheaper workers was not tested. Pre-registered, with two protocol revisions recorded before the main run; 560 runs, $5.73.
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">1</div><h2>The last operator</h2></div>
+    <p>Every result so far has been about pools of whole attempts: the same question answered by seven models, by sixteen draws of one model, by agents debating, by scaffolds around a model, by an agent run four times. The pool's union is wider than its best member, and nothing without a verifier collects the difference. Decomposition is different in kind. A planner cuts the problem into parts, each part is solved with a clean context and a short horizon, and an assembler combines them. If a model fails a problem because its reasoning runs too long or drifts, parts could succeed where the whole did not; if it fails because the move it needs is not in it, parts fail too. Which of the two is the question.</p>
+    <p>The literature has the operator everywhere and the comparison nowhere. CooperBench (arXiv:2601.13295) gives two agents separate features of one task and finds them at 26–28% against 47–49% for one agent doing both, with budgets unmatched and only self-play. The Interaction Tax (arXiv:2608.23541) runs ten configurations at one budget on verifier-scored optimisation and finds planner–executors–integrator the worst of them. CodeR (arXiv:2406.01304) gains from roles on SWE-bench Lite and does not report a single agent with the same tools at the same cost. The Conductor (arXiv:2512.04388) gains nine points over its best worker on held-out tasks by writing subtask prompts, with about three worker calls per question and no compute-matched single model. On the SWE-bench Verified leaderboard, systems built as role teams or fixed pipelines (MASAI, Composio, Agentless, AutoCodeRover) fail on the same bugs as free agents on the same model, at pairwise φ 0.42–0.67; the role teams do not beat the best single agent on their model, and the fixed pipelines sit inside the band of free agents on Claude 3.5 Sonnet and above them on GPT-4o. None of that is identical tasks, equal budget, per-task results, single against split. So: run it.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">2</div><h2>Design</h2></div>
+    <p><strong>Problems and difficulty.</strong> The earlier corpus holds sixteen draws at temperature one of each model on each problem. Difficulty is the count of correct draws. For two base models, GLM-5.3-flash and DeepSeek v3.2, I took every problem the model solved in four draws or fewer (hard), twelve sampled from five to thirteen (medium) and six from fourteen or more (easy), on AIME 2024–25, GPQA Diamond and GSM-Hard, after the label audit of the earlier note: 41 + 12 + 6 for GLM, 20 + 12 + 6 for DeepSeek, 97 in all. One thing showed at selection and was fixed in the pre-registration before any call: thirty-eight of GLM's forty-one hard problems are hard because the single pass is cut by the corpus's 8,192-token cap on eight or more of sixteen draws; DeepSeek's twenty have no problem cut on more than one draw (seven are cut on one of sixteen). So GLM's hard stratum asks whether splitting helps a model that runs out of tokens, DeepSeek's whether it helps a model that cannot.</p>
+    <p><strong>Arms.</strong> Arm 1 is the corpus's sixteen draws, which give pass@1, pass@4 and pass@16 for free. Arm 2: the base model is asked for two to four ordered subtasks without solving, then solves each subtask seeing the problem, the list and the earlier results, then assembles a final answer. Arm 3: the same plan and assembly by the base model, the subtasks handed in turn to Qwen 3.7 plus, Mistral Large 2512 and Kimi K2.5. Every attempt spends at most 8,192 completion tokens across all its calls, reasoning included: up to 1,024 for the plan with one retry, 2,048 reserved for the assembly, the rest split equally over the subtasks. Arms 2 and 3 ran once on every problem and four times on the hard ones, 560 runs, no failures, $5.07.</p>
+    <p><strong>Predictions,</strong> written before the run: on true-hard problems decomposition pass@1 at or under 0.15, arm 3 at or under arm 2, zero or one of the twelve never-solved problems solved; a signal would be three or more, or decomposition pass@4 at 0.35 with an interval clear of the single model's pass@4. On cap-hard problems decomposition would gain, as a budget effect. On medium, within ten points; on easy, at most two of six lost.</p>
+    <p><strong>Two protocol fixes before the main run,</strong> both in the pre-registration file. In an aborted first start GLM spent each call's cap on hidden reasoning and returned no text; reasoning was bounded to half of each call. In a first wave of 186 runs both models solved the problem inside the "plan, do not solve" call and hit its cap; the instruction was moved into the user turn with the problem marked "for planning only", reasoning on that call was cut to 64 tokens, one retry was allowed inside the budget, and the parser was made to accept malformed JSON. The first wave is kept as a pilot and not pooled. Nothing changed after the main run started.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">3</div><h2>Where the model cannot, splitting cannot</h2></div>
+    <div class="tw"><table>
+      <thead><tr><th>base</th><th>stratum</th><th>n</th><th>single p@1</th><th>single p@4</th><th>single p@16</th><th>split p@1</th><th>split p@4</th><th>team p@4</th><th>never-solved</th><th>of those, solved by any of 8 split attempts</th></tr></thead>
+      <tbody>
+        <tr><td>DeepSeek</td><td>hard, no cap, numeric</td><td>14</td><td>0.06</td><td>0.21</td><td>0.50</td><td>0.07</td><td>0.21</td><td>0.07</td><td>7</td><td class="hi">0</td></tr>
+        <tr><td>DeepSeek</td><td>hard, no cap, GPQA</td><td>6</td><td>0.03</td><td>0.00</td><td>0.17</td><td>0.50</td><td>0.67</td><td>0.50</td><td>5</td><td>3 (rate 0.23; chance 0.25)</td></tr>
+        <tr><td>GLM</td><td>hard, capped</td><td>38</td><td>0.10</td><td>0.37</td><td>0.58</td><td>0.45</td><td>0.71</td><td>0.66</td><td>16</td><td>10</td></tr>
+        <tr><td>GLM</td><td>medium</td><td>12</td><td>0.67</td><td>1.00</td><td>1.00</td><td>0.75</td><td>—</td><td>—</td><td>0</td><td>—</td></tr>
+        <tr><td>GLM</td><td>easy</td><td>6</td><td>1.00</td><td>1.00</td><td>1.00</td><td>1.00</td><td>—</td><td>—</td><td>0</td><td>—</td></tr>
+        <tr><td>DeepSeek</td><td>medium</td><td>12</td><td>0.62</td><td>1.00</td><td>1.00</td><td>0.25</td><td>—</td><td>—</td><td>0</td><td>—</td></tr>
+        <tr><td>DeepSeek</td><td>easy</td><td>6</td><td>0.99</td><td>1.00</td><td>1.00</td><td>0.50</td><td>—</td><td>—</td><td>0</td><td>—</td></tr>
+      </tbody>
+    </table></div>
+    <p>"Split" is arm 2, "team" arm 3; p@4 of a split arm is any of its four attempts. The three GLM problems that are hard without truncation are omitted from the table (one of three solved by the same model, two of three by any of the eight attempts).</p>
+    <p>Take DeepSeek's fourteen numeric hard problems, ten from AIME and four from GSM-Hard, with no cap in play. The single model solves them at 0.06 per draw, 0.21 in four, 0.50 in sixteen. Decomposition in four attempts: 0.21, the same number, with a bootstrap interval of ±0.29 around a difference of zero. Eight decomposition attempts per problem, four alone and four with the other models, add no problem to the single model's pass@16: the union is the single model's set exactly. The seven AIME problems DeepSeek never solved in sixteen draws it did not solve in eight more, cut into parts. The pre-registered signal was three or more of the twelve never-solved problems; on the numeric half the count is zero of seven.</p>
+    <p>The six GPQA problems look different and are not. Three of the five never-solved ones were solved at least once by decomposition. But GPQA has four options, and over the forty decomposition attempts on those five problems the rate of a correct letter was 0.23; guessing gives 0.25. The single model is confidently wrong sixteen times; a different arrangement of the same model breaks that path and lands on a letter. The pre-registration should have carried a guessing floor for "solved at least once over eight attempts", where pure guessing reaches ninety percent of items, and did not; the threshold was met nominally and means nothing. One problem (gpqa:57, five of eight) is unlikely under pure guessing for one item (about 0.03), and about 0.13 for at least one of five; it is one item.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">4</div><h2>Where the model runs out of tokens, splitting is a bigger budget</h2></div>
+    <figure>
+      <div class="fig">
+        <div class="legend"><span><i style="background:var(--muted)"></i> single pass@4</span><span><i style="background:var(--a)"></i> split pass@4</span><span><i style="background:var(--b)"></i> single pass@16</span></div>
+        <div class="fig-b"><svg viewBox="0 0 620 250" role="img" aria-label="Single model pass@4 and pass@16 against decomposition pass@4 by stratum"><line x1="40" y1="204" x2="614" y2="204" stroke="var(--rule)"/><line x1="40" y1="124.0" x2="614" y2="124.0" stroke="var(--hair)"/><text x="34" y="128.0" text-anchor="end" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace">0.5</text><line x1="40" y1="44.0" x2="614" y2="44.0" stroke="var(--hair)"/><text x="34" y="48.0" text-anchor="end" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace">1.0</text><rect x="50.9" y="170.4" width="27.1" height="33.6" fill="var(--muted)" rx="1.5"/><text x="64.4" y="166.4" text-anchor="middle" font-size="9.5" fill="var(--ink2)" font-family="JetBrains Mono,monospace">0.21</text><rect x="80.7" y="170.4" width="27.1" height="33.6" fill="var(--a)" rx="1.5"/><text x="94.3" y="166.4" text-anchor="middle" font-size="9.5" fill="var(--ink2)" font-family="JetBrains Mono,monospace">0.21</text><rect x="110.6" y="124.0" width="27.1" height="80.0" fill="var(--b)" rx="1.5"/><text x="124.1" y="120.0" text-anchor="middle" font-size="9.5" fill="var(--ink2)" font-family="JetBrains Mono,monospace">0.50</text><text x="95.6" y="216" text-anchor="middle" font-size="9.5" fill="var(--muted)" font-family="JetBrains Mono,monospace">DeepSeek</text><text x="95.6" y="227" text-anchor="middle" font-size="9.5" fill="var(--muted)" font-family="JetBrains Mono,monospace">hard, no cap</text><text x="95.6" y="238" text-anchor="middle" font-size="9.5" fill="var(--muted)" font-family="JetBrains Mono,monospace">(14 numeric)</text><rect x="164.9" y="204.0" width="27.1" height="0.0" fill="var(--muted)" rx="1.5"/><text x="178.4" y="200.0" text-anchor="middle" font-size="9.5" fill="var(--ink2)" font-family="JetBrains Mono,monospace">0.00</text><rect x="194.7" y="96.8" width="27.1" height="107.2" fill="var(--a)" rx="1.5"/><text x="208.3" y="92.8" text-anchor="middle" font-size="9.5" fill="var(--ink2)" font-family="JetBrains Mono,monospace">0.67</text><rect x="224.6" y="176.8" width="27.1" height="27.2" fill="var(--b)" rx="1.5"/><text x="238.1" y="172.8" text-anchor="middle" font-size="9.5" fill="var(--ink2)" font-family="JetBrains Mono,monospace">0.17</text><text x="209.6" y="216" text-anchor="middle" font-size="9.5" fill="var(--muted)" font-family="JetBrains Mono,monospace">DeepSeek</text><text x="209.6" y="227" text-anchor="middle" font-size="9.5" fill="var(--muted)" font-family="JetBrains Mono,monospace">hard, no cap</text><text x="209.6" y="238" text-anchor="middle" font-size="9.5" fill="var(--muted)" font-family="JetBrains Mono,monospace">(6 GPQA)</text><rect x="278.9" y="144.8" width="27.1" height="59.2" fill="var(--muted)" rx="1.5"/><text x="292.4" y="140.8" text-anchor="middle" font-size="9.5" fill="var(--ink2)" font-family="JetBrains Mono,monospace">0.37</text><rect x="308.7" y="90.4" width="27.1" height="113.6" fill="var(--a)" rx="1.5"/><text x="322.3" y="86.4" text-anchor="middle" font-size="9.5" fill="var(--ink2)" font-family="JetBrains Mono,monospace">0.71</text><rect x="338.6" y="111.2" width="27.1" height="92.8" fill="var(--b)" rx="1.5"/><text x="352.1" y="107.2" text-anchor="middle" font-size="9.5" fill="var(--ink2)" font-family="JetBrains Mono,monospace">0.58</text><text x="323.6" y="216" text-anchor="middle" font-size="9.5" fill="var(--muted)" font-family="JetBrains Mono,monospace">GLM</text><text x="323.6" y="227" text-anchor="middle" font-size="9.5" fill="var(--muted)" font-family="JetBrains Mono,monospace">hard, capped</text><text x="323.6" y="238" text-anchor="middle" font-size="9.5" fill="var(--muted)" font-family="JetBrains Mono,monospace">(38)</text><rect x="392.9" y="44.0" width="27.1" height="160.0" fill="var(--muted)" rx="1.5"/><text x="406.4" y="40.0" text-anchor="middle" font-size="9.5" fill="var(--ink2)" font-family="JetBrains Mono,monospace">1.00</text><rect x="422.7" y="84.0" width="27.1" height="120.0" fill="var(--a)" rx="1.5"/><text x="436.3" y="80.0" text-anchor="middle" font-size="9.5" fill="var(--ink2)" font-family="JetBrains Mono,monospace">0.75</text><rect x="452.6" y="44.0" width="27.1" height="160.0" fill="var(--b)" rx="1.5"/><text x="466.1" y="40.0" text-anchor="middle" font-size="9.5" fill="var(--ink2)" font-family="JetBrains Mono,monospace">1.00</text><text x="437.6" y="216" text-anchor="middle" font-size="9.5" fill="var(--muted)" font-family="JetBrains Mono,monospace">GLM</text><text x="437.6" y="227" text-anchor="middle" font-size="9.5" fill="var(--muted)" font-family="JetBrains Mono,monospace">medium (12)</text><rect x="506.9" y="44.0" width="27.1" height="160.0" fill="var(--muted)" rx="1.5"/><text x="520.4" y="40.0" text-anchor="middle" font-size="9.5" fill="var(--ink2)" font-family="JetBrains Mono,monospace">1.00</text><rect x="536.7" y="164.0" width="27.1" height="40.0" fill="var(--a)" rx="1.5"/><text x="550.3" y="160.0" text-anchor="middle" font-size="9.5" fill="var(--ink2)" font-family="JetBrains Mono,monospace">0.25</text><rect x="566.6" y="44.0" width="27.1" height="160.0" fill="var(--b)" rx="1.5"/><text x="580.1" y="40.0" text-anchor="middle" font-size="9.5" fill="var(--ink2)" font-family="JetBrains Mono,monospace">1.00</text><text x="551.6" y="216" text-anchor="middle" font-size="9.5" fill="var(--muted)" font-family="JetBrains Mono,monospace">DeepSeek</text><text x="551.6" y="227" text-anchor="middle" font-size="9.5" fill="var(--muted)" font-family="JetBrains Mono,monospace">medium (12)</text></svg></div>
+        <figcaption><b>Three strata, three stories.</b> Where DeepSeek cannot solve the problem whole, split equals single on numeric problems and guesses on GPQA. Where GLM's single pass is cut by the token cap, four short attempts pass the model's own sixteen long ones. Where the problems are medium, GLM is unchanged and DeepSeek loses most of its accuracy to its own verbosity (medium rows: one split attempt, so the middle bar is pass@1).</figcaption>
+      </div>
+    </figure>
+    <p>GLM's thirty-eight cap-hard problems go from 0.37 in four whole draws to 0.71 in four split attempts, +0.34 [+0.18, +0.50], above the 0.58 the model reaches in sixteen whole draws. Ten of sixteen never-solved problems are solved, on GPQA at a per-attempt rate of 0.47, well above chance. This is the predicted direction with a larger size, and it is the budget: a model that spends its 8,192 tokens thinking and is cut off before the answer finishes three or four calls of about seventeen hundred. The right comparator is the same model with the cap lifted, which the corpus does not have, so the number says how much a longer budget would have been worth, not what splitting adds to it. On the numeric part of this stratum the union over the model's sixteen draws is +0.09 [0, +0.23]; on GPQA +0.50.</p>
+    <p>Is the line between the two models their strength, or the overrun? Bin every problem by how many of its sixteen single draws were cut by the cap, and put decomposition's first attempt against the single model's pass@1:</p>
+    <div class="tw"><table>
+      <thead><tr><th>single draws cut by the cap</th><th>n</th><th>single p@1</th><th>split p@1</th><th>Δ</th><th>Δ, numeric only (n)</th></tr></thead>
+      <tbody>
+        <tr><td>0 of 16</td><td>39</td><td>0.51</td><td>0.49</td><td>−0.03</td><td>−0.01 (26)</td></tr>
+        <tr><td>1–7</td><td>20</td><td>0.42</td><td>0.35</td><td>−0.07</td><td>−0.10 (15)</td></tr>
+        <tr><td>12–15</td><td>23</td><td>0.14</td><td>0.61</td><td class="hi">+0.46</td><td>+0.31 (16)</td></tr>
+        <tr><td>16 of 16</td><td>13</td><td>0.00</td><td>0.15</td><td>+0.15</td><td>0.00 (5)</td></tr>
+      </tbody>
+    </table></div>
+    <p>Both models pooled (the 8–11 bin has two problems and is omitted). Within GLM alone the gradient is the same: +0.03 to +0.14 on its problems cut seven times or fewer, +0.46 on those cut twelve to fifteen times. DeepSeek, with no problem cut on more than one draw, sits at −0.09 on the problems cut on none and −0.17 on the ten cut on one. The gain follows the overrun, not the model: the stronger model gains nothing because it never runs out, the weaker one gains exactly on the problems where it is cut off and not on the ones it finishes. Problems cut on every draw are the exception on the numeric side, 0.00 on five: where the budget is far short, pieces do not finish either. Two models is not a law, but the gradient inside one model is the evidence that what mediates is the overrun.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">5</div><h2>Where the model was fine, splitting can cost</h2></div>
+    <p>On medium and easy problems GLM is unchanged by splitting (+0.06 [−0.13, +0.22]). DeepSeek loses 0.41 [−0.60, −0.21]: from 0.74 to 0.33 at one attempt. The runs show why. It solves inside the planning call despite the instruction, and loses both plan calls to the cap in thirty-four of ninety-eight runs. Where it does plan, it overruns the subtask budget on 62% of its subtask calls (GLM: 22%). In the assembly it re-solves from scratch rather than combining, and truncates at 2,048 tokens without a final line in thirty-four runs. A model that does not shorten its reasoning to the size of a step pays for every step. Under the equal-budget rule those count as wrong, which is the rule applied strictly; under any rule they are the model refusing the operator.</p>
+    <p>The team arm never helps. Against arm 2, arm 3 is −0.15 [−0.30, 0.00] on DeepSeek's hard problems, −0.18 [−0.41, 0.00] on GLM's numeric cap-hard problems, +0.12 [−0.13, +0.38] on GLM's GPQA. The subtasks themselves were not graded; what is measured is that Kimi overruns its subtask budget on 68% of its calls, Qwen on 25%, Mistral on 5%, and that the assembled answer is no better. Mistral rate-limited 53 of 927 subtask calls; those went to the next worker in the list, Kimi, and are marked in the data. Pairwise φ between a split attempt and a single draw is 0.58 for GLM and 0.22 for DeepSeek, against 0.53 and 0.68 between two single draws: splitting changes which problems fail less than a resample does for GLM, more for DeepSeek, and in neither case toward the problems the model could not solve.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">6</div><h2>In dollars</h2></div>
+    <p>The 8,192-token rule is a cap, not matched spend, and the two models fill it differently. Every call's price is in the OpenRouter ledger, so the comparison can be redone in money: give the single model as many whole draws as the decomposition attempt cost (k rounded to the nearest draw), and compare its unbiased pass@k over the sixteen corpus draws.</p>
+    <div class="tw"><table>
+      <thead><tr><th>base</th><th>stratum</th><th>one whole draw, $ / tokens</th><th>one split attempt, $ / tokens</th><th>ratio</th><th>split accuracy</th><th>single at the same money: k / pass@k</th></tr></thead>
+      <tbody>
+        <tr><td>DeepSeek</td><td>hard, no cap (20)</td><td>0.0046 / 3,255</td><td>0.0163 / 4,660</td><td>×3.5</td><td>0.20 (×4: 0.35)</td><td>4 / 0.17 (14 / 0.38)</td></tr>
+        <tr><td>DeepSeek</td><td>hard, numeric (14)</td><td></td><td></td><td></td><td>×4: 0.21</td><td class="hi">10 / 0.39</td></tr>
+        <tr><td>DeepSeek</td><td>medium (12)</td><td>0.0032 / 2,632</td><td>0.0247 / 5,899</td><td>×7.7</td><td>0.25</td><td>8 / 1.00</td></tr>
+        <tr><td>DeepSeek</td><td>easy (6)</td><td>0.0009 / 900</td><td>0.0086 / 2,957</td><td>×9.1</td><td>0.50</td><td>9 / 1.00</td></tr>
+        <tr><td>GLM</td><td>hard, capped (38)</td><td>0.0042 / 7,735</td><td>0.0021 / 2,987</td><td class="hi">×0.5</td><td>0.45 (×4: 0.71)</td><td>1 / 0.10 (2 / 0.18)</td></tr>
+        <tr><td>GLM</td><td>medium (12)</td><td>0.0024 / 4,699</td><td>0.0010 / 1,386</td><td>×0.4</td><td>0.75</td><td>1 / 0.67</td></tr>
+        <tr><td>GLM</td><td>easy (6)</td><td>0.0004 / 767</td><td>0.0007 / 836</td><td>×1.6</td><td>1.00</td><td>2 / 1.00</td></tr>
+      </tbody>
+    </table></div>
+    <p>DeepSeek fills every per-call cap, so one split attempt costs three and a half whole draws on hard problems and eight or nine on medium and easy ones, where a whole draw is 900–2,600 tokens. At equal money the single model edges decomposition on the pooled hard stratum (0.38 against 0.35) and beats it on the numeric part (pass@10 0.39 against split pass@4 0.21) and everywhere else. The token comparison favoured decomposition and it gained nothing; the dollar comparison is worse. GLM is the mirror: one whole draw on a cap-hard problem burns the whole 7,735-token cap on reasoning, while a split attempt, with reasoning bounded to half of each call by the protocol, spends 2,987 tokens and half the money, and is better (0.45 against 0.10 at one draw's money, 0.71 against 0.18 at two). For GLM decomposition is cheaper and better on that stratum, with a confound stated below: it is the bound on reasoning per call that the single pass never had. Everything "bought" here is bought by arm 2, the model splitting its own work. Arm 3 costs two to seventeen times a draw because Qwen 3.7 plus, Kimi and Mistral are dearer per token, for no gain; the arrangement people actually sell, an expensive planner over cheap workers, was not run and is the open case.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">7</div><h2>What this says</h2></div>
+    <div class="note">
+      <span class="eyebrow">Reading</span>
+      <p>Decomposition is a way to spend a budget in pieces. For a model whose single pass overruns, pieces finish, and the gain is what a larger budget would give. For a model whose single pass finishes and fails, pieces fail at the same places, and on a multiple-choice question they fail at a different letter. For a model whose single pass finishes and succeeds, pieces can break what worked. Passing the pieces to other models adds hand-off loss and nothing else. The earlier notes said a pool of whole attempts moves mass inside the union of what its members solve; this adds that cutting the attempt into parts does not move the union either. What it moves is the point on the budget curve at which the model is evaluated.</p>
+    </div>
+    <p>Two things this does not say. It does not say decomposition is useless in agents: a coding agent that reads a file, runs a test and edits is decomposing with tools, and tools bring information the model did not have; that operator is in a companion note on agents with tools, in preparation, as a pool of scaffolds, not as a split against a single pass. And it does not say decomposition with a verifier at each step is useless: a checked step can be retried, and that is a different operator again, the partial-verifier question, which remains open. What is closed is the bare operator: plan, solve parts, assemble, no checker, equal cost.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">8</div><h2>Limitations</h2></div>
+    <ul>
+      <li><strong>Twenty true-hard problems, one strong model.</strong> Fourteen numeric. The interval on the numeric difference is ±0.29; the null "no problem gained" is exact on this set, not an estimate. A second uncapped base would double it.</li>
+      <li><strong>GLM's hard stratum is the corpus's cap, and the protocol bounded reasoning.</strong> The 8,192-token limit of the earlier corpus made the stratum, and the decomposition protocol capped hidden reasoning at half of each call, which the single pass never had. GLM's gain there, cheaper and better, may be the reasoning bound rather than the split. The two controls that would separate them, the same model with the cap removed and a single pass with reasoning capped at 4,096, were not run.</li>
+      <li><strong>Protocol was revised twice before the main run</strong> (reasoning bound; planning prompt), both recorded in the pre-registration with the reason; the first wave under the old protocol is kept as a pilot. The planning prompt still fails on DeepSeek in a third of runs, and those count as wrong.</li>
+      <li><strong>No guessing floor in the pre-registration.</strong> "Solved at least once over eight attempts" on four-option items is met by chance; the numeric half of the criterion is the one that holds.</li>
+      <li><strong>One planner, two to four subtasks, no loops.</strong> A planner model different from the solver, deeper trees, or a checker between steps were not run.</li>
+      <li><strong>Budget accounting.</strong> Fifteen attempts exceed 8,192 tokens by 1–15 tokens because reasoning is counted after the fact; the per-call caps are what the API enforces.</li>
+      <li><strong>Grading</strong> is the corpus grader: a FINAL line, numeric tolerance, letter match. Decomposition attempts that end without a FINAL line are wrong by the equal-budget rule.</li>
+      <li><strong>Workers.</strong> Mistral rate-limited 53 of 927 subtask calls in arm 3; the subtask went to the next worker, recorded per call.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">9</div><h2>Sources</h2></div>
+    <p>Data and code: the corpus of <a href="../where-the-swarm-pays/">Where the Swarm Pays</a> (sixteen draws per model and problem, audited labels; released at <a href="https://github.com/Alatip/tech-note-5">Alatip/tech-note-5</a>); the decomposition runs, pre-registration with its two revisions, runner and statistics will be released with this note. Models via OpenRouter: deepseek/deepseek-v3.2, z-ai/glm-5.3-flash, qwen/qwen3.7-plus, moonshotai/kimi-k2.5, mistralai/mistral-large-2512; temperature 1; 9–10 October 2026.</p>
+    <p>Papers: CooperBench, <a href="https://arxiv.org/abs/2601.13295">arXiv:2601.13295</a>; Ann, Liu and Tan, <em>The Interaction Tax</em>, ICML 2026, <a href="https://arxiv.org/abs/2608.23541">arXiv:2608.23541</a>; CodeR, <a href="https://arxiv.org/abs/2406.01304">arXiv:2406.01304</a>; the Conductor, <a href="https://arxiv.org/abs/2512.04388">arXiv:2512.04388</a>, read in <a href="../orchestrator-can-and-cannot-add/">What a Model Orchestrator Can and Cannot Add</a>. The SWE-bench cut is from the leaderboard matrix of a companion note on agents with tools, in preparation.</p>
+    <p>Earlier notes: <a href="../where-the-swarm-pays/">Where the Swarm Pays</a>, <a href="../no-free-lunch/">There Is No Free Lunch After All</a> (the claim this tests at the level of a single attempt).</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <p class="foot"><a href="../">← notes</a> · <a href="https://github.com/Alatip">github.com/Alatip</a></p>
+  </div>
+</section>
+</div>
+</body>
+</html>
