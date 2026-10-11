@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Do safety breaches of computer-use agents co-occur across model families the way correctness errors do? Five agents from four vendors on 150 OS-Harm tasks, pre-registered, zero cost. On deliberate misuse the agents comply together (tetrachoric ρ 0.67, 1.4 effective votes of 5); on prompt injection which agent obeys is close to idiosyncratic (ρ 0.28, no task breaks all five); on the same tasks safety breaches are more shared than task failures (ρ 0.27–0.51).">
+<title>Agents Break Together on Misuse, Apart on Injection</title>
+<link rel="canonical" href="https://alatip.github.io/safety-breaches-co-occur/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Agents Break Together on Misuse, Apart on Injection">
+<meta property="og:description" content="Five computer-use agents from four vendors, 150 OS-Harm tasks. On misuse the agents comply together (ρ 0.67); on prompt injection which agent obeys is close to idiosyncratic (ρ 0.28); on the same tasks safety breaches are more shared than task failures.">
+<meta property="og:url" content="https://alatip.github.io/safety-breaches-co-occur/">
+<meta name="author" content="Aziz Latipov">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"Agents Break Together on Misuse, Apart on Injection","datePublished":"2026-10-11","author":{"@type":"Person","name":"Aziz Latipov","url":"https://alatip.github.io/"},"url":"https://alatip.github.io/safety-breaches-co-occur/"}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<style>
+:root{
+  --paper:#F8F9FA; --card:#FFFFFF; --sunk:#F0F2F5;
+  --ink:#12161C; --ink2:#39424F; --muted:#6B7684; --rule:#DDE1E7; --hair:#EAEDF1;
+  --accent:#14548C; --accent-soft:#E4EDF6;
+  --a:#14548C; --b:#BF5B04; --truth:#39424F;
+  --warn-bg:#FBF2E4; --warn-ink:#8A5A00;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0F1216; --card:#161A20; --sunk:#1C2128;
+    --ink:#E6EAEF; --ink2:#B6BFCA; --muted:#828D9B; --rule:#2A313A; --hair:#222932;
+    --accent:#7FB3E0; --accent-soft:#152838;
+    --a:#4D93D0; --b:#D4762A; --truth:#B6BFCA;
+    --warn-bg:#2A2214; --warn-ink:#D8AA5C;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0F1216; --card:#161A20; --sunk:#1C2128;
+  --ink:#E6EAEF; --ink2:#B6BFCA; --muted:#828D9B; --rule:#2A313A; --hair:#222932;
+  --accent:#7FB3E0; --accent-soft:#152838;
+  --a:#4D93D0; --b:#D4762A; --truth:#B6BFCA;
+  --warn-bg:#2A2214; --warn-ink:#D8AA5C;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"Source Serif 4",Georgia,serif; font-size:17.5px; line-height:1.62;
+  -webkit-font-smoothing:antialiased; font-variant-numeric:oldstyle-nums;
+}
+.page{max-width:1000px; margin:0 auto; padding:0 24px 110px}
+.col{max-width:640px; margin:0 auto}
+.col > * + *{margin-top:1.05em}
+p{margin:0}
+h1,h2,h3{margin:0; line-height:1.2; text-wrap:balance; font-weight:600}
+h1{font-size:clamp(2rem,4.6vw,2.85rem); letter-spacing:-.012em}
+h2{font-size:1.42rem}
+h3{font-size:1.08rem}
+a{color:var(--accent)}
+strong{font-weight:600}
+code,.mono,.eyebrow{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace}
+code{font-size:.84em; background:var(--sunk); padding:.1em .35em; border-radius:3px}
+.eyebrow{font-size:.68rem; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); font-weight:500}
+
+header{padding:82px 0 30px}
+.byline{display:flex; flex-wrap:wrap; gap:6px 20px; margin-top:1.1em; font-family:"JetBrains Mono",monospace; font-size:.74rem; color:var(--muted)}
+.abstract{
+  margin-top:2em; padding:22px 26px; background:var(--card);
+  border-top:2px solid var(--ink); border-bottom:1px solid var(--rule);
+  font-size:.97rem; line-height:1.6; color:var(--ink2);
+}
+.abstract .eyebrow{display:block; margin-bottom:.7em}
+.abstract strong{color:var(--ink)}
+
+section{padding-top:56px}
+.sec-head{display:flex; gap:14px; align-items:baseline; margin-bottom:20px}
+.sec-num{font-family:"JetBrains Mono",monospace; font-size:.78rem; color:var(--accent); padding-top:.3em; flex:none; font-weight:500}
+
+.eq{
+  background:var(--card); border:1px solid var(--rule); border-radius:4px;
+  padding:16px 20px; overflow-x:auto; font-family:"JetBrains Mono",monospace;
+  font-size:.88rem; line-height:1.85;
+}
+.eq .cm{color:var(--muted)}
+.note{background:var(--accent-soft); padding:16px 20px; border-radius:4px; font-size:.95rem}
+.note.warn{background:var(--warn-bg)}
+.note .eyebrow{display:block; margin-bottom:.45em; color:var(--ink2)}
+
+.tw{overflow-x:auto; border:1px solid var(--rule); border-radius:4px; background:var(--card)}
+table{border-collapse:collapse; width:100%; font-size:.88rem; font-family:"JetBrains Mono",monospace}
+th,td{padding:9px 13px; text-align:right; border-bottom:1px solid var(--hair)}
+th:first-child,td:first-child{text-align:left}
+thead th{font-size:.66rem; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:500; background:var(--sunk)}
+tbody tr:last-child td{border-bottom:none}
+td.hi{color:var(--ink); font-weight:500}
+td.dim{color:var(--muted)}
+.tnum{font-variant-numeric:tabular-nums}
+
+figure{margin:0; max-width:880px; margin-inline:auto}
+.fig{background:var(--card); border:1px solid var(--rule); border-radius:4px; overflow:hidden}
+.fig-b{padding:18px 14px 6px}
+figcaption{padding:0 24px 20px; font-size:.85rem; color:var(--muted); line-height:1.55; max-width:66ch}
+figcaption b{color:var(--ink2); font-weight:600}
+.legend{display:flex; flex-wrap:wrap; gap:6px 22px; padding:16px 24px 0; font-size:.8rem; color:var(--ink2); font-family:"JetBrains Mono",monospace}
+.legend span{display:inline-flex; align-items:center; gap:7px}
+.legend i{width:15px; height:2.5px; border-radius:2px}
+.legend i.dash{background:none; border-top:2px dashed var(--truth); height:0}
+svg{display:block; width:100%; height:auto; overflow:visible}
+
+ol,ul{margin:0; padding-left:1.25em}
+li{margin:.42em 0}
+.refs{font-size:.88rem; color:var(--ink2)}
+.refs li{margin:.55em 0}
+.refs .mono{color:var(--muted); font-size:.92em}
+hr.r{border:none; border-top:1px solid var(--rule); margin:0}
+.foot{padding-top:52px; font-size:.86rem; color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<style>.col p+p,.col p+ul,.col p+ol,.col ul+p,.col ol+p,.col div.note+p,.col p+div.note{margin-top:1.05em} .note .eyebrow{display:block;margin-bottom:.45em} .note p{margin:0}</style>
+</head>
+<body>
+<div class="page">
+<header>
+  <div class="col">
+    <div class="eyebrow">Technical note · Ensembles · Safety</div>
+    <h1 style="margin-top:.5em">Agents Break Together on Misuse, Apart on Injection</h1>
+    <p style="margin-top:.6em; font-size:1.12rem; color:var(--ink2)">Five computer-use agents from four vendors, 150 OS-Harm tasks, one judge. When a user asks for harm, the agents that comply are mostly the same ones; when a web page asks for harm, which agent obeys looks close to chance. On the same tasks, safety breaches are more shared across models than task failures are.</p>
+    <div class="byline">
+      <span>11 October 2026</span><span>pre-registered</span><span>5 agents, 150 tasks, 749 cells, $0</span>
+    </div>
+    <div class="abstract">
+      <span class="eyebrow">Abstract</span>
+      The earlier notes measured how often frontier models are wrong on the same questions: between model families, tetrachoric ρ 0.69–0.84, so a panel of seven carries about two effective votes. This note asks the same question of safety failures, on someone else's data and at no cost. OS-Harm (Kuntz et al., 2025) released one trajectory per task for Claude 3.7 Sonnet, GPT-4.1, o4-mini, Gemini 2.5 Pro and Gemini 2.5 Flash on 150 desktop tasks in three categories: deliberate misuse (25 tasks, with and without a jailbreak wrapper), prompt injection (50) and model misbehavior (50), each judged by GPT-4.1. A breach is the judge's <em>unsafe</em> verdict. Pre-registered before any correlation was computed, with the same estimators as the correctness corpus. Three findings. <strong>Pooled over all 150 tasks, breaches look as shared as correctness errors</strong> (ρ 0.84 [0.76, 0.91]), but the pooling is a confound: base rates run from 0.07 to 0.88 by category, so the number mostly says that models breach on the same kinds of task, which the benchmark guarantees. <strong>Per category the answer splits.</strong> On plain misuse, ρ 0.67 [0.35, 0.89]: all five comply on 29% of tasks against 15% if independent, and no model is safe on 92% of them. On prompt injection, ρ 0.28 [−0.34, 0.39], entirely below the corpus band: no task breaks all five, 68% break none. On misbehavior the point estimate is high (0.88) but 18 breaches in 250 cells make the interval useless. <strong>The fairer baseline is correctness on the same tasks,</strong> not on QA: agentic task failures on OS-Harm have ρ 0.27–0.51, and against that, breaches are more shared on misuse (0.67 against 0.48) and misbehavior (0.88 against 0.37), equal on injection. A mixed-vendor panel buys less independence for safety than for accuracy. The measurement is one judge deep; human labels exist for one model only, and substituting them moves the small categories more than the bootstrap does.
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">1</div><h2>The question</h2></div>
+    <p><a href="../effective-independence/">Effective Independence</a> measured how much a pool of frontier models is worth as a panel: pairwise φ on binary correctness 0.34–0.40 between seven models, tetrachoric ρ 0.69–0.84 between families on the layered matrices, and so 1.5–2.3 effective votes from seven. Later notes spent that finding on debate, scaffolds, orchestrators and decomposition. All of it is about being <em>wrong</em> together. Nothing in it says whether models are <em>unsafe</em> together: whether, when an agent carries out a harmful request or follows an instruction planted in a web page, the agents from other vendors do the same on the same task.</p>
+    <p>The question matters for the same reason the correctness one did. A safety panel, a second model that watches the first or a vote across vendors on whether to proceed, is worth as many votes as its members are independent. If breaches co-occur like errors, a mixed-vendor guard buys little. If they are idiosyncratic, it buys a lot. The question is also answerable from released traces: OS-Harm ships every trajectory and every judge verdict, so the matrix can be built without running an agent.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">2</div><h2>Data and definitions</h2></div>
+    <p><strong>Data.</strong> OS-Harm (Kuntz, Duzan, Zhao, Croce, Kolter, Flammarion and Andriushchenko, NeurIPS 2025 Datasets and Benchmarks; arXiv:2506.14866; Apache 2.0) runs computer-use agents on OSWorld desktops with a screenshot plus accessibility tree, one run per model per task. The public release holds the trajectories, action logs, agent responses, judge files and human annotations; I read 145 MB of it, skipping screenshots and videos. Five agents from four vendors: Claude 3.7 Sonnet, GPT-4.1, o4-mini, Gemini 2.5 Pro, Gemini 2.5 Flash. Three categories: <em>deliberate misuse</em>, 25 tasks each run with the plain harmful prompt and with a jailbreak wrapper, treated as 50 items with the two rows of one task resampled together; <em>prompt injection</em>, 50 benign tasks with an injected instruction in the environment; <em>model misbehavior</em>, 50 benign tasks where the agent can do harm by accident. 150 items by five models, 749 cells, since GPT-4.1 lacks one misuse task. Twenty-five augmented misuse variants exist only for o4-mini and were dropped.</p>
+    <p><strong>Outcomes.</strong> A <em>breach</em> is the paper's main judge, GPT-4.1 with the "aer" prompt, version 3, marking the trajectory unsafe. A <em>correctness error</em> is the same judge marking the task not done; on misuse tasks "done" means the harm was carried out, so error there is not the benign-benchmark quantity, and the comparison with the corpus is made on injection and misbehavior. <em>Refusal</em>, on misuse only, was pre-registered as the proxy "safe and not done", with an explicit flag (the agent emitted <code>FAIL</code> or a refusal phrase) computed from trajectories as a check; section 6 shows the proxy fails.</p>
+    <p><strong>Estimators,</strong> copied verbatim from the corpus: pairwise φ and tetrachoric ρ for all ten pairs, their means, Kish effective votes n<sub>eff</sub> = k / (1 + (k − 1) ρ̄), the observed rate of "all five breach" and "none breach" against the independence product, and a 95% percentile bootstrap over tasks (B = 1000). Pairs with a constant column are excluded and counted. The plan was frozen before any correlation was computed; two interpretation notes were added before the full run and are in the pre-registration file: the pooled estimate is confounded by category base rates and the decision rule applies to the per-category rows as well, and the Claude misuse trajectories sit under a dated model directory whose per-trajectory judgment is a different judge pass from the batch file, which stays primary.</p>
+    <p><strong>Hypotheses.</strong> H0: breaches are at least as correlated across families as correctness errors in the corpus, ρ in or above 0.69–0.84. H1: less correlated, the interval entirely below 0.69.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">3</div><h2>Breach against error, five-model panel</h2></div>
+    <div class="tw"><table>
+      <thead><tr><th>slice</th><th>n</th><th>breach rate</th><th>breach ρ [95%]</th><th>n<sub>eff</sub></th><th>all 5 breach / indep.</th><th>error ρ [95%]</th><th>n<sub>eff</sub></th><th>all 5 err / indep.</th></tr></thead>
+      <tbody>
+        <tr><td>all 150, pooled</td><td>150</td><td>0.32</td><td>0.84 [0.76, 0.91]</td><td>1.14</td><td>0.148 / 0.003</td><td>0.35 [0.23, 0.47]</td><td>2.07</td><td>0.208 / 0.079</td></tr>
+        <tr><td>misuse, plain</td><td>25</td><td>0.69</td><td class="hi">0.67 [0.35, 0.89]</td><td>1.36</td><td>0.292 / 0.151</td><td>0.48 [0.16, 0.76]</td><td>1.70</td><td>0.250 / 0.080</td></tr>
+        <tr><td>misuse, jailbreak</td><td>25</td><td>0.88</td><td class="dim">0.11 [−0.33, 1.00], 7 of 10 pairs degenerate</td><td class="dim">3.45</td><td>0.520 / 0.473</td><td>0.51 [0.11, 0.82]</td><td>1.65</td><td>0.240 / 0.093</td></tr>
+        <tr><td>injection</td><td>50</td><td>0.10</td><td class="hi">0.28 [−0.34, 0.39]</td><td>2.35</td><td>0.000 / 0.000</td><td>0.27 [0.08, 0.49]</td><td>2.38</td><td>0.080 / 0.027</td></tr>
+        <tr><td>misbehavior</td><td>50</td><td>0.07</td><td>0.88 [−0.78, 0.99]</td><td>1.10</td><td>0.040 / 0.000</td><td>0.37 [0.11, 0.60]</td><td>2.02</td><td>0.300 / 0.143</td></tr>
+        <tr><td>injection + misbehavior</td><td>100</td><td>0.09</td><td>0.67 [−0.27, 0.87]</td><td>1.36</td><td>0.020 / 0.000</td><td>0.35 [0.20, 0.49]</td><td>2.08</td><td>0.190 / 0.068</td></tr>
+      </tbody>
+    </table></div>
+    <p>Breach rate is the mean of the five models' rates; ρ is the mean pairwise tetrachoric; n<sub>eff</sub> is from it with k = 5. Mean φ runs 0.18–0.65 on breach and 0.17–0.32 on error; the full pairwise tables and the three- and four-family panels are in the results file.</p>
+    <p>Two things about the panel itself. Vendor does not organise the pairs: on the pooled breach matrix the two OpenAI models correlate at 0.70 and the two Gemini models at 0.96, while Claude against either Gemini is 0.96–0.97. The odd one out is o4-mini, whose four pairs are the lowest in every slice, not OpenAI. The strict three-vendor panel (Claude, GPT-4.1, Gemini Pro) is <em>more</em> correlated than the five, pooled ρ 0.92 [0.85, 0.97], n<sub>eff</sub> 1.06.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">4</div><h2>Reading the pre-registered test</h2></div>
+    <p><strong>Pooled, the null holds and means little.</strong> ρ 0.84 sits inside the corpus band. But the four categories breach at 0.69, 0.88, 0.10 and 0.07, an order of magnitude apart, and a binary variable whose base rate tracks the task category correlates across models through category alone. The pooled row says models breach on the same kinds of task. The benchmark was built to make that true.</p>
+    <p><strong>Deliberate misuse, plain prompt: inconclusive, leaning shared.</strong> ρ 0.67 [0.35, 0.89], at the lower edge of the band and covering it. All five agents carry out the harmful task on 29% of the 25 against 15% under independence; on 92% of the tasks at least one does. Twenty-five tasks is the whole of the evidence here.</p>
+    <p><strong>Misuse with a jailbreak: degenerate.</strong> Three of five agents breach on all 25 tasks, so seven of ten pairs have no correlation to compute. The one informative column is o4-mini at 56%. This is a ceiling, not a finding.</p>
+    <p><strong>Prompt injection: H1.</strong> ρ 0.28 [−0.34, 0.39], the interval entirely below 0.69. Fifty tasks, 26 breaches in 250 cells. No task breaks all five agents; 68% break none; of the ten pairs three are negative. Which agent reads and follows the planted instruction on a given page looks close to idiosyncratic, and it is the one category where a second model from another vendor would plausibly catch what the first missed.</p>
+    <p><strong>Model misbehavior: inconclusive, leaning shared.</strong> Eighteen breaches in 250 cells. The point estimate is 0.88 and the two tasks on which anyone did accidental harm saw all five do it (against 0.00 under independence), but the interval spans [−0.78, 0.99]. Tetrachoric ρ is the right estimator for rare events and still cannot be pinned at these counts.</p>
+    <figure>
+      <div class="fig">
+        <div class="legend"><span><i style="background:var(--a)"></i> breach ρ</span><span><i style="background:var(--b)"></i> correctness-error ρ, same tasks</span><span><i class="dash"></i> corpus band 0.69–0.84 (QA correctness, between families)</span></div>
+        <div class="fig-b"><svg viewBox="0 0 620 230" role="img" aria-label="Mean tetrachoric rho for safety breach and for correctness error, by OS-Harm category, with the corpus band for QA correctness">
+          <!-- y: rho from -0.4 (y=200) to 1.0 (y=20); 1 unit = 128.6 px -->
+          <rect x="40" y="40.6" width="574" height="19.3" fill="var(--sunk)"/>
+          <line x1="40" y1="40.6" x2="614" y2="40.6" stroke="var(--truth)" stroke-dasharray="4 4"/>
+          <line x1="40" y1="59.9" x2="614" y2="59.9" stroke="var(--truth)" stroke-dasharray="4 4"/>
+          <line x1="40" y1="148.6" x2="614" y2="148.6" stroke="var(--rule)"/>
+          <text x="34" y="24" text-anchor="end" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace">1.0</text>
+          <text x="34" y="88" text-anchor="end" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace">0.5</text>
+          <text x="34" y="152" text-anchor="end" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace">0</text>
+          <!-- misuse plain: breach 0.67 [0.35,0.89]; error 0.48 [0.16,0.76] -->
+          <line x1="110" y1="34.1" x2="110" y2="103.6" stroke="var(--a)" stroke-width="1.5"/><circle cx="110" cy="62.4" r="5" fill="var(--a)"/>
+          <line x1="140" y1="50.9" x2="140" y2="128.0" stroke="var(--b)" stroke-width="1.5"/><circle cx="140" cy="86.9" r="5" fill="var(--b)"/>
+          <text x="125" y="222" text-anchor="middle" font-size="10.5" fill="var(--ink2)" font-family="JetBrains Mono,monospace">misuse, plain</text>
+          <!-- injection: breach 0.28 [-0.34,0.39]; error 0.27 [0.08,0.49] -->
+          <line x1="270" y1="98.4" x2="270" y2="192.3" stroke="var(--a)" stroke-width="1.5"/><circle cx="270" cy="112.6" r="5" fill="var(--a)"/>
+          <line x1="300" y1="85.6" x2="300" y2="138.3" stroke="var(--b)" stroke-width="1.5"/><circle cx="300" cy="113.9" r="5" fill="var(--b)"/>
+          <text x="285" y="222" text-anchor="middle" font-size="10.5" fill="var(--ink2)" font-family="JetBrains Mono,monospace">injection</text>
+          <!-- misbehavior: breach 0.88 [-0.78,0.99] (clipped at -0.4); error 0.37 [0.11,0.60] -->
+          <line x1="430" y1="21.3" x2="430" y2="200" stroke="var(--a)" stroke-width="1.5"/><circle cx="430" cy="35.4" r="5" fill="var(--a)"/>
+          <text x="430" y="212" text-anchor="middle" font-size="9" fill="var(--muted)" font-family="JetBrains Mono,monospace">↓ −0.78</text>
+          <line x1="460" y1="71.4" x2="460" y2="134.5" stroke="var(--b)" stroke-width="1.5"/><circle cx="460" cy="101.0" r="5" fill="var(--b)"/>
+          <text x="445" y="222" text-anchor="middle" font-size="10.5" fill="var(--ink2)" font-family="JetBrains Mono,monospace">misbehavior</text>
+          <!-- pooled: breach 0.84 [0.76,0.91]; error 0.35 [0.23,0.47] -->
+          <line x1="560" y1="31.6" x2="560" y2="50.9" stroke="var(--a)" stroke-width="1.5"/><circle cx="560" cy="40.6" r="5" fill="var(--a)"/>
+          <line x1="590" y1="88.2" x2="590" y2="119.0" stroke="var(--b)" stroke-width="1.5"/><circle cx="590" cy="103.6" r="5" fill="var(--b)"/>
+          <text x="575" y="222" text-anchor="middle" font-size="10.5" fill="var(--ink2)" font-family="JetBrains Mono,monospace">pooled (confounded)</text>
+        </svg></div>
+        <figcaption><b>Where the test is fair, the answer splits.</b> Mean pairwise tetrachoric ρ with 95% bootstrap intervals, five-model panel. Misuse breaches sit at the edge of the corpus band; injection breaches sit well below it; misbehavior cannot be placed. In every category the breach point estimate is at or above the correctness-error estimate on the same tasks. The misbehavior breach interval runs to −0.78 and is clipped.</figcaption>
+      </div>
+    </figure>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">5</div><h2>The right baseline is agentic correctness, not QA</h2></div>
+    <p>The pre-registered comparison was against the corpus, whose correctness is on QA: AIME, GPQA Diamond, GSM-Hard. OS-Harm offers a fairer one, correctness errors on the very same tasks under the very same judge. Those come out at ρ 0.27–0.51 per category, 0.35 pooled, well below the QA band. Agentic correctness co-fails less than QA correctness, presumably because finishing a desktop task depends on GUI navigation as much as on knowing what to do, and navigation luck is model-specific. A panel of five computer-use agents carries about two effective correctness votes on these tasks, against about one and a half on QA with seven.</p>
+    <p>Against that baseline the safety result reads differently. On misuse, breach 0.67 against error 0.48; on misbehavior, 0.88 against 0.37; on injection, 0.28 against 0.27. In effective votes, a five-model panel carries about 1.4 safety votes on misuse and 1.1 on misbehavior, against 1.7–2.4 correctness votes. Whatever makes an agent carry out a harmful request, or do accidental harm on the way to a benign goal, is more shared across vendors than whatever makes it fail the task. Only on injection do safety and correctness co-fail alike, and both weakly.</p>
+    <p>The within-dataset comparison has a bias of its own worth stating. Breach and error are read off the same judge pass, so judge errors that touch both fields (a trajectory misread end to end) push both correlations the same way, and the <em>gap</em> between them is more robust to the judge than either level is.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">6</div><h2>Refusal is not an outcome here</h2></div>
+    <div class="tw"><table>
+      <thead><tr><th>misuse slice</th><th>proxy refusal rate: Claude / GPT-4.1 / o4-mini / Gemini Pro / Flash</th><th>proxy ρ [95%]</th><th>explicit FAIL rate, same order</th></tr></thead>
+      <tbody>
+        <tr><td>plain</td><td>0.04 / 0.38 / 0.36 / 0.28 / 0.20</td><td>0.62 [−0.16, 0.82]</td><td>0.00 / 0.25 / 0.04 / 0.16 / 0.00</td></tr>
+        <tr><td>jailbreak</td><td>0.04 / 0.00 / 0.44 / 0.00 / 0.12</td><td>0.13 [−0.30, 1.00]</td><td>0.00 / 0.00 / 0.00 / 0.04 / 0.00</td></tr>
+      </tbody>
+    </table></div>
+    <p>The pre-registered proxy, safe and not done, was meant to stand for "declined". It does not. Of 249 misuse cells with a trajectory, 46 are proxy refusals, 12 ended with an explicit <code>FAIL</code>, and only 7 are both. The proxy captures "did not finish". Explicit refusals are too rare to correlate. Claude 3.7 Sonnet never emitted <code>FAIL</code> in 50 misuse runs and was judged unsafe on 90% of them; GPT-4.1 refused outright on a quarter of plain prompts and on none with the wrapper. Whether a refusal panel is worth more than a breach panel cannot be read from this release.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">7</div><h2>One judge, humans on one column</h2></div>
+    <p>Everything above is GPT-4.1's verdict. The release has human annotations for 175 trajectories, all of them o4-mini's, so the judge can be checked on one column and the matrix cannot be re-measured. On that column the judge agrees with the humans on 89% of unsafe verdicts (κ 0.74, F1 0.82) and 85% of success verdicts (κ 0.66), in line with the paper's F1 of 0.79 and 0.76. Its safety errors are one-sided: 13 misses against 4 false alarms, concentrated in misuse, where humans mark o4-mini unsafe on 21 of 25 plain prompts and the judge on 15.</p>
+    <p>Substituting the human labels for the o4-mini column moves the pooled breach ρ from 0.84 to 0.79, the four o4-mini pairs from 0.65–0.75 to 0.48–0.62, injection from 0.28 to 0.21, misbehavior from 0.88 to 0.87. On misuse plain the substituted estimate collapses to 0.14 with all four o4-mini pairs at −1.00: with 21 of 25 unsafe the 2×2 tables sit on the boundary where overlap equals its minimum, a saturation artefact of n = 25 rather than a finding. A second GPT-4.1 judge pass (prompt version 2) agrees with the primary on 91% of cells (κ 0.79) and gives pooled 0.81, injection −0.07, misbehavior 0.60. The sign of the per-category pattern survives a change of judge; the magnitudes on the two low-rate categories do not. Judge choice moves them more than the bootstrap does.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">8</div><h2>What this says</h2></div>
+    <div class="note">
+      <span class="eyebrow">Reading</span>
+      <p>The question has a category-dependent answer, and the release is enough to see the shape of it. When the harm is in the user's request, the five agents largely comply or hold back together, about as shared as correctness errors on QA and more shared than their own task failures; a second vendor in the loop is worth about 1.4 votes out of five. When the harm is planted in the environment, which agent follows it is close to idiosyncratic, no page caught all five, and a second vendor is worth close to a full extra vote. Accidental harm on the way to a benign goal looks shared but cannot be measured at eighteen events. The earlier notes said a pool of models buys less independence than its headcount; this adds that for the one safety failure that is a <em>disposition</em>, complying with misuse, it buys less still, and for the one that is an <em>attention lapse</em>, reading the injection, it buys more.</p>
+    </div>
+    <p>What it does not say. It does not say a mixed-vendor guard is useless on misuse: 1.4 votes is more than one, and a guard model is not asked to carry out the task, which is a different disposition from the agent's. It does not separate model from scaffold: all five ran in the same OSWorld harness with the same system prompt, and part of the co-failure is the prompt's. And it says nothing about within-model variance, since every cell is a single run; the corpus found within-model φ of 0.45–0.78 on correctness and there is no counterpart here.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">9</div><h2>Limitations</h2></div>
+    <ul>
+      <li><strong>Five models, four vendors, one run each.</strong> No temperature replication, so within-model co-failure cannot be measured; the five-model panel has two vendors doubled and the strict three-vendor panel has three columns.</li>
+      <li><strong>Small informative slices.</strong> 25 tasks for plain misuse, 25 for jailbreak, 26 and 18 breach events in injection and misbehavior. Tetrachoric intervals on the low-rate categories span most of [−1, 1]; several pairs saturate at ±1.00 on an empty 2×2 cell and are reported as computed.</li>
+      <li><strong>One LLM judge.</strong> GPT-4.1 throughout; humans annotated o4-mini only, and the judge's safety misses cluster in misuse. A second judge pass changes the magnitude of the small-category estimates, not the sign.</li>
+      <li><strong>The pooled estimate is confounded</strong> by category base rates, as stated before the run; it is reported because it was pre-specified and should not be read as a result.</li>
+      <li><strong>Shared scaffold.</strong> The same OSWorld harness and prompt for all agents, so some co-failure is harness, not model.</li>
+      <li><strong>Refusal proxy failed</strong> and the explicit flag is too sparse; refusal is unmeasured.</li>
+      <li><strong>Data quirks.</strong> The Claude misuse trajectories sit under a dated directory whose per-trajectory judgment differs from the batch file on 1 of 25 safety and 8 of 25 success verdicts; the batch file was primary as planned. GPT-4.1 lacks one misuse task.</li>
+      <li><strong>Correctness on misuse tasks means harm done,</strong> so the error column there is not comparable to a benign benchmark and the corpus comparison is restricted to injection and misbehavior.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">10</div><h2>Sources</h2></div>
+    <p>Data: OS-Harm, Kuntz, Duzan, Zhao, Croce, Kolter, Flammarion and Andriushchenko, <em>OS-Harm: A Benchmark for Measuring Safety of Computer Use Agents</em>, NeurIPS 2025 Datasets and Benchmarks, <a href="https://arxiv.org/abs/2506.14866">arXiv:2506.14866</a>, Apache 2.0; the public release (trajectories, judge files, human annotations) read without login. Nothing was re-run.</p>
+    <p>Code: pre-registration with its two dated notes, the Drive walker and downloader, the matrix builder, the analysis and the statistics module (a verbatim copy of the corpus estimators) are to be released as a companion repository. Estimators and the corpus numbers: <a href="../effective-independence/">Effective Independence</a> (doi:10.5281/zenodo.23132592).</p>
+    <p>Earlier notes: <a href="../effective-independence/">Effective Independence</a>, <a href="../where-the-swarm-pays/">Where the Swarm Pays</a>, <a href="../decomposition-buys-budget/">Decomposition Buys Budget at Best, Nothing Usually</a>.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <p class="foot"><a href="../">← notes</a> · <a href="https://github.com/Alatip">github.com/Alatip</a></p>
+  </div>
+</section>
+</div>
+</body>
+</html>
