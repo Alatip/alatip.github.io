@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="One public asset for the axis the earlier notes set aside: 175 software agents, each a model wrapped in its own tools and workflow, scored on the same 500 SWE-bench Verified bugs. The seven best carry 1.4 effective independent votes, not seven; a majority of them resolves 79.4% of bugs against 79.2% for the best one alone, zero inside the interval; a perfect selector over the seven would reach 89.0%, ten points of coverage that no judge in the earlier notes could collect. Forty-one models in one scaffold and one model in eleven scaffolds give the same shape. Twenty-six bugs are resolved by none of the 175. On τ-bench's released logs one agent rerun four times is worth 1.4–1.9 independent runs, any-of-four adds 14–25 points over one run, and four runs of the best model cover as much as four models once. Pre-registered against the text-corpus predictions, zero inference, results only, no trajectories read.">
+<title>Agents with Tools Fail Together</title>
+<link rel="canonical" href="https://alatip.github.io/agents-fail-together/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Agents with Tools Fail Together">
+<meta property="og:description" content="One public asset for the axis the earlier notes set aside: 175 software agents, each a model wrapped in its own tools and workflow, scored on the same 500 SWE-bench Verified bugs. The seven best carry 1.4 effective independent votes, not seven; a majority of them resolves 79.4% of bugs against 79.2% for the best one alone, zero inside the interval; a perfect selector over the seven would reach 89.0%, ten points of coverage that no judge in the earlier notes could collect. Forty-one models in one scaffold and one model in eleven scaffolds give the same shape. Twenty-six bugs are resolved by none of the 175. On τ-bench's released logs one agent rerun four times is worth 1.4–1.9 independent runs, any-of-four adds 14–25 points over one run, and four runs of the best model cover as much as four models once. Pre-registered against the text-corpus predictions, zero inference, results only, no trajectories read.">
+<meta property="og:url" content="https://alatip.github.io/agents-fail-together/">
+<meta name="author" content="Aziz Latipov">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"Agents with Tools Fail Together","datePublished":"2026-10-11","author":{"@type":"Person","name":"Aziz Latipov","url":"https://alatip.github.io/"},"url":"https://alatip.github.io/agents-fail-together/"}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<style>
+:root{
+  --paper:#F8F9FA; --card:#FFFFFF; --sunk:#F0F2F5;
+  --ink:#12161C; --ink2:#39424F; --muted:#6B7684; --rule:#DDE1E7; --hair:#EAEDF1;
+  --accent:#14548C; --accent-soft:#E4EDF6;
+  --a:#14548C; --b:#BF5B04; --truth:#39424F;
+  --warn-bg:#FBF2E4; --warn-ink:#8A5A00;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0F1216; --card:#161A20; --sunk:#1C2128;
+    --ink:#E6EAEF; --ink2:#B6BFCA; --muted:#828D9B; --rule:#2A313A; --hair:#222932;
+    --accent:#7FB3E0; --accent-soft:#152838;
+    --a:#4D93D0; --b:#D4762A; --truth:#B6BFCA;
+    --warn-bg:#2A2214; --warn-ink:#D8AA5C;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0F1216; --card:#161A20; --sunk:#1C2128;
+  --ink:#E6EAEF; --ink2:#B6BFCA; --muted:#828D9B; --rule:#2A313A; --hair:#222932;
+  --accent:#7FB3E0; --accent-soft:#152838;
+  --a:#4D93D0; --b:#D4762A; --truth:#B6BFCA;
+  --warn-bg:#2A2214; --warn-ink:#D8AA5C;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"Source Serif 4",Georgia,serif; font-size:17.5px; line-height:1.62;
+  -webkit-font-smoothing:antialiased; font-variant-numeric:oldstyle-nums;
+}
+.page{max-width:1000px; margin:0 auto; padding:0 24px 110px}
+.col{max-width:640px; margin:0 auto}
+.col > * + *{margin-top:1.05em}
+p{margin:0}
+h1,h2,h3{margin:0; line-height:1.2; text-wrap:balance; font-weight:600}
+h1{font-size:clamp(2rem,4.6vw,2.85rem); letter-spacing:-.012em}
+h2{font-size:1.42rem}
+h3{font-size:1.08rem}
+a{color:var(--accent)}
+strong{font-weight:600}
+code,.mono,.eyebrow{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace}
+code{font-size:.84em; background:var(--sunk); padding:.1em .35em; border-radius:3px}
+.eyebrow{font-size:.68rem; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); font-weight:500}
+
+header{padding:82px 0 30px}
+.byline{display:flex; flex-wrap:wrap; gap:6px 20px; margin-top:1.1em; font-family:"JetBrains Mono",monospace; font-size:.74rem; color:var(--muted)}
+.abstract{
+  margin-top:2em; padding:22px 26px; background:var(--card);
+  border-top:2px solid var(--ink); border-bottom:1px solid var(--rule);
+  font-size:.97rem; line-height:1.6; color:var(--ink2);
+}
+.abstract .eyebrow{display:block; margin-bottom:.7em}
+.abstract strong{color:var(--ink)}
+
+section{padding-top:56px}
+.sec-head{display:flex; gap:14px; align-items:baseline; margin-bottom:20px}
+.sec-num{font-family:"JetBrains Mono",monospace; font-size:.78rem; color:var(--accent); padding-top:.3em; flex:none; font-weight:500}
+
+.eq{
+  background:var(--card); border:1px solid var(--rule); border-radius:4px;
+  padding:16px 20px; overflow-x:auto; font-family:"JetBrains Mono",monospace;
+  font-size:.88rem; line-height:1.85;
+}
+.eq .cm{color:var(--muted)}
+.note{background:var(--accent-soft); padding:16px 20px; border-radius:4px; font-size:.95rem}
+.note.warn{background:var(--warn-bg)}
+.note .eyebrow{display:block; margin-bottom:.45em; color:var(--ink2)}
+
+.tw{overflow-x:auto; border:1px solid var(--rule); border-radius:4px; background:var(--card)}
+table{border-collapse:collapse; width:100%; font-size:.88rem; font-family:"JetBrains Mono",monospace}
+th,td{padding:9px 13px; text-align:right; border-bottom:1px solid var(--hair)}
+th:first-child,td:first-child{text-align:left}
+thead th{font-size:.66rem; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:500; background:var(--sunk)}
+tbody tr:last-child td{border-bottom:none}
+td.hi{color:var(--ink); font-weight:500}
+td.dim{color:var(--muted)}
+.tnum{font-variant-numeric:tabular-nums}
+
+figure{margin:0; max-width:880px; margin-inline:auto}
+.fig{background:var(--card); border:1px solid var(--rule); border-radius:4px; overflow:hidden}
+.fig-b{padding:18px 14px 6px}
+figcaption{padding:0 24px 20px; font-size:.85rem; color:var(--muted); line-height:1.55; max-width:66ch}
+figcaption b{color:var(--ink2); font-weight:600}
+.legend{display:flex; flex-wrap:wrap; gap:6px 22px; padding:16px 24px 0; font-size:.8rem; color:var(--ink2); font-family:"JetBrains Mono",monospace}
+.legend span{display:inline-flex; align-items:center; gap:7px}
+.legend i{width:15px; height:2.5px; border-radius:2px}
+.legend i.dash{background:none; border-top:2px dashed var(--truth); height:0}
+svg{display:block; width:100%; height:auto; overflow:visible}
+
+ol,ul{margin:0; padding-left:1.25em}
+li{margin:.42em 0}
+.refs{font-size:.88rem; color:var(--ink2)}
+.refs li{margin:.55em 0}
+.refs .mono{color:var(--muted); font-size:.92em}
+hr.r{border:none; border-top:1px solid var(--rule); margin:0}
+.foot{padding-top:52px; font-size:.86rem; color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<style>.col p+p,.col p+ul,.col p+ol,.col ul+p,.col ol+p,.col div.note+p,.col p+div.note{margin-top:1.05em} .note .eyebrow{display:block;margin-bottom:.45em} .note p{margin:0}</style>
+</head>
+<body>
+<div class="page">
+<header>
+  <div class="col">
+    <div class="eyebrow">Technical note · Ensembles · Agents with tools</div>
+    <h1 style="margin-top:.5em">Agents with Tools Fail Together</h1>
+    <p style="margin-top:.6em; font-size:1.12rem; color:var(--ink2)">On 500 real GitHub bugs, 175 software agents built from different models and different tools resolve and miss the same ones. The best seven carry 1.4 independent votes; their majority ties the best of them; only a perfect selector would gain, and only ten points.</p>
+    <div class="byline">
+      <span>11 October 2026</span><span>pre-registered</span><span>zero inference</span><span>public results, no trajectories</span>
+    </div>
+    <div class="abstract">
+      <span class="eyebrow">Abstract</span>
+      <a href="../where-the-swarm-pays/">Where the Swarm Pays</a> measured voting, debate, personas and judging on answer traces and set one operator aside as unmeasured: an agent that decomposes a task, keeps memory and uses tools. This note takes the cheapest public asset for that operator. The SWE-bench team keeps, for every leaderboard submission on SWE-bench Verified, the list of the 500 bugs the submission resolved. That is a correctness matrix of 175 systems by 500 tasks, built from different models (Claude, GPT, Gemini, Qwen, Kimi, DeepSeek and others) wrapped in different scaffolds (SWE-agent, OpenHands, mini-SWE-agent, Agentless, and some forty commercial agents), with nothing to download but the results. The statistics are the ones of the earlier notes, with predictions written down before the script ran. <strong>Agents with tools look like the text corpus.</strong> The seven most accurate systems agree pairwise at φ 0.68 and carry a Kish n_eff of 1.38; the majority of the seven resolves 79.4% of bugs against 79.2% for the best single system, with zero inside the bootstrap interval; a perfect selector that takes any passing patch among the seven reaches 89.0%. With all 175 systems the majority falls to 59.2% and the perfect selector rises to 94.8%; 26 bugs are resolved by no system at all. A second asset, τ-bench's released logs of each model run four to eight times, puts the within-agent number next to it: one agent rerun is worth 1.4–1.9 independent runs, any-of-four adds 14–25 points over one run, and on the same tasks four runs of the best model cover as much as four models once. Holding the scaffold fixed (41 models in mini-SWE-agent) or the model fixed (Claude 3.5 Sonnet in eleven scaffolds) gives the same shape: n_eff 1.4 and 1.7, majority at or under the best member, oracle ten to sixteen points above it. Two predictions failed in the same direction: the agents are <em>more</em> correlated than the text models, not less, and the all-wrong share is 5.2% rather than under 5%. The scaffold is not a source of independence; what the swarm of agents adds is coverage, collectable only by something that can tell a passing patch from a failing one, which on this benchmark is the hidden test suite and nothing the agents have. The solo-versus-team question on identical tasks is not testable on this asset and is left open.
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">1</div><h2>The asset</h2></div>
+    <p>SWE-bench Verified is 500 GitHub issues from twelve Python repositories, each with a hidden test suite that decides whether a patch resolves it. Submissions to the leaderboard live in the public repository <code>SWE-bench/experiments</code>; for each one the team stores a results file with the instance ids the system resolved, and for the mini-SWE-agent series a per-instance file with the same information plus cost. I took the repository at commit <code>40f164d5</code> (2026-10-09), 182 submission directories, and kept the results files and the metadata: 135 carry the results list, 40 carry the per-instance file, one both, seven neither. Nothing else was fetched: no trajectories, no logs, no patches. The cell is 1 if the instance is in the resolved list and 0 otherwise; a system that generated no patch for an instance counts as 0.</p>
+    <p>The 175 systems span October 2023 (the RAG baselines of the original paper, 0.4–4.4%) to September 2026, with a median accuracy of 56.4% and a best of 79.2%, reached twice with Claude 4.5 Opus in two scaffolds (Sonar Foundation Agent and live-SWE-agent). Metadata gives the model, the scaffold, whether the submission used one attempt or an internal best-of-n, and whether the SWE-bench team checked it. None of the top seven is marked checked by the team; 121 of the 175 are not. The matrix, the script and the pre-registration are in the working repository and will be released with the note.</p>
+    <p>The pre-registration carried five predictions from the text corpus: pairwise φ 0.3–0.6 among the top seven (lower than text, since scaffolds differ more than samples do); n_eff of the seven between 2 and 3; the majority at or under the best single at every k; the oracle ten to twenty points above the best single; all-wrong across every system under 5% of 500.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">2</div><h2>Seven agents, 1.4 votes</h2></div>
+    <p>Take the k most accurate systems and ask three things of them: how correlated their resolved sets are, whether a majority of them resolves more bugs than the best one alone, and how many bugs at least one of them resolves. The last number is what a perfect verifier would collect; on SWE-bench it is also what the hidden tests would collect if one could run them, which is exactly what a submission cannot do.</p>
+    <div class="tw"><table>
+      <thead><tr><th>set</th><th>k</th><th>mean φ</th><th>n_eff</th><th>best single</th><th>majority</th><th>Δ [95% CI]</th><th>oracle</th><th>all-wrong</th></tr></thead>
+      <tbody>
+        <tr><td>top 3</td><td>3</td><td>0.67</td><td>1.29</td><td>0.792</td><td>0.802</td><td>+0.010 [−0.014, +0.016]</td><td>0.868</td><td>66</td></tr>
+        <tr><td>top 5</td><td>5</td><td>0.70</td><td>1.32</td><td>0.792</td><td>0.794</td><td>+0.002 [−0.024, +0.008]</td><td>0.880</td><td>60</td></tr>
+        <tr><td class="hi">top 7</td><td>7</td><td class="hi">0.68</td><td class="hi">1.38</td><td>0.792</td><td class="hi">0.794</td><td>+0.002 [−0.022, +0.010]</td><td class="hi">0.890</td><td>55</td></tr>
+        <tr><td>top 15</td><td>15</td><td>0.67</td><td>1.45</td><td>0.792</td><td>0.794</td><td>+0.002 [−0.026, +0.012]</td><td>0.912</td><td>44</td></tr>
+        <tr><td>top 30</td><td>30</td><td>0.66</td><td>1.49</td><td>0.792</td><td>0.772</td><td>−0.020 [−0.048, −0.010]</td><td>0.930</td><td>35</td></tr>
+        <tr><td>all</td><td>175</td><td>0.45</td><td>2.19</td><td>0.792</td><td>0.592</td><td>−0.200 [−0.242, −0.172]</td><td>0.948</td><td>26</td></tr>
+      </tbody>
+    </table></div>
+    <p>Majority: a bug counts as resolved if more than half of the k systems resolved it. Δ is majority minus best single, with a bootstrap over the 500 items (1,000 draws); the best single is re-chosen inside each draw. Oracle: resolved by at least one. All-wrong: resolved by none, out of 500.</p>
+    <p>The seven agree at φ 0.68 pairwise, in a narrow range (0.60–0.84), and together carry 1.38 effective votes. The majority of the seven lands on 79.4% against 79.2% for the best alone, two tenths of a point with zero inside the interval, and the picture does not change at three, five or fifteen; at thirty the majority is already losing, and over all 175 it loses twenty points, because the median system is at 56% and the vote is dragged to the median. The oracle is where the pool differs from its best member: ten points at seven, twelve at fifteen, fifteen and a half over all 175. Those points exist, they are not reachable by voting, and on SWE-bench they are not reachable by a judge either, because the judge that knows whether a patch passes is the test suite the submission cannot see.</p>
+    <figure>
+      <div class="fig">
+        <div class="legend"><span><i style="background:var(--a)"></i> bugs, by how many of the top seven resolve them</span></div>
+        <div class="fig-b"><svg viewBox="0 0 400 200" role="img" aria-label="Number of the top seven systems that resolve each of the 500 bugs"><line x1="34" y1="172" x2="394" y2="172" stroke="var(--rule)"/><rect x="38.0" y="147.6" width="36.5" height="24.4" fill="var(--a)" rx="1.5"/><text x="56.2" y="142.6" text-anchor="middle" font-size="10.5" fill="var(--ink2)" font-family="JetBrains Mono,monospace">55</text><text x="56.2" y="188" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace">0</text><rect x="82.5" y="164.5" width="36.5" height="7.5" fill="var(--a)" rx="1.5"/><text x="100.8" y="159.5" text-anchor="middle" font-size="10.5" fill="var(--ink2)" font-family="JetBrains Mono,monospace">17</text><text x="100.8" y="188" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace">1</text><rect x="127.0" y="166.2" width="36.5" height="5.8" fill="var(--a)" rx="1.5"/><text x="145.2" y="161.2" text-anchor="middle" font-size="10.5" fill="var(--ink2)" font-family="JetBrains Mono,monospace">13</text><text x="145.2" y="188" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace">2</text><rect x="171.5" y="164.0" width="36.5" height="8.0" fill="var(--a)" rx="1.5"/><text x="189.8" y="159.0" text-anchor="middle" font-size="10.5" fill="var(--ink2)" font-family="JetBrains Mono,monospace">18</text><text x="189.8" y="188" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace">3</text><rect x="216.0" y="163.6" width="36.5" height="8.4" fill="var(--a)" rx="1.5"/><text x="234.2" y="158.6" text-anchor="middle" font-size="10.5" fill="var(--ink2)" font-family="JetBrains Mono,monospace">19</text><text x="234.2" y="188" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace">4</text><rect x="260.5" y="159.6" width="36.5" height="12.4" fill="var(--a)" rx="1.5"/><text x="278.8" y="154.6" text-anchor="middle" font-size="10.5" fill="var(--ink2)" font-family="JetBrains Mono,monospace">28</text><text x="278.8" y="188" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace">5</text><rect x="305.0" y="156.9" width="36.5" height="15.1" fill="var(--a)" rx="1.5"/><text x="323.2" y="151.9" text-anchor="middle" font-size="10.5" fill="var(--ink2)" font-family="JetBrains Mono,monospace">34</text><text x="323.2" y="188" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace">6</text><rect x="349.5" y="32.0" width="36.5" height="140.0" fill="var(--a)" rx="1.5"/><text x="367.8" y="27.0" text-anchor="middle" font-size="10.5" fill="var(--ink2)" font-family="JetBrains Mono,monospace">316</text><text x="367.8" y="188" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace">7</text></svg></div>
+        <figcaption><b>Bimodal.</b> Of 500 bugs, 316 are resolved by all seven of the most accurate systems and 55 by none; 129 sit in between. The seven are not seven draws from a difficulty-free urn: under independence at their accuracies the all-wrong share would be 0.00%, the observed share is 11.0%.</figcaption>
+      </div>
+    </figure>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">3</div><h2>Hold the scaffold, hold the model</h2></div>
+    <p>The seven above mix models and scaffolds, so their correlation could come from either. The asset allows both controls.</p>
+    <p><strong>One scaffold, 41 models.</strong> The mini-SWE-agent series runs the same hundred-line agent over 41 models, from a Gemini 3 Pro run that resolved nothing to Claude 4.5 Opus at 76.8%. Its seven best: φ 0.68, n_eff 1.39, majority 75.8% against 76.8% for the best (−1.0 [−3.4, +0.4]), oracle 88.0%. The same numbers as the mixed pool, to the second decimal on φ and n_eff. Model diversity inside a fixed scaffold buys the same nothing that family diversity bought on text.</p>
+    <p><strong>One model, many scaffolds.</strong> Where the metadata names the same model in at least three submissions with accuracy 30% or higher:</p>
+    <div class="tw"><table>
+      <thead><tr><th>model</th><th>scaffolds</th><th>accuracy range</th><th>mean φ</th><th>n_eff</th><th>majority</th><th>oracle</th></tr></thead>
+      <tbody>
+        <tr><td>Claude 3.5 Sonnet</td><td>11</td><td>0.34–0.63</td><td>0.55</td><td>1.70</td><td>0.532</td><td>0.786</td></tr>
+        <tr><td>Claude 4 Sonnet</td><td>8</td><td>0.65–0.77</td><td>0.70</td><td>1.36</td><td>0.714</td><td>0.840</td></tr>
+        <tr><td>Claude 4.5 Opus</td><td>4</td><td>0.74–0.79</td><td>0.75</td><td>1.23</td><td>0.760</td><td>0.848</td></tr>
+        <tr><td>Claude 4.5 Sonnet</td><td>3</td><td>0.71–0.75</td><td>0.71</td><td>1.24</td><td>0.734</td><td>0.806</td></tr>
+        <tr><td>GPT 5.2</td><td>3</td><td>0.69–0.73</td><td>0.70</td><td>1.25</td><td>0.738</td><td>0.792</td></tr>
+        <tr><td>GPT-4o</td><td>3</td><td>0.33–0.39</td><td>0.55</td><td>1.43</td><td>0.360</td><td>0.526</td></tr>
+      </tbody>
+    </table></div>
+    <p>Eleven scaffolds around Claude 3.5 Sonnet, from 34% to 63%, are the clearest case: the majority of the eleven is ten points under the best of them, the oracle sixteen points above. A scaffold moves which bugs a model resolves, and across eleven of them the union is wide, but no vote collects it. The newer the model the tighter the pairs: Claude 4.5 Opus in four scaffolds is at φ 0.75 and 1.23 votes, with a spread of five points between the best and worst scaffold.</p>
+    <p>Across all pairs of systems at 30% or better, same-model-different-scaffold pairs sit at φ 0.61, same-scaffold-different-model pairs at 0.56, pairs sharing neither at 0.51. Read naively, the model is the operator and the scaffold the smaller perturbation; but same-model pairs are also closer in accuracy, and φ rises with matched marginals, so this is a direction and not a measurement. Submissions that declare an internal best-of-n (81 of 175) are no less correlated with one another than single-attempt ones (top seven of each: φ 0.65 against 0.69).</p>
+    <p>Three of the eleven Claude 3.5 Sonnet scaffolds have been read by someone else. An empirical study of failures in automated issue solving (arXiv:2509.13941) takes the same public logs for OpenHands CodeAct 2.1, Tools + Claude and Agentless 1.5, all on Claude 3.5 Sonnet, and reports that the first two share 205 resolved issues with 60 and 40 of their own, and that Agentless resolves 30 that neither does; it reads the complementarity as a reason to ensemble, and does not count what an ensemble would do. The matrix here reproduces those four numbers exactly and adds the count: the three sit at pairwise φ 0.53–0.60 and 1.4 effective votes of three, their majority resolves 51.6% against 53.0% for the best of them, and their union is 67.0%, fourteen points above the best. The complementarity is real and is the oracle column; the vote that would collect it without the test suite does not exist here either. Added 11 October 2026.</p>
+    <figure>
+      <div class="fig">
+        <div class="legend"><span><i style="background:var(--b)"></i> bugs, by how many of the 175 systems resolve them</span></div>
+        <div class="fig-b"><svg viewBox="0 0 400 200" role="img" aria-label="Number of the 175 systems that resolve each bug, binned"><line x1="34" y1="172" x2="394" y2="172" stroke="var(--rule)"/><rect x="38.0" y="138.9" width="31.6" height="33.1" fill="var(--b)" rx="1.5"/><text x="53.8" y="133.9" text-anchor="middle" font-size="10.5" fill="var(--ink2)" font-family="JetBrains Mono,monospace">26</text><text x="53.8" y="188" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace">0</text><rect x="77.6" y="132.5" width="31.6" height="39.5" fill="var(--b)" rx="1.5"/><text x="93.3" y="127.5" text-anchor="middle" font-size="10.5" fill="var(--ink2)" font-family="JetBrains Mono,monospace">31</text><text x="93.3" y="188" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace">1–5</text><rect x="117.1" y="121.1" width="31.6" height="50.9" fill="var(--b)" rx="1.5"/><text x="132.9" y="116.1" text-anchor="middle" font-size="10.5" fill="var(--ink2)" font-family="JetBrains Mono,monospace">40</text><text x="132.9" y="188" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace">6–25</text><rect x="156.7" y="122.4" width="31.6" height="49.6" fill="var(--b)" rx="1.5"/><text x="172.4" y="117.4" text-anchor="middle" font-size="10.5" fill="var(--ink2)" font-family="JetBrains Mono,monospace">39</text><text x="172.4" y="188" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace">26–50</text><rect x="196.2" y="121.1" width="31.6" height="50.9" fill="var(--b)" rx="1.5"/><text x="212.0" y="116.1" text-anchor="middle" font-size="10.5" fill="var(--ink2)" font-family="JetBrains Mono,monospace">40</text><text x="212.0" y="188" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace">51–75</text><rect x="235.8" y="82.9" width="31.6" height="89.1" fill="var(--b)" rx="1.5"/><text x="251.6" y="77.9" text-anchor="middle" font-size="10.5" fill="var(--ink2)" font-family="JetBrains Mono,monospace">70</text><text x="251.6" y="188" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace">76–100</text><rect x="275.3" y="93.1" width="31.6" height="78.9" fill="var(--b)" rx="1.5"/><text x="291.1" y="88.1" text-anchor="middle" font-size="10.5" fill="var(--ink2)" font-family="JetBrains Mono,monospace">62</text><text x="291.1" y="188" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace">101–125</text><rect x="314.9" y="32.0" width="31.6" height="140.0" fill="var(--b)" rx="1.5"/><text x="330.7" y="27.0" text-anchor="middle" font-size="10.5" fill="var(--ink2)" font-family="JetBrains Mono,monospace">110</text><text x="330.7" y="188" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace">126–150</text><rect x="354.4" y="67.6" width="31.6" height="104.4" fill="var(--b)" rx="1.5"/><text x="370.2" y="62.6" text-anchor="middle" font-size="10.5" fill="var(--ink2)" font-family="JetBrains Mono,monospace">82</text><text x="370.2" y="188" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace">151–175</text></svg></div>
+        <figcaption><b>Difficulty is a property of the bug.</b> 192 of 500 bugs are resolved by more than 125 of the 175 systems; 57 by five or fewer; 26 by none. This is the one-factor picture that fitted the text corpus badly in detail and well in shape: a latent difficulty per item, shared by every solver.</figcaption>
+      </div>
+    </figure>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">4</div><h2>One agent, four runs</h2></div>
+    <p>The matrix has one run per system, so it cannot say how much of an agent's failure is the agent and how much is the dice. τ-bench can: the Sierra team ships, under MIT, the full logs of each model run four times (eight in the first version) over the same customer-service tasks, with the benchmark's own evaluator deciding each run. τ-bench v1 gives GPT-4o and Claude 3.5 Sonnet on airline (50 tasks) and retail (115); τ²-bench gives Claude 3.7 Sonnet, GPT-4.1, GPT-4.1 mini and o4-mini on airline, retail and telecom (50, 114, 114), all against the same simulated user. The same pre-registration discipline: predictions first, then the script.</p>
+    <div class="tw"><table>
+      <thead><tr><th>model</th><th>domain</th><th>k</th><th>pass@1</th><th>φ between runs</th><th>n_eff</th><th>all k pass</th><th>any of k</th></tr></thead>
+      <tbody>
+        <tr><td>GPT-4o</td><td>airline</td><td>4</td><td>0.420</td><td>0.40</td><td>1.82</td><td>0.200</td><td>0.720</td></tr>
+        <tr><td>Claude 3.5 Sonnet</td><td>airline</td><td>8</td><td>0.460</td><td>0.46</td><td>1.89</td><td>0.160</td><td>0.800</td></tr>
+        <tr><td>Claude 3.5 Sonnet</td><td>retail</td><td>8</td><td>0.692</td><td>0.46</td><td>1.90</td><td>0.357</td><td>0.939</td></tr>
+        <tr><td>Claude 3.7 Sonnet</td><td>retail</td><td>4</td><td>0.787</td><td>0.44</td><td>1.73</td><td>0.596</td><td>0.930</td></tr>
+        <tr><td>Claude 3.7 Sonnet</td><td>telecom</td><td>4</td><td>0.493</td><td>0.53</td><td>1.55</td><td>0.254</td><td>0.702</td></tr>
+        <tr><td>GPT-4.1</td><td>telecom</td><td>4</td><td>0.342</td><td>0.63</td><td>1.38</td><td>0.193</td><td>0.500</td></tr>
+        <tr><td>o4-mini</td><td>retail</td><td>4</td><td>0.715</td><td>0.40</td><td>1.81</td><td>0.456</td><td>0.912</td></tr>
+        <tr><td>o4-mini</td><td>telecom</td><td>4</td><td>0.421</td><td>0.62</td><td>1.39</td><td>0.263</td><td>0.596</td></tr>
+      </tbody>
+    </table></div>
+    <p>Eight of the eighteen default runs; the rest sit inside the same ranges (φ 0.40–0.64, n_eff 1.37–1.82). An agent run four times is worth about one and a half independent runs, the number the text models gave when resampled at temperature one. Running again adds coverage, fourteen to twenty-five points from one run to any-of-four, and the coverage is as wide as a panel's: on the same τ² tasks, four runs of the best model reach 0.76, 0.93 and 0.70 (airline, retail, telecom) where four different models once reach 0.78, 0.97 and 0.63. Across models on the same domain the pairwise φ is 0.29–0.47, below the within-model 0.44–0.59, so the shared task and simulated user explain less of the co-failure than the policy does; the panel's gain over its best member is again the oracle only, seventeen to twenty points.</p>
+    <p>One thing the text corpus had and this one does not: a vote. A τ-bench run is a conversation that ends in a database state; there is no answer to count, and the evaluator is hidden from the agent. "Majority of four runs" can still be computed, and it shows what the operator is worth: with ties counted as failures it sits half a point to eight points under a single run, with ties counted as passes two to thirteen points above. Ten points that depend on a rule nobody can apply without the evaluator is the whole gap between pass@k and pass@1, priced in verifier.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">5</div><h2>What this says</h2></div>
+    <div class="note">
+      <span class="eyebrow">Reading</span>
+      <p>The earlier notes measured an operator that samples answers and found a pool worth one to three independent votes. The operator set aside, an agent that reads the repository, runs code, keeps state and edits files, was the candidate for a different answer: a scaffold is a procedure, and procedures could fail in different places. On the one public asset where many such agents are scored on the same tasks, they do not. The seven best carry 1.4 votes, their majority ties the best member, and the all-wrong rate of the seven is 11% where independence would give zero. What the pool adds is a union ten to sixteen points wider than any member, and the union is worth exactly as much as the selector that reads it. On SWE-bench the selector that works is the hidden test suite. Coverage, not intelligence; and the coverage is priced in verifier.</p>
+    </div>
+    <p>Two predictions missed, both toward more correlation. I expected scaffolds that differ in tools, retries and prompting to be <em>less</em> correlated than samples from the same seven text models (φ 0.3–0.6, n_eff 2–3); they are at 0.68 and 1.38, tighter than the three larger text layers of Where the Swarm Pays (n_eff 2.1–2.3 of 7). One reading is that a bug's difficulty is more of a fixed property than a math problem's: the test suite is the same, the repository is the same, and the failing agents fail at the same locality. Another is leaderboard selection: everyone submits their best run, and best runs of strong models resolve the same easy 316. The 26 never-resolved bugs are 5.2% of 500 against the predicted under-5%; the benchmark has been attacked for two years by 175 systems and still has a floor, as the text corpus did before its label audit, and the audit here has not been done. A third reading was tested after the first draft, on 11 October: fit a one-dimensional item-response model to the matrix and look at what is left once every bug has a difficulty and every system an ability. The seven best keep a residual pairwise correlation of 0.05, and the model name explains more of that remainder than the scaffold (Limitations, last item).</p>
+    <p>A trajectory-level study published after the matrix was drawn says where the remainder sits. Coherence Collapse (arXiv:2603.24631) maps 16,758 SWE-bench and PolyBench trajectories of seven models in three scaffolds onto the files viewed, functions read and functions edited, and finds that for the capable models 60–69% of failures come after the agent has reached and edited the functions the reference patch changes: the right place, the wrong patch, and in five cases a patch identical to the reference that the agent then undid. The stages a scaffold controls, search and reading, are not where the strong agents fail; the stage the model controls is. That is the same ordering the residuals give, and it says what a different scaffold around the same model can and cannot move: which bugs are found, not which found bugs are fixed. The study also reports that successful agents converge on the same files 93.7% of the time and uses six other models' viewed files as a hint to a seventh; whether the six miss the same files on the bugs none of them resolves is in its list of things not tested, and its released sets of viewed files would answer it without running an agent. Added 11 October 2026.</p>
+    <p>This is also the number the <a href="../orchestrator-can-and-cannot-add/">orchestrator note</a> asked Sakana for and did not get: the co-failure rate of a pool on the tasks the orchestrator is scored on. For a pool of top SWE-bench agents it is 11% at seven and 5.2% at 175. A router over the seven cannot exceed 89%; a workflow that rewrites the patch from several agents' work is not bound by that in principle, and nothing here measures it.</p>
+    <p>The within-agent number has one use already. The failure study above (arXiv:2509.13941) builds an Expert agent whose prompt carries its failure taxonomy, has it supervise an OpenHands Executor on the same model, and reports that the pair resolves 22.2% of 108 issues OpenHands had failed. There is no second plain run of OpenHands to compare with, the round budget was raised from the original runs to 40, and the taxonomy was built on the issues it is scored on. Section 4 gives the missing control from another benchmark: one agent rerun is worth 1.4–1.9 independent runs, and a second run alone recovers 14–25 points of the tasks the first one failed. A fifth of previously failed issues is inside what rerunning the Executor by itself would be expected to recover, so the number does not yet say whether the Expert adds anything to the dice. Added 11 October 2026.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">6</div><h2>Limitations</h2></div>
+    <ul>
+      <li><strong>Not solo versus team.</strong> The scaffolds differ in model, tools, retries, prompts and date at once, so neither asset says whether a team of agents beats one agent on the same task. CooperBench (arXiv:2601.13295) is the only public setting with that contrast and publishes aggregates only: on 652 tasks GPT-5 resolves 48.3% alone and 28.0% as a pair, Claude Sonnet 4.5 47.1% and 25.9%, Gemini 3 Flash 48.6% and 26.2%; its repository holds the tasks, not the runs. HAL's traces are 113 GB, encrypted and unlicensed. The contrast stays open.</li>
+      <li><strong>Selected submissions.</strong> Leaderboard entries are what their authors chose to submit; 121 of 175 are not marked checked by the SWE-bench team, none of the top seven is checked, and 21 directories carry the team's flag for suspicious commits. Nothing was excluded on that basis.</li>
+      <li><strong>Two benchmarks, two scaffolds.</strong> The within-agent numbers come from τ-bench, a single tool-calling scaffold on customer-service tasks with a simulated user and a model-assisted evaluator; four τ² models and two τ¹ models, 50–115 tasks per domain, so airline intervals are ±6–10 points. The SWE-bench matrix has one run per system and no within-system number of its own.</li>
+      <li><strong>Model names are free text.</strong> "Claude 4.5 Opus" and "Claude Opus 4.5" are two strings in the metadata; the same-model table uses the strings as given, so some groups are undercounted (the OpenHands Claude 4.5 Opus run, 77.6%, is not in the four-scaffold row).</li>
+      <li><strong>No-generation as wrong.</strong> A system that produced no patch is scored 0, which raises correlation among weak systems; the top-k tables are unaffected, since the top systems generate for every instance.</li>
+      <li><strong>Labels unaudited.</strong> The 26 never-resolved bugs have not been read; on the text corpus the never-resolved items were mostly the benchmark's fault.</li>
+      <li><strong>Interval on φ.</strong> Intervals are reported for majority minus best only; φ and n_eff are point values over 500 items.</li>
+      <li><strong>Difficulty explains most of the 1.4.</strong> A 2PL item-response model with the 175 systems as persons, fitted on the 474 instances that at least one and not every system resolves (the never-resolved 26 dropped), beats a Rasch model held-out by 0.015 nats per response and leaves the seven best systems with a residual pairwise correlation of +0.05 [+0.01, +0.10] (bootstrap over instances) against φ 0.68 on all 500 instances and 0.61 on the 474; Kish n_eff on the residuals is 5.3 of 7, and 7.8 of 11 for the eleven Claude 3.5 Sonnet scaffolds (φ 0.52, n_eff 1.8 raw). Residual correlation within a scaffold exceeds between-scaffold by +0.055, within a model name by +0.085, within a model family by +0.017 (permutation p &lt; 0.001 each; ICC 0.07, 0.11, 0.03). So the agents fail together mostly because the bugs are hard for everyone in one order, and the model carries more of the remainder than the scaffold, as the fixed-scaffold and fixed-model rows above already suggested. The number that matters for a vote is still 1.4: a vote does not get to condition on difficulty. Pre-registered on 11 October 2026 (irt-swebench-residual in the working repository); the predicted family excess of +0.02 to +0.12 came in under, at +0.017.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">7</div><h2>Sources</h2></div>
+    <p>Data: <a href="https://github.com/SWE-bench/experiments">github.com/SWE-bench/experiments</a>, <code>evaluation/verified/*/results/results.json</code>, <code>per_instance_details.json</code> and <code>metadata.yaml</code> at commit 40f164d5, fetched 9 October 2026 by sparse checkout. Benchmark: Jimenez et al., <em>SWE-bench: Can Language Models Resolve Real-world GitHub Issues?</em>, ICLR 2024, <a href="https://arxiv.org/abs/2310.06770">arXiv:2310.06770</a>; the Verified split is OpenAI and SWE-bench, August 2024. Definitions of φ, Kish n_eff, majority and oracle follow <a href="../where-the-swarm-pays/">Where the Swarm Pays</a>; the pre-registration with its five predictions was written before the script ran and is released with the matrix. τ-bench: Yao et al., <em>τ-bench: A Benchmark for Tool-Agent-User Interaction in Real-World Domains</em>, <a href="https://arxiv.org/abs/2406.12045">arXiv:2406.12045</a>, logs in <a href="https://github.com/sierra-research/tau-bench">sierra-research/tau-bench</a> <code>historical_trajectories/</code> at 59a200c6; Barres et al., <em>τ²-Bench</em>, <a href="https://arxiv.org/abs/2506.07982">arXiv:2506.07982</a>, logs in <a href="https://github.com/sierra-research/tau2-bench">sierra-research/tau2-bench</a> <code>data/tau2/results/final/</code> at 4ce7c039; both MIT, fetched 9 October 2026, with their own pre-registration. CooperBench: <a href="https://arxiv.org/abs/2601.13295">arXiv:2601.13295</a>, leaderboard at cooperbench.com read 9 October 2026. Failure study of the three Claude 3.5 Sonnet tools: <em>An Empirical Study on Failures in Automated Issue Solving</em>, <a href="https://arxiv.org/abs/2509.13941">arXiv:2509.13941</a>. Trajectory stages: <em>Coherence Collapse: Diagnosing Why Code Agents Fail After Reaching the Right Code</em>, <a href="https://arxiv.org/abs/2603.24631">arXiv:2603.24631</a>.</p>
+    <p>Earlier notes: <a href="../where-the-swarm-pays/">Where the Swarm Pays</a> (the axes this one completes), <a href="../orchestrator-can-and-cannot-add/">What a Model Orchestrator Can and Cannot Add</a> (the router ceiling this one measures for a pool), <a href="../effective-independence/">Effective Independence</a> (n_eff), <a href="../no-free-lunch/">There Is No Free Lunch After All</a> (why the union is the boundary).</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <p class="foot"><a href="../">← notes</a> · <a href="https://github.com/Alatip">github.com/Alatip</a></p>
+  </div>
+</section>
+</div>
+</body>
+</html>
