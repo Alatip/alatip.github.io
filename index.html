@@ -24,6 +24,11 @@ body{margin:0;background:var(--paper);color:var(--ink);font-family:"Source Serif
 .page{max-width:640px;margin:0 auto;padding:80px 24px 110px}
 h1{font-size:1.6rem;font-weight:600;margin:0}
 .sub{color:var(--muted);margin-top:.4em;font-size:.95rem}
+.disclosure{color:var(--muted);font-size:.85rem;margin-top:1em;padding-left:.9em;border-left:2px solid var(--rule)}
+.disclosure p{margin:.35em 0}
+.disclosure summary{cursor:pointer;font-family:"JetBrains Mono",monospace;font-size:.72rem;letter-spacing:.06em;color:var(--muted)}
+.disclosure summary:hover{color:var(--accent)}
+.disclosure[open] summary{margin-bottom:.4em}
 .eyebrow{font-family:"JetBrains Mono",monospace;font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:500}
 a{color:var(--accent)}
 .post{padding:26px 0;border-top:1px solid var(--rule);margin-top:34px}
@@ -41,6 +46,12 @@ a{color:var(--accent)}
   <div class="eyebrow">Technical notes</div>
   <h1 style="margin-top:.5em">Aziz Latipov</h1>
   <p class="sub">Senior software engineer working on AI security. Notes on measurement, ensembles of language models, and what their failure modes mean for the agents built on them.</p>
+  <details class="disclosure">
+    <summary>Authorship and AI-generation disclosure</summary>
+    <p>The research program behind these notes is mine: the questions, the hypotheses and pre-registered predictions, the design of each experiment, the reading of the results and the conclusions drawn from them.</p>
+    <p>I work with Anthropic's Claude models (via Claude Code) as a research assistant. They draft most of the prose and write most of the code and analysis scripts; I direct the work, rewrite and edit text myself, reject what does not hold, send numbers back for recomputation and independent re-checks, and decide what gets published. Every note goes out under my name and I am responsible for it.</p>
+    <p>This records how the notes are made; it does not imply that Anthropic endorses them. Most notes link their code and data where relevant.</p>
+  </details>
 
   <div class="post">
     <div class="date">11 October 2026</div>
