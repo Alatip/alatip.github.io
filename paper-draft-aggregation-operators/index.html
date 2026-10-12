@@ -3,15 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Working paper draft v8 (12 October 2026) assembling the ten notes on language-model ensembles into one evaluation: how much of the distance between the best member and the oracle each aggregation operator collects (voting, repeated sampling, debate, synthesis, judges, routing, decomposition), on an audited text corpus, the same corpus without frontier models, SWE-bench and two leaderboard matrices at and below the ceiling, τ-bench and OS-Harm logs, and a cost-matched study. PDF, 87 references.">
-<title>Paper Draft (v8). Exploring the Boundaries of Multi-Agent Ensembles: An Evaluation of Aggregation Operators</title>
+<meta name="description" content="Working paper draft v9 (12 October 2026) assembling the ten notes on language-model ensembles into one evaluation: how much of the distance between the best member and the oracle each aggregation operator collects (voting, repeated sampling, debate, synthesis, judges, routing, decomposition), on an audited text corpus, the same corpus without frontier models, SWE-bench and two leaderboard matrices at and below the ceiling, τ-bench and OS-Harm logs, and a cost-matched study; v9 adds a first measurement of what an imperfect verifier collects of the oracle gap on released agent candidates. PDF, 90 references.">
+<title>Paper Draft (v9). Exploring the Boundaries of Multi-Agent Ensembles: An Evaluation of Aggregation Operators</title>
 <link rel="canonical" href="https://alatip.github.io/paper-draft-aggregation-operators/">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Paper Draft (v8). Exploring the Boundaries of Multi-Agent Ensembles: An Evaluation of Aggregation Operators">
-<meta property="og:description" content="Draft v8 of the paper that assembles the ten ensemble notes: what each aggregation operator collects of the best-to-oracle distance, and when. PDF download.">
+<meta property="og:title" content="Paper Draft (v9). Exploring the Boundaries of Multi-Agent Ensembles: An Evaluation of Aggregation Operators">
+<meta property="og:description" content="Draft v9 of the paper that assembles the ten ensemble notes: what each aggregation operator collects of the best-to-oracle distance, and when. PDF download.">
 <meta property="og:url" content="https://alatip.github.io/paper-draft-aggregation-operators/">
 <meta name="author" content="Aziz Latipov">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"Paper Draft (v8). Exploring the Boundaries of Multi-Agent Ensembles: An Evaluation of Aggregation Operators","datePublished":"2026-10-12","author":{"@type":"Person","name":"Aziz Latipov","url":"https://alatip.github.io/"},"url":"https://alatip.github.io/paper-draft-aggregation-operators/"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"Paper Draft (v9). Exploring the Boundaries of Multi-Agent Ensembles: An Evaluation of Aggregation Operators","datePublished":"2026-10-12","author":{"@type":"Person","name":"Aziz Latipov","url":"https://alatip.github.io/"},"url":"https://alatip.github.io/paper-draft-aggregation-operators/"}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap">
@@ -120,11 +120,11 @@ hr.r{border:none; border-top:1px solid var(--rule); margin:0}
 <div class="page">
 <header>
   <div class="col">
-    <div class="eyebrow">Paper draft · v8 · Ensembles</div>
-    <h1 style="margin-top:.5em">Paper Draft (v8). Exploring the Boundaries of Multi-Agent Ensembles: An Evaluation of Aggregation Operators</h1>
+    <div class="eyebrow">Paper draft · v9 · Ensembles</div>
+    <h1 style="margin-top:.5em">Paper Draft (v9). Exploring the Boundaries of Multi-Agent Ensembles: An Evaluation of Aggregation Operators</h1>
     <p style="margin-top:.6em; font-size:1.12rem; color:var(--ink2)">The ten technical notes on this site, assembled into one paper with one yardstick: for every aggregation operator, how much of the distance between the best single member and the oracle it collects, on which data, and at what price. A working draft, not peer reviewed; the PDF is the deliverable.</p>
     <div class="byline">
-      <span>12 October 2026</span><span>draft v8</span><span>15 sections, 20 tables, 87 references</span><span><a href="paper-v8.pdf">download PDF</a></span><span><a href="https://doi.org/10.5281/zenodo.23311676">doi:10.5281/zenodo.23311676</a></span>
+      <span>12 October 2026</span><span>draft v9</span><span>15 sections, 21 tables, 90 references</span><span><a href="paper-v9.pdf">download PDF (v9)</a></span><span><a href="paper-v8.pdf">v8 PDF</a></span><span><a href="https://doi.org/10.5281/zenodo.23311676">doi:10.5281/zenodo.23311676</a></span>
     </div>
     <div class="abstract">
       <span class="eyebrow">Abstract</span>
@@ -164,18 +164,18 @@ hr.r{border:none; border-top:1px solid var(--rule); margin:0}
       <li>Pool without the frontier models: +3.4…+6.8 over the plurality, 0.939–0.958 on the corpus against the best member's 0.950; the panel is not clearly above its best judge. DeepSeek picks 0.829 while solving 0.575 of the same problems.</li>
       <li>Certification: only unanimity of five keeps false accepts under 5 % (1 of 54, Wilson [0.3 %, 9.8 %]), and that rests on the two strictest judges; the other three alone pass 8 of 54.</li>
       <li>Synthesis in one call: 0.849 on the contested problems against 0.870 for three rounds of debate; 0 of 16 all-wrong problems recovered on the saturated pool, 1 of 10 on the weak one, with an answer none of the members had given.</li>
-      <li>The oracle (a perfect selector): +9.8 on the SWE-bench top seven, +14…+25 on τ-bench, +19…+32 in the mid-ranked bands. This is the unmeasured prize: no partial verifier (tests, execution) was run, and the 82 submissions that declare an internal best-of-n selector are indistinguishable from their peers.</li>
+      <li>The oracle (a perfect selector): +9.8 on the SWE-bench top seven, +14…+25 on τ-bench, +19…+32 in the mid-ranked bands. New in v9, on released candidates and no calls of our own: a trained model verifier (R2E-Gym, AUROC 0.805, no operating point with both errors small) collects 0.51 [0.46, 0.56] of a 32.5-point prize at two candidates and 0.36 [0.29, 0.42] at sixteen; its errors are clustered by bug and its blind spot is rejecting correct patches on hard bugs (false-reject rate vs item difficulty +0.46 [+0.36, +0.55]; false-accept +0.09 [−0.01, +0.18]). An agent's own generated tests (67,074 SWE-rebench rollouts) accept 69% of wrong patches (AUROC 0.53) and collect 0.02–0.04. A formula with per-task false-accept and false-reject rates reproduces the selection curves to within estimation noise; the single error rate of earlier drafts does not.</li>
     </ul>
     <p><strong>Routing: not measured by us.</strong> By the published tables routers collect about a tenth to a quarter of their pool's gap to the oracle (Trinity ≈ 0.15 and under its oracle on every task; Chen's deployable routers ≈ 0.09; the Conductor and Fugu report no oracle). On our pool the router ceiling is at most 2.4 points and a per-problem-set route collects 0.7 of them.</p>
     <p><strong>Decomposition: nothing, except a budget effect.</strong> On 14 hard numeric problems split pass@4 is 0.21 against 0.21 (0 of 7 never-solved problems solved in eight tries); +0.34 [+0.18, +0.50] on 38 problems where one pass runs out of tokens (mechanism not isolated); −0.41 on medium and easy problems for DeepSeek; handing the parts to other models is never better than splitting within one.</p>
-    <p><strong>In one sentence.</strong> Operators that rearrange finished answers give nothing, because the members fail on the same hard problems; operators that add computation give a few points, only where the single answer is weak and the members' errors do not coincide, at several times the tokens and with part of the coverage lost; the one large unclaimed prize is a selector with an external verifier on agent tasks, which this paper does not measure.</p>
+    <p><strong>In one sentence.</strong> Operators that rearrange finished answers give nothing, because the members fail on the same hard problems; operators that add computation give a few points, only where the single answer is weak and the members' errors do not coincide, at several times the tokens and with part of the coverage lost; the one large prize is a selector with an external verifier on agent tasks, and what an imperfect verifier collects of it is now measured on released candidates: half at two candidates and a third at sixteen for a model verifier, almost nothing for an agent's own tests, with a per-task two-rate formula fitting both.</p>
   </div>
 </section>
 
 <section>
   <div class="col">
     <div class="sec-head"><div class="sec-num">2</div><h2>Download</h2></div>
-    <p><a href="paper-v8.pdf"><strong>paper-v8.pdf</strong></a> (1.6 MB, 15 sections, 20 tables, 87 numbered references). Version 8 of 12 October 2026, archived on Zenodo as <a href="https://doi.org/10.5281/zenodo.23311676">doi:10.5281/zenodo.23311676</a> (PDF and HTML; all versions under 10.5281/zenodo.23311675). Earlier drafts are kept locally; a changed text gets a new Zenodo version.</p>
+    <p><a href="paper-v9.pdf"><strong>paper-v9.pdf</strong></a> (1.6 MB, 15 sections, 21 tables, 90 numbered references). Version 9 of 12 October 2026: Section 2.2 replaces the single-error-rate bound for selection by a per-task two-rate formula, and Section 7.7 adds the first measurement of an imperfect verifier on released agent candidates. Version 9 is not yet deposited; the archived version is v8, <a href="paper-v8.pdf">paper-v8.pdf</a>, on Zenodo as <a href="https://doi.org/10.5281/zenodo.23311676">doi:10.5281/zenodo.23311676</a> (all versions under 10.5281/zenodo.23311675). Earlier drafts are kept locally.</p>
   </div>
 </section>
 
@@ -200,14 +200,14 @@ hr.r{border:none; border-top:1px solid var(--rule); margin:0}
 <section>
   <div class="col">
     <div class="sec-head"><div class="sec-num">4</div><h2>Status and what is still open</h2></div>
-    <p>This is a working draft: the results are the notes' results, re-read with the controls a referee would ask for (held-out best member, pre-registered runs with their missed predictions reported, tie rules and in-sample choices marked). It has not been peer reviewed. Known open items, listed in the paper's Section 13: the text corpus is saturated and four of its models ran under an 8,192-token cap; the label audit was one-sided; several tie rules were chosen in sample; the agent matrices are leaderboard submissions; the partial-verifier measurement on agent tasks has not been made. Volume and page details of the six classical references are to be verified before any submission.</p>
+    <p>This is a working draft: the results are the notes' results, re-read with the controls a referee would ask for (held-out best member, pre-registered runs with their missed predictions reported, tie rules and in-sample choices marked). It has not been peer reviewed. Known open items, listed in the paper's Section 13: the text corpus is saturated and four of its models ran under an 8,192-token cap; the label audit was one-sided; several tie rules were chosen in sample; the agent matrices are leaderboard submissions; the partial-verifier measurement (v9, Section 7.7) covers one model verifier and one agent's own tests, both from released candidates, and a test verifier not written by the solver is still unmeasured. Volume and page details of the six classical references are to be verified before any submission.</p>
   </div>
 </section>
 
 <section>
   <div class="col">
     <div class="sec-head"><div class="sec-num">5</div><h2>Cite</h2></div>
-    <p>Latipov, A. (2026). <em>Exploring the Boundaries of Multi-Agent Ensembles: An Evaluation of Aggregation Operators</em> (working paper, draft v8). Zenodo. <a href="https://doi.org/10.5281/zenodo.23311676">https://doi.org/10.5281/zenodo.23311676</a> (all versions: 10.5281/zenodo.23311675). Archived with a DOI on 12 October 2026; the deposit holds the PDF, the HTML and this page.</p>
+    <p>Latipov, A. (2026). <em>Exploring the Boundaries of Multi-Agent Ensembles: An Evaluation of Aggregation Operators</em> (working paper, draft v8). Zenodo. <a href="https://doi.org/10.5281/zenodo.23311676">https://doi.org/10.5281/zenodo.23311676</a> (all versions: 10.5281/zenodo.23311675). The deposit holds v8 (PDF, HTML and this page), archived on 12 October 2026; v9 is published here only and cites as draft v9 of the same working paper.</p>
   </div>
 </section>
 
