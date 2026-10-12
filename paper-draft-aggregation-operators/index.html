@@ -135,14 +135,53 @@ hr.r{border:none; border-top:1px solid var(--rule); margin:0}
 
 <section>
   <div class="col">
-    <div class="sec-head"><div class="sec-num">1</div><h2>Download</h2></div>
+    <div class="sec-head"><div class="sec-num">1</div><h2>Results</h2></div>
+    <p><strong>The frame.</strong> The ceiling of any operator that returns a member's answer is the oracle, the share of problems that at least one member solves. The whole prize is oracle minus best member. The question is not "does the ensemble help" but "what share of that distance does the operator collect", with the best member chosen on held-out problems wherever the data allow. One distinction organises the results: operators that only <em>rearrange</em> answers already produced (plurality voting, routing) collect nothing, because the members fail on the same hard problems; operators that <em>add computation</em> (repeated draws, debate, a judge or synthesis call) collect a few points, only where the single answer is weak and the members' errors are not already shared, at several times the tokens.</p>
+    <p><strong>Plurality voting: collects nothing over a held-out best member.</strong></p>
+    <ul>
+      <li>Full pool of seven models (best 0.975–1.000, oracle 0.998–1.000, so at most 2.3 points of room): indistinguishable from the best member once it is chosen on held-out problems (split-half +1.8 [0.0, +3.3] for the best on MMLU-Pro, ≤ 0 elsewhere; Opus fixed in advance 714 vs 708 of 733, p = 0.26); in sample it trails by 0–1.9 points.</li>
+      <li>Pool without the frontier models (four models, 1–9 points of room): collects none of it; where one member dominates (GLM 0.989 vs 0.76–0.87 on GPQA Diamond) the vote loses to it by 8.9 points with the interval clear of zero.</li>
+      <li>SWE-bench submissions at accuracy 0.4–0.7 (19–32 points of room, 58–93 bugs nobody in the band resolves): the majority is 1.6–4.4 points below the best member; random panels of seven beat their own best in 1–17 % of draws. Chen MMLU-Pro and Leaderboard MMLU in the 0.5–0.7 band (14–25 points of room): a tie or 4–6 points below the held-out best.</li>
+      <li>The reason is the same everywhere: 1.4–2.3 effective votes, and after a fitted difficulty axis the residual correlation is zero (−0.009…+0.009 in every SWE-bench window below the top). The independent Condorcet model over-predicts the majority by up to 27 points where it promises most; a one-factor copula at the tetrachoric ρ predicts it within 1–3 points.</li>
+      <li>What voting does give is insurance: the plurality of three to five mid-ranked models scores about where the best of them scores, without knowing in advance which that is (it beats DeepSeek fixed in advance, 10 won / 33 lost, p = 0.001).</li>
+    </ul>
+    <p><strong>Self-consistency (k draws of one model): pays in a narrow regime.</strong></p>
+    <ul>
+      <li>Pays where a single draw is below 0.9 and the problems are hard: GPQA Diamond +4.3…+6.7, olympiad up to +14.5 (49 of 60 problems; +6.1 over the first draw); MMLU-Pro and GSM-Hard −0.6…+1.7; no intervals.</li>
+      <li>At equal tokens it loses to one answer at every budget a draw can use (by 0.3–31 points even at the best n); it wins only when the budget is about ten times an answer's natural length: olympiad +7…+12 at 32,768 tokens, one GSM-Hard cell +4.3.</li>
+      <li>A cheap model's ensemble against an expensive model: Haiku reaches Opus only on MMLU-Pro at k = 15 (ten times the price) and on GSM-Hard at k = 5; at the measured draw correlation (ρ 0.74–0.93) nine copies add at most 2.7 points, so the replacement works only when the gap is under about three points and the price ratio is at least the number of copies.</li>
+    </ul>
+    <p><strong>Debate: depends on whether the members have something to exchange.</strong></p>
+    <ul>
+      <li>Full pool: +4.9 under one tie rule, +2.2 under another (p = 0.06); 10 of 11 fixes are on answers an agent had not finished within its token cap; in the six-copy control half the gain appears with no peers at all ("think again"); on the 162 problems every agent answered, one fix. The panel collapses to about one effective voter.</li>
+      <li>Pool without the frontier models, pre-registered (errors on the contested problems uncorrelated, φ̄ −0.10): +6.8 on the 146 contested problems (14 fixed / 4 broken, p = 0.031), corpus 0.947 → 0.963 against the best member's 0.950 (p = 0.052), about 1.3 of the 3.6 points of room. The price: eleven contested problems end with every member wrong, coverage 1.000 → 0.925; a correct agent facing three disagreeing peers switches 46 % of the time. All four pre-registered "nothing will happen" predictions failed, each toward a larger effect.</li>
+      <li>9,600 public traces of weak models: +6…+20 over the round-0 modal-hit rate, with the panel again collapsing toward one voter.</li>
+      <li>Reading: debate collects one to two points over the best member where the members fail on different problems; where their errors are shared difficulty it collects zero; it always destroys part of the coverage.</li>
+    </ul>
+    <p><strong>Judges (best-of-n with a posterior check): a few points; the sign against the best member is set by the tie rule.</strong></p>
+    <ul>
+      <li>Full pool: +8.1 / +4.0 / −1.4 over the solvers' plurality under three tie rules; over the whole set within a point of the best solver.</li>
+      <li>Pool without the frontier models: +3.4…+6.8 over the plurality, 0.939–0.958 on the corpus against the best member's 0.950; the panel is not clearly above its best judge. DeepSeek picks 0.829 while solving 0.575 of the same problems.</li>
+      <li>Certification: only unanimity of five keeps false accepts under 5 % (1 of 54, Wilson [0.3 %, 9.8 %]), and that rests on the two strictest judges; the other three alone pass 8 of 54.</li>
+      <li>Synthesis in one call: 0.849 on the contested problems against 0.870 for three rounds of debate; 0 of 16 all-wrong problems recovered on the saturated pool, 1 of 10 on the weak one, with an answer none of the members had given.</li>
+      <li>The oracle (a perfect selector): +9.8 on the SWE-bench top seven, +14…+25 on τ-bench, +19…+32 in the mid-ranked bands. This is the unmeasured prize: no partial verifier (tests, execution) was run, and the 82 submissions that declare an internal best-of-n selector are indistinguishable from their peers.</li>
+    </ul>
+    <p><strong>Routing: not measured by us.</strong> By the published tables routers collect about a tenth to a quarter of their pool's gap to the oracle (Trinity ≈ 0.15 and under its oracle on every task; Chen's deployable routers ≈ 0.09; the Conductor and Fugu report no oracle). On our pool the router ceiling is at most 2.4 points and a per-problem-set route collects 0.7 of them.</p>
+    <p><strong>Decomposition: nothing, except a budget effect.</strong> On 14 hard numeric problems split pass@4 is 0.21 against 0.21 (0 of 7 never-solved problems solved in eight tries); +0.34 [+0.18, +0.50] on 38 problems where one pass runs out of tokens (mechanism not isolated); −0.41 on medium and easy problems for DeepSeek; handing the parts to other models is never better than splitting within one.</p>
+    <p><strong>In one sentence.</strong> Operators that rearrange finished answers give nothing, because the members fail on the same hard problems; operators that add computation give a few points, only where the single answer is weak and the members' errors do not coincide, at several times the tokens and with part of the coverage lost; the one large unclaimed prize is a selector with an external verifier on agent tasks, which this paper does not measure.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">2</div><h2>Download</h2></div>
     <p><a href="paper-v8.pdf"><strong>paper-v8.pdf</strong></a> (1.6 MB, 15 sections, 20 tables, 87 numbered references). Version 8 of 12 October 2026, archived on Zenodo as <a href="https://doi.org/10.5281/zenodo.23311676">doi:10.5281/zenodo.23311676</a> (PDF and HTML; all versions under 10.5281/zenodo.23311675). Earlier drafts are kept locally; a changed text gets a new Zenodo version.</p>
   </div>
 </section>
 
 <section>
   <div class="col">
-    <div class="sec-head"><div class="sec-num">2</div><h2>What the draft is built from</h2></div>
+    <div class="sec-head"><div class="sec-num">3</div><h2>What the draft is built from</h2></div>
     <p>Every number in the paper comes from one of the notes below or from their companion data; the paper adds the common yardstick, the cross-validated best member, two new measurements (voting, debate and judges on the corpus without its frontier models; voting among mid-ranked members of three public matrices), and the one-difficulty-factor reading that ties the operators together.</p>
     <ul>
       <li><a href="../effective-independence/">Effective Independence</a> · <a href="https://doi.org/10.5281/zenodo.23132592">doi:10.5281/zenodo.23132592</a></li>
@@ -160,14 +199,14 @@ hr.r{border:none; border-top:1px solid var(--rule); margin:0}
 
 <section>
   <div class="col">
-    <div class="sec-head"><div class="sec-num">3</div><h2>Status and what is still open</h2></div>
+    <div class="sec-head"><div class="sec-num">4</div><h2>Status and what is still open</h2></div>
     <p>This is a working draft: the results are the notes' results, re-read with the controls a referee would ask for (held-out best member, pre-registered runs with their missed predictions reported, tie rules and in-sample choices marked). It has not been peer reviewed. Known open items, listed in the paper's Section 13: the text corpus is saturated and four of its models ran under an 8,192-token cap; the label audit was one-sided; several tie rules were chosen in sample; the agent matrices are leaderboard submissions; the partial-verifier measurement on agent tasks has not been made. Volume and page details of the six classical references are to be verified before any submission.</p>
   </div>
 </section>
 
 <section>
   <div class="col">
-    <div class="sec-head"><div class="sec-num">4</div><h2>Cite</h2></div>
+    <div class="sec-head"><div class="sec-num">5</div><h2>Cite</h2></div>
     <p>Latipov, A. (2026). <em>Exploring the Boundaries of Multi-Agent Ensembles: An Evaluation of Aggregation Operators</em> (working paper, draft v8). Zenodo. <a href="https://doi.org/10.5281/zenodo.23311676">https://doi.org/10.5281/zenodo.23311676</a> (all versions: 10.5281/zenodo.23311675). Archived with a DOI on 12 October 2026; the deposit holds the PDF, the HTML and this page.</p>
   </div>
 </section>
