@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Working paper draft v8 (12 October 2026) assembling the ten notes on language-model ensembles into one evaluation: how much of the distance between the best member and the oracle each aggregation operator collects (voting, repeated sampling, debate, synthesis, judges, routing, decomposition), on an audited text corpus, the same corpus without frontier models, SWE-bench and two leaderboard matrices at and below the ceiling, τ-bench and OS-Harm logs, and a cost-matched study. PDF, 87 references.">
+<title>Paper Draft (v8). Exploring the Boundaries of Multi-Agent Ensembles: An Evaluation of Aggregation Operators</title>
+<link rel="canonical" href="https://alatip.github.io/paper-draft-aggregation-operators/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Paper Draft (v8). Exploring the Boundaries of Multi-Agent Ensembles: An Evaluation of Aggregation Operators">
+<meta property="og:description" content="Draft v8 of the paper that assembles the ten ensemble notes: what each aggregation operator collects of the best-to-oracle distance, and when. PDF download.">
+<meta property="og:url" content="https://alatip.github.io/paper-draft-aggregation-operators/">
+<meta name="author" content="Aziz Latipov">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"Paper Draft (v8). Exploring the Boundaries of Multi-Agent Ensembles: An Evaluation of Aggregation Operators","datePublished":"2026-10-12","author":{"@type":"Person","name":"Aziz Latipov","url":"https://alatip.github.io/"},"url":"https://alatip.github.io/paper-draft-aggregation-operators/"}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<style>
+:root{
+  --paper:#F8F9FA; --card:#FFFFFF; --sunk:#F0F2F5;
+  --ink:#12161C; --ink2:#39424F; --muted:#6B7684; --rule:#DDE1E7; --hair:#EAEDF1;
+  --accent:#14548C; --accent-soft:#E4EDF6;
+  --a:#14548C; --b:#BF5B04; --truth:#39424F;
+  --warn-bg:#FBF2E4; --warn-ink:#8A5A00;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0F1216; --card:#161A20; --sunk:#1C2128;
+    --ink:#E6EAEF; --ink2:#B6BFCA; --muted:#828D9B; --rule:#2A313A; --hair:#222932;
+    --accent:#7FB3E0; --accent-soft:#152838;
+    --a:#4D93D0; --b:#D4762A; --truth:#B6BFCA;
+    --warn-bg:#2A2214; --warn-ink:#D8AA5C;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0F1216; --card:#161A20; --sunk:#1C2128;
+  --ink:#E6EAEF; --ink2:#B6BFCA; --muted:#828D9B; --rule:#2A313A; --hair:#222932;
+  --accent:#7FB3E0; --accent-soft:#152838;
+  --a:#4D93D0; --b:#D4762A; --truth:#B6BFCA;
+  --warn-bg:#2A2214; --warn-ink:#D8AA5C;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"Source Serif 4",Georgia,serif; font-size:17.5px; line-height:1.62;
+  -webkit-font-smoothing:antialiased; font-variant-numeric:oldstyle-nums;
+}
+.page{max-width:1000px; margin:0 auto; padding:0 24px 110px}
+.col{max-width:640px; margin:0 auto}
+.col > * + *{margin-top:1.05em}
+p{margin:0}
+h1,h2,h3{margin:0; line-height:1.2; text-wrap:balance; font-weight:600}
+h1{font-size:clamp(2rem,4.6vw,2.85rem); letter-spacing:-.012em}
+h2{font-size:1.42rem}
+h3{font-size:1.08rem}
+a{color:var(--accent)}
+strong{font-weight:600}
+code,.mono,.eyebrow{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace}
+code{font-size:.84em; background:var(--sunk); padding:.1em .35em; border-radius:3px}
+.eyebrow{font-size:.68rem; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); font-weight:500}
+
+header{padding:82px 0 30px}
+.byline{display:flex; flex-wrap:wrap; gap:6px 20px; margin-top:1.1em; font-family:"JetBrains Mono",monospace; font-size:.74rem; color:var(--muted)}
+.abstract{
+  margin-top:2em; padding:22px 26px; background:var(--card);
+  border-top:2px solid var(--ink); border-bottom:1px solid var(--rule);
+  font-size:.97rem; line-height:1.6; color:var(--ink2);
+}
+.abstract .eyebrow{display:block; margin-bottom:.7em}
+.abstract strong{color:var(--ink)}
+
+section{padding-top:56px}
+.sec-head{display:flex; gap:14px; align-items:baseline; margin-bottom:20px}
+.sec-num{font-family:"JetBrains Mono",monospace; font-size:.78rem; color:var(--accent); padding-top:.3em; flex:none; font-weight:500}
+
+.eq{
+  background:var(--card); border:1px solid var(--rule); border-radius:4px;
+  padding:16px 20px; overflow-x:auto; font-family:"JetBrains Mono",monospace;
+  font-size:.88rem; line-height:1.85;
+}
+.eq .cm{color:var(--muted)}
+.note{background:var(--accent-soft); padding:16px 20px; border-radius:4px; font-size:.95rem}
+.note.warn{background:var(--warn-bg)}
+.note .eyebrow{display:block; margin-bottom:.45em; color:var(--ink2)}
+
+.tw{overflow-x:auto; border:1px solid var(--rule); border-radius:4px; background:var(--card)}
+table{border-collapse:collapse; width:100%; font-size:.88rem; font-family:"JetBrains Mono",monospace}
+th,td{padding:9px 13px; text-align:right; border-bottom:1px solid var(--hair)}
+th:first-child,td:first-child{text-align:left}
+thead th{font-size:.66rem; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:500; background:var(--sunk)}
+tbody tr:last-child td{border-bottom:none}
+td.hi{color:var(--ink); font-weight:500}
+td.dim{color:var(--muted)}
+.tnum{font-variant-numeric:tabular-nums}
+
+figure{margin:0; max-width:880px; margin-inline:auto}
+.fig{background:var(--card); border:1px solid var(--rule); border-radius:4px; overflow:hidden}
+.fig-b{padding:18px 14px 6px}
+figcaption{padding:0 24px 20px; font-size:.85rem; color:var(--muted); line-height:1.55; max-width:66ch}
+figcaption b{color:var(--ink2); font-weight:600}
+.legend{display:flex; flex-wrap:wrap; gap:6px 22px; padding:16px 24px 0; font-size:.8rem; color:var(--ink2); font-family:"JetBrains Mono",monospace}
+.legend span{display:inline-flex; align-items:center; gap:7px}
+.legend i{width:15px; height:2.5px; border-radius:2px}
+.legend i.dash{background:none; border-top:2px dashed var(--truth); height:0}
+svg{display:block; width:100%; height:auto; overflow:visible}
+
+ol,ul{margin:0; padding-left:1.25em}
+li{margin:.42em 0}
+.refs{font-size:.88rem; color:var(--ink2)}
+.refs li{margin:.55em 0}
+.refs .mono{color:var(--muted); font-size:.92em}
+hr.r{border:none; border-top:1px solid var(--rule); margin:0}
+.foot{padding-top:52px; font-size:.86rem; color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<style>.col p+p,.col p+ul,.col p+ol,.col ul+p,.col ol+p,.col div.note+p,.col p+div.note{margin-top:1.05em} .note .eyebrow{display:block;margin-bottom:.45em} .note p{margin:0}</style>
+</head>
+<body>
+<div class="page">
+<header>
+  <div class="col">
+    <div class="eyebrow">Paper draft · v8 · Ensembles</div>
+    <h1 style="margin-top:.5em">Paper Draft (v8). Exploring the Boundaries of Multi-Agent Ensembles: An Evaluation of Aggregation Operators</h1>
+    <p style="margin-top:.6em; font-size:1.12rem; color:var(--ink2)">The ten technical notes on this site, assembled into one paper with one yardstick: for every aggregation operator, how much of the distance between the best single member and the oracle it collects, on which data, and at what price. A working draft, not peer reviewed; the PDF is the deliverable.</p>
+    <div class="byline">
+      <span>12 October 2026</span><span>draft v8</span><span>15 sections, 20 tables, 87 references</span><span><a href="paper-v8.pdf">download PDF</a></span>
+    </div>
+    <div class="abstract">
+      <span class="eyebrow">Abstract</span>
+      An ensemble of language models can be no better than the share of problems that at least one of its members solves. Every way of combining members, which we call an aggregation operator, collects some part of the distance between the best single member and that ceiling. The paper measures that share, on the same data and with the same yardstick, for plurality voting, repeated sampling of one model, multi-round debate, synthesis, selection and certification by judges, routing by an orchestrator, and decomposition into subtasks. The data are a text corpus of 733 problems answered by seven models from five vendors, with every jointly failed problem re-audited; the same corpus with the frontier models removed; 9,600 public debate traces; the SWE-bench Verified leaderboard matrix of 175 agent submissions, at the top and in mid-ranked accuracy bands; two public leaderboard matrices; released τ-bench and OS-Harm logs; and a cost-matched study of one model's draws. Operators that only rearrange answers already produced collect nothing, whether the room above the best member is 2 points or 32, because the members fail on the same hard problems: one latent difficulty factor reproduces their joint failures and their votes, and the independent Condorcet model over-predicts the vote by up to 27 points. Operators that add computation collect a few points under conditions the paper names: repeated sampling where a single draw is below 0.9 at about ten times one answer's tokens; debate where the members' errors are unshared, at a loss of coverage; a judge panel whose sign against the best member depends on the tie rule. The one large prize nobody collects is the oracle on agent tasks, 10 to 32 points above the best submission, which a selector with an external verifier might reach.
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">1</div><h2>Download</h2></div>
+    <p><a href="paper-v8.pdf"><strong>paper-v8.pdf</strong></a> (1.6 MB, 15 sections, 20 tables, 87 numbered references). Version 8 of 12 October 2026. Earlier versions are kept locally and will be archived with the Zenodo record; a changed text gets a new version there.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">2</div><h2>What the draft is built from</h2></div>
+    <p>Every number in the paper comes from one of the notes below or from their companion data; the paper adds the common yardstick, the cross-validated best member, two new measurements (voting, debate and judges on the corpus without its frontier models; voting among mid-ranked members of three public matrices), and the one-difficulty-factor reading that ties the operators together.</p>
+    <ul>
+      <li><a href="../effective-independence/">Effective Independence</a> · <a href="https://doi.org/10.5281/zenodo.23132592">doi:10.5281/zenodo.23132592</a></li>
+      <li><a href="../no-free-lunch/">There Is No Free Lunch After All</a> · <a href="https://doi.org/10.5281/zenodo.23132912">doi:10.5281/zenodo.23132912</a></li>
+      <li><a href="../the-control-ate-the-signal/">The Control Ate the Signal</a> · <a href="https://doi.org/10.5281/zenodo.23133020">doi:10.5281/zenodo.23133020</a></li>
+      <li><a href="../debate-is-not-sampling/">Debate Is Not Sampling</a> · <a href="https://doi.org/10.5281/zenodo.23133060">doi:10.5281/zenodo.23133060</a></li>
+      <li><a href="../where-the-swarm-pays/">Where the Swarm Pays</a> · <a href="https://doi.org/10.5281/zenodo.23241005">doi:10.5281/zenodo.23241005</a></li>
+      <li><a href="../orchestrator-can-and-cannot-add/">What a Model Orchestrator Can and Cannot Add</a> · <a href="https://doi.org/10.5281/zenodo.23258163">doi:10.5281/zenodo.23258163</a></li>
+      <li><a href="../decomposition-buys-budget/">Decomposition Buys Budget at Best, Nothing Usually</a> · <a href="https://doi.org/10.5281/zenodo.23273230">doi:10.5281/zenodo.23273230</a></li>
+      <li><a href="../safety-breaches-co-occur/">Agents Break Together on Misuse, Apart on Injection</a> · <a href="https://doi.org/10.5281/zenodo.23298301">doi:10.5281/zenodo.23298301</a></li>
+      <li><a href="../agents-fail-together/">Agents with Tools Fail Together</a> · <a href="https://doi.org/10.5281/zenodo.23299738">doi:10.5281/zenodo.23299738</a></li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">3</div><h2>Status and what is still open</h2></div>
+    <p>This is a working draft: the results are the notes' results, re-read with the controls a referee would ask for (held-out best member, pre-registered runs with their missed predictions reported, tie rules and in-sample choices marked). It has not been peer reviewed. Known open items, listed in the paper's Section 13: the text corpus is saturated and four of its models ran under an 8,192-token cap; the label audit was one-sided; several tie rules were chosen in sample; the agent matrices are leaderboard submissions; the partial-verifier measurement on agent tasks has not been made. Volume and page details of the six classical references are to be verified before any submission.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">4</div><h2>Cite</h2></div>
+    <p>Latipov, A. (2026). <em>Exploring the Boundaries of Multi-Agent Ensembles: An Evaluation of Aggregation Operators</em> (working paper, draft v8). alatip.github.io/paper-draft-aggregation-operators/. A Zenodo DOI will be added here once the deposit is published.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <p class="foot"><a href="../">← notes</a> · <a href="https://github.com/Alatip">github.com/Alatip</a></p>
+  </div>
+</section>
+</div>
+</body>
+</html>
