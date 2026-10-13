@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="What an imperfect verifier collects of the distance between the best agent run and the oracle: a per-task two-error-rate formula checked on a released model verifier (R2E-Gym on SWE-bench Verified) and on pre-registered runs of a Claude Haiku judge and two test writers over the same 1,600 Qwen3-Coder candidates. Model verifiers err on the reject side; model-written tests accept 39–69% of wrong patches; tests as a gate before a ranking judge collect 0.28 of the prize.">
+<title>What an Unreliable Verifier Collects</title>
+<link rel="canonical" href="https://alatip.github.io/what-an-unreliable-verifier-collects/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="What an Unreliable Verifier Collects">
+<meta property="og:description" content="A verifier with false-accept rate α and false-reject rate β, per task, predicts what a selector collects of the oracle gap on agent tasks. Measured on a released critic and on our own judge and test writers: model-written tests supply recall, not a small α; the best rule, tests as a gate before a ranking judge, collects 0.28 of the prize at eight candidates.">
+<meta property="og:url" content="https://alatip.github.io/what-an-unreliable-verifier-collects/">
+<meta name="author" content="Aziz Latipov">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"What an Unreliable Verifier Collects","datePublished":"2026-10-13","author":{"@type":"Person","name":"Aziz Latipov","url":"https://alatip.github.io/"},"url":"https://alatip.github.io/what-an-unreliable-verifier-collects/"}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<style>
+:root{
+  --paper:#F8F9FA; --card:#FFFFFF; --sunk:#F0F2F5;
+  --ink:#12161C; --ink2:#39424F; --muted:#6B7684; --rule:#DDE1E7; --hair:#EAEDF1;
+  --accent:#14548C; --accent-soft:#E4EDF6;
+  --a:#14548C; --b:#BF5B04; --truth:#39424F;
+  --warn-bg:#FBF2E4; --warn-ink:#8A5A00;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0F1216; --card:#161A20; --sunk:#1C2128;
+    --ink:#E6EAEF; --ink2:#B6BFCA; --muted:#828D9B; --rule:#2A313A; --hair:#222932;
+    --accent:#7FB3E0; --accent-soft:#152838;
+    --a:#4D93D0; --b:#D4762A; --truth:#B6BFCA;
+    --warn-bg:#2A2214; --warn-ink:#D8AA5C;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0F1216; --card:#161A20; --sunk:#1C2128;
+  --ink:#E6EAEF; --ink2:#B6BFCA; --muted:#828D9B; --rule:#2A313A; --hair:#222932;
+  --accent:#7FB3E0; --accent-soft:#152838;
+  --a:#4D93D0; --b:#D4762A; --truth:#B6BFCA;
+  --warn-bg:#2A2214; --warn-ink:#D8AA5C;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"Source Serif 4",Georgia,serif; font-size:17.5px; line-height:1.62;
+  -webkit-font-smoothing:antialiased; font-variant-numeric:oldstyle-nums;
+}
+.page{max-width:1000px; margin:0 auto; padding:0 24px 110px}
+.col{max-width:640px; margin:0 auto}
+.col > * + *{margin-top:1.05em}
+p{margin:0}
+h1,h2,h3{margin:0; line-height:1.2; text-wrap:balance; font-weight:600}
+h1{font-size:clamp(2rem,4.6vw,2.85rem); letter-spacing:-.012em}
+h2{font-size:1.42rem}
+h3{font-size:1.08rem}
+a{color:var(--accent)}
+strong{font-weight:600}
+code,.mono,.eyebrow{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace}
+code{font-size:.84em; background:var(--sunk); padding:.1em .35em; border-radius:3px}
+.eyebrow{font-size:.68rem; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); font-weight:500}
+
+header{padding:82px 0 30px}
+.byline{display:flex; flex-wrap:wrap; gap:6px 20px; margin-top:1.1em; font-family:"JetBrains Mono",monospace; font-size:.74rem; color:var(--muted)}
+.abstract{
+  margin-top:2em; padding:22px 26px; background:var(--card);
+  border-top:2px solid var(--ink); border-bottom:1px solid var(--rule);
+  font-size:.97rem; line-height:1.6; color:var(--ink2);
+}
+.abstract .eyebrow{display:block; margin-bottom:.7em}
+.abstract strong{color:var(--ink)}
+
+section{padding-top:56px}
+.sec-head{display:flex; gap:14px; align-items:baseline; margin-bottom:20px}
+.sec-num{font-family:"JetBrains Mono",monospace; font-size:.78rem; color:var(--accent); padding-top:.3em; flex:none; font-weight:500}
+
+.eq{
+  background:var(--card); border:1px solid var(--rule); border-radius:4px;
+  padding:16px 20px; overflow-x:auto; font-family:"JetBrains Mono",monospace;
+  font-size:.88rem; line-height:1.85;
+}
+.eq .cm{color:var(--muted)}
+.note{background:var(--accent-soft); padding:16px 20px; border-radius:4px; font-size:.95rem}
+.note.warn{background:var(--warn-bg)}
+.note .eyebrow{display:block; margin-bottom:.45em; color:var(--ink2)}
+
+.tw{overflow-x:auto; border:1px solid var(--rule); border-radius:4px; background:var(--card)}
+table{border-collapse:collapse; width:100%; font-size:.88rem; font-family:"JetBrains Mono",monospace}
+th,td{padding:9px 13px; text-align:right; border-bottom:1px solid var(--hair)}
+th:first-child,td:first-child{text-align:left}
+thead th{font-size:.66rem; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:500; background:var(--sunk)}
+tbody tr:last-child td{border-bottom:none}
+td.hi{color:var(--ink); font-weight:500}
+td.dim{color:var(--muted)}
+.tnum{font-variant-numeric:tabular-nums}
+
+figure{margin:0; max-width:880px; margin-inline:auto}
+.fig{background:var(--card); border:1px solid var(--rule); border-radius:4px; overflow:hidden}
+.fig-b{padding:18px 14px 6px}
+figcaption{padding:0 24px 20px; font-size:.85rem; color:var(--muted); line-height:1.55; max-width:66ch}
+figcaption b{color:var(--ink2); font-weight:600}
+.legend{display:flex; flex-wrap:wrap; gap:6px 22px; padding:16px 24px 0; font-size:.8rem; color:var(--ink2); font-family:"JetBrains Mono",monospace}
+.legend span{display:inline-flex; align-items:center; gap:7px}
+.legend i{width:15px; height:2.5px; border-radius:2px}
+.legend i.dash{background:none; border-top:2px dashed var(--truth); height:0}
+svg{display:block; width:100%; height:auto; overflow:visible}
+
+ol,ul{margin:0; padding-left:1.25em}
+li{margin:.42em 0}
+.refs{font-size:.88rem; color:var(--ink2)}
+.refs li{margin:.55em 0}
+.refs .mono{color:var(--muted); font-size:.92em}
+hr.r{border:none; border-top:1px solid var(--rule); margin:0}
+.foot{padding-top:52px; font-size:.86rem; color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<style>.col p+p,.col p+ul,.col p+ol,.col ul+p,.col ol+p,.col div.note+p,.col p+div.note{margin-top:1.05em} .note .eyebrow{display:block;margin-bottom:.45em} .note p{margin:0}</style>
+</head>
+<body>
+<div class="page">
+<header>
+  <div class="col">
+    <div class="eyebrow">Technical note · Ensembles · Verification</div>
+    <h1 style="margin-top:.5em">What an Unreliable Verifier Collects</h1>
+    <p style="margin-top:.6em; font-size:1.12rem; color:var(--ink2)">On agent benchmarks the share of tasks that at least one run solves sits 10 to 32 points above the best single run, and only a selector with an external check can reach it. This note asks what an imperfect check collects: a formula with two error rates per task, one released verifier, and two pre-registered runs of our own on the same 1,600 candidates. Model judges' false-reject rate, not their false-accept rate, rises with task difficulty; model-written tests, even after reading the code, accept 46% of the wrong patches. The rule with the largest point estimate, found after the pre-registered endpoints, gates on tests and ranks by a judge: 0.28 of the prize at eight candidates, with an interval that overlaps the tests alone.</p>
+    <div class="byline">
+      <span>13 October 2026</span><span>two pre-registered runs; the released-verifier analysis partly pre-registered</span><span>500 + 200 issues, 12,695 + 1,600 candidates, under $10 of cloud compute</span><span>no DOI yet</span>
+    </div>
+    <div class="abstract">
+      <span class="eyebrow">Abstract</span>
+      A selector that picks among <var>n</var> candidate runs with a verifier can reach the oracle, the share of tasks that at least one candidate solves, only if the verifier never accepts a wrong candidate. We replace the single error rate of the earlier paper draft by two rates per task, false accept α<sub><var>i</var></sub> and false reject β<sub><var>i</var></sub>, and derive what follows: the selector's accuracy tends to the verifier's precision at the task's base rate, not to 1; false rejects heal with more candidates, false accepts hurt; and rates that vary by task matter more than their mean. On the R2E-Gym release (500 SWE-bench Verified bugs, about 25 candidates each, a trained model verifier) the per-task formula fits the selection curves within half a point in-sample and removes a third to two thirds of the pooled formula's error out of sample. The verifier collects half of the 32-point prize at two candidates and about a third at sixteen to twenty-five. Its false-reject rate rises with difficulty (Spearman +0.46 against item-response difficulty); its false-accept rate does not. In two pre-registered runs on 200 contested SWE-rebench issues with 8 Qwen3-Coder rollouts each, a Claude Haiku judge (α 0.20, β 0.54) collects 0.15 of the prize at eight candidates by threshold and 0.19 by ranking. Tests written by Haiku from the issue text accept 39% of wrong patches; tests written after reading the repository accept 46%, although they are valid against the reference fix on 163 of 200 issues and collect 0.23. The agent's own tests, on the 30,740 released rollouts that carry them, accept 69%. Model-written tests supply recall, not a small false-accept rate; the one strict execution-based verifier in any of the data uses the hidden fix. Tests as a gate before the judge's ranking, a rule examined after the pre-registered endpoints, collect 0.28 [0.15, 0.40] at eight candidates, the largest point estimate in this series, with an interval that overlaps the tests alone. The residual error correlation between model families on the SWE-bench leaderboard, after one difficulty factor, is at most 0.09, so choosing a verifier from another family moves little; the false-accept rate decides.
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">1</div><h2>The question</h2></div>
+    <p>The earlier notes and the paper draft measured, for every way of combining several language-model runs, how much of the distance between the best single run and the oracle it collects. The oracle is the share of tasks that at least one run solves; the distance to it is the prize. Operators that only rearrange finished answers, voting and routing, collect nothing, because runs fail on the same hard tasks. The one large prize left was on agent benchmarks: 9.8 points above the best of the top seven SWE-bench Verified submissions, 19 to 32 points in mid-ranked bands, 14 to 25 points between pass@1 and pass@4 on τ-bench. Only a selector that checks each candidate against something outside the solvers can reach it, and the draft's bound for such a selector assumed a verifier with one error rate and said nothing about a verifier that is itself unreliable.</p>
+    <p>This note is about that case. It writes down the smallest formalism that fits, checks it on data released by others, and then runs the verifiers we could afford on one set of candidates; the two runs of our own were registered in full before they ran, the analysis of the released data partly so. Two terms recur. A rule's share of the prize is (its accuracy − a random candidate) / (oracle − random) at the same number of candidates <var>n</var>: 1 is the oracle, 0 is a random pick. A task is contested when at least one candidate is correct and one is wrong; the prize lives only there. The SWE-bench bands are groups of leaderboard submissions of similar accuracy.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">2</div><h2>Two error rates, per task</h2></div>
+    <p>A task has <var>n</var> candidates, <var>k</var> of them correct by the benchmark's hidden check; <var>p</var> = <var>k</var>/<var>n</var> is the task's base rate. A verifier accepts a wrong candidate with probability α (false accept) and rejects a correct one with probability β (false reject). The threshold rule picks uniformly among accepted candidates, or among all if none is accepted; the argmax rule picks the candidate with the highest verifier score; a strict test verdict accepts a candidate only if every written test passes. With <var>A</var><sub>r</sub> ~ Binomial(<var>k</var>, 1 − β) accepted correct candidates and <var>A</var><sub>w</sub> ~ Binomial(<var>n</var> − <var>k</var>, α) accepted wrong ones, the chance of picking a correct candidate is E[<var>A</var><sub>r</sub> / (<var>A</var><sub>r</sub> + <var>A</var><sub>w</sub>)], with <var>k</var>/<var>n</var> when nothing is accepted; The selector's accuracy on a benchmark is the mean over tasks with their observed <var>k<sub>i</sub></var>; the observed <var>k<sub>i</sub></var> carry the fact, measured in the earlier notes, that runs fail on the same tasks. Three things follow.</p>
+    <ul>
+      <li><strong>A precision ceiling.</strong> As <var>n</var> grows at fixed <var>p</var>, both accepted counts grow in proportion to <var>n</var>, so the per-task accuracy tends to <var>p</var>(1 − β) / [<var>p</var>(1 − β) + (1 − <var>p</var>)α], the verifier's precision, not to 1 (the same limit as Dorner et al., <a href="https://arxiv.org/abs/2507.12399">arXiv:2507.12399</a>). On a hard task, where <var>p</var> is small, the accepted pool is mostly wrong candidates that slipped through; and the prize sits on hard tasks: in the SWE-bench bands about half of the bugs the best member fails have <var>p<sub>i</sub></var> ≤ 0.2.</li>
+      <li><strong>α and β are not symmetric.</strong> A false reject loses a task only if every correct candidate is rejected, probability β<sup><var>k</var></sup>: more candidates heal it. A false accept adds wrong candidates in proportion to <var>n</var> − <var>k</var>: more candidates hurt. So there is an optimal <var>n</var> for a given verifier, and a strict, flaky check should gain with <var>n</var> while a lenient one loses.</li>
+      <li><strong>Per-task rates.</strong> A verifier that is lenient on some tasks and strict on others collects less than its mean (α, β) says: where it is lenient it accepts every wrong candidate, where it is strict it rejects every correct one, and neither is fixed by sampling more. The per-task version replaces (α, β) by (α<sub><var>i</var></sub>, β<sub><var>i</var></sub>).</li>
+    </ul>
+    <p>On the correctness matrices of the earlier notes (SWE-bench bands, τ-bench trials) the formula gives shares that barely depend on the data: at four candidates and β = 0 the share is about 1 − 1.5α; raising β from 0 to 0.3 costs 20 points of share at <var>n</var>=4 and 12 at <var>n</var>=8, raising α by the same amount costs 49 and 61. So a verifier is judged first by its false-accept rate, and per task.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">3</div><h2>A released model verifier: R2E-Gym on SWE-bench Verified</h2></div>
+    <p>Jain et al. (<a href="https://arxiv.org/abs/2504.07164">arXiv:2504.07164</a>) released, for their 32B agent, the hidden-test outcome of every attempt on the 500 SWE-bench Verified bugs, 12,695 candidates, 19 to 26 per bug, each with the probability of "yes" from their 14B execution-free verifier. pass@1 is 0.319 [0.286, 0.351] and pass@<var>n</var> 0.644 [0.598, 0.684], a prize of 32.5 points on 299 contested bugs. The verifier has AUROC 0.805 and no operating point with both errors small: at threshold 0.5, α 0.31 and β 0.23; at 0.7, α 0.05 and β 0.76. The analyses below the first look (intervals, split-half, difficulty) were pre-registered and run on the same data. Difficulty here is the per-bug parameter of a one-factor item-response fit to the leaderboard's correctness matrix (175 submissions × 500 bugs; 474 bugs matched).</p>
+    <div class="tw"><table>
+      <thead><tr><th>Rule</th><th><var>n</var>=2</th><th>4</th><th>8</th><th>16</th><th>25</th></tr></thead>
+      <tbody>
+        <tr><td>oracle, pass@<var>n</var></td><td>0.409</td><td>0.483</td><td>0.552</td><td>0.611</td><td>0.642</td></tr>
+        <tr><td>random candidate</td><td>0.320</td><td>0.319</td><td>0.319</td><td>0.319</td><td>0.320</td></tr>
+        <tr><td>verifier argmax: accuracy</td><td>0.365</td><td>0.391</td><td>0.408</td><td>0.423</td><td>0.428</td></tr>
+        <tr><td class="hi">share of the prize</td><td class="hi">0.51 [0.46, 0.56]</td><td class="hi">0.44 [0.39, 0.49]</td><td class="hi">0.38 [0.32, 0.44]</td><td class="hi">0.36 [0.29, 0.42]</td><td class="hi">0.33 [0.26, 0.41]</td></tr>
+        <tr><td>threshold 0.5: share</td><td>0.35</td><td>0.31</td><td>0.26</td><td>0.22</td><td>0.20</td></tr>
+        <tr><td>threshold 0.7: share</td><td>0.11</td><td>0.13</td><td>0.15</td><td>0.17</td><td>0.18</td></tr>
+      </tbody>
+    </table></div>
+    <p><b>Table 1.</b> Selection among <var>n</var> random candidates per bug, R2E-Gym release; 95% bootstrap intervals over 500 bugs. Share = (accuracy − random) / (oracle − random) at the same <var>n</var>.</p>
+    <p>Accuracy rises with <var>n</var> while the share falls, from half at two candidates to about a third at sixteen to twenty-five for the argmax rule (share(16) − share(4) = −0.08 [−0.12, −0.04]): the distance to the oracle widens, as the precision limit says. At the strict threshold the share rises instead (+0.04 [+0.01, +0.07] at 0.7): with β of 0.76, more candidates still heal false rejects faster than false accepts hurt; the best threshold rises with <var>n</var>, from 0.35 at two to 0.6 at sixteen. The verifier's errors are clustered by bug (intraclass correlation of accept verdicts 0.26 to 0.43). The formula with one pooled (α, β) overpredicts the threshold rule by 3.8 points at threshold 0.6 and 5.7 at 0.7 (<var>n</var>=12 on a held-out half); per-bug rates estimated on one half of each bug's candidates and applied to the other remove 0.36 and 0.65 of that error, and verdicts regenerated as independent coins from the per-bug rates give the same removal within 0.08, so the remainder is estimation noise from about 13 candidates per half, not structure the per-task model misses. The task-dependence has a side: the per-bug false-reject rate correlates with difficulty at +0.46 [+0.36, +0.55] (Spearman; 0.47, 0.72, 0.75 by difficulty tercile at threshold 0.6), the false-accept rate at +0.09 [−0.01, +0.18]. On hard bugs this verifier rejects correct patches more often; it does not accept wrong ones more often. The released critic therefore behaves as the per-task formula says: the share falls with <var>n</var> at argmax and rises at a strict threshold, and the per-task rates, not their mean, carry the fit.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">4</div><h2>Our own verifiers on the same candidates</h2></div>
+    <p>To put a model judge and model-written tests on identical candidates we took the SWE-rebench OpenHands rollouts released by Nebius (67,074 rollouts of Qwen3-Coder-480B on 3,792 issues, the benchmark's resolved flag on every row), chose 200 issues that are contested, at least one resolved and one unresolved candidate, with a public environment image, and 8 rollouts each: 1,600 candidates, pass@1 0.536, pass@8 0.960, a prize of 42.4 points on these issues. Contested issues are chosen on the hidden labels on purpose: the prize is zero elsewhere, α<sub><var>i</var></sub> and β<sub><var>i</var></sub> are defined per issue and do not depend on the selection, and the pooled rates reported here are means over contested issues. Contested issues are 29% of those with eight candidates, so the whole-benchmark share is 0.29 of the share reported here. Three verifiers, pre-registered with their endpoints and sample size (200 issues give power 0.8 for an α difference of 0.10): a Claude Haiku judge reading issue and patch; tests written by Claude Haiku from the issue text and a file list; and, in a second pre-registered run, tests written by Claude Haiku with read-only access to the repository at the base commit (median eight agent turns per issue). The registered prediction, both times, was that the tests would be the strict verifier of Section 2: α at least 0.10 below the judge's, and, for the reading tests, at least 0.10 below the blind tests'. Tests ran in cloud sandboxes on the base commit, the reference fix (for validation only) and each candidate; 4,000 sandboxes in all, $4.47 of cloud credit by the provider's dashboard. The agent's own tests, present on 47% of the released rollouts, are the fifth row.</p>
+    <div class="tw"><table>
+      <thead><tr><th>Verifier</th><th>Valid on</th><th>α</th><th>β</th><th>AUROC</th><th>Share <var>n</var>=2</th><th><var>n</var>=8</th></tr></thead>
+      <tbody>
+        <tr><td>Judge (Claude Haiku), threshold 0.5</td><td></td><td>0.20 [0.15, 0.26]</td><td>0.54 [0.48, 0.60]</td><td>0.68</td><td>0.17</td><td>0.15 [0.08, 0.22]</td></tr>
+        <tr><td>Judge, argmax</td><td></td><td></td><td></td><td></td><td>0.32 [0.22, 0.41]</td><td>0.19 [0.07, 0.31]</td></tr>
+        <tr><td>Tests written from the issue text, strict</td><td>98 of 200</td><td>0.39 [0.31, 0.47]</td><td>0.48 [0.40, 0.55]</td><td>0.57</td><td>0.15</td><td>0.11 [0.06, 0.17]</td></tr>
+        <tr><td>Tests written after reading the repository, strict</td><td>163 of 200</td><td>0.46 [0.39, 0.53]</td><td>0.25 [0.19, 0.31]</td><td>0.65</td><td>0.34 [0.27, 0.42]</td><td>0.23 [0.16, 0.30]</td></tr>
+        <tr><td>The agent's own tests (released rollouts)</td><td>30% of test sets</td><td>0.69</td><td>0.24</td><td>0.53</td><td>0.02</td><td>0.04</td></tr>
+        <tr><td class="hi">Reading tests as gate, then judge argmax</td><td></td><td></td><td></td><td></td><td class="hi">0.42 [0.31, 0.52]</td><td class="hi">0.28 [0.15, 0.40]</td></tr>
+        <tr><td>Reading tests, only those valid against the reference fix (upper bound)</td><td></td><td>0.45</td><td>0.20</td><td></td><td>0.38</td><td>0.26</td></tr>
+      </tbody>
+    </table></div>
+    <p><b>Table 2.</b> Verifiers against hidden tests on the same 1,600 Qwen3-Coder candidates (the agent's-own-tests row is on the released rollouts that carry tests: 30,740 candidates on 5,221 issues, prize 10.7 points). "Valid on": issues with at least one written test that fails on the base commit and passes on the reference fix. 95% cluster-bootstrap intervals over issues.</p>
+    <p>The judge repeats the R2E pattern: errors clustered by issue (intraclass correlation 0.65), the pooled formula overpredicting by 6.7 points at <var>n</var>=8 with per-issue rates removing 0.39 of the error out of sample, and the false-reject rate, not the false-accept rate, tracking difficulty (β<sub><var>i</var></sub> +0.39 [+0.26, +0.51]; α<sub><var>i</var></sub> +0.08). Used as a ranker it collects 0.32 of the prize at two candidates and 0.19 at eight, the falling shape again.</p>
+    <p>The tests are the surprise, in two steps. Written from the issue text alone, they are valid against the reference fix on only 98 of 200 issues, and α is 0.39. Written after reading the code, they are valid on 163 issues, their false-reject rate falls from 0.48 to 0.25 and their AUROC rises from 0.57 to 0.65. But their false-accept rate does not fall: 0.46 [0.39, 0.53], and the difference from the blind tests, +0.07 [−0.02, +0.16], has the wrong sign for the registered prediction. This is consistent with wrong patches that fix the behaviour the issue names and fail elsewhere, on a regression, an edge case or another test file, while the written tests check the named behaviour; we did not inspect the patches to confirm it. On the hardest third of issues 56% of wrong patches pass the reading tests. The agent's own tests, written by the same model that wrote the patch, accept 69%. Across the three, model-written tests accept 39 to 69% of wrong patches; the one execution-based check with a small false-accept rate in any of the data, the agent's own tests restricted to those valid against the reference fix (α 0.12), needs the hidden fix.</p>
+    <p>What the reading tests collect is the largest of any single verifier in this series: 0.34 of the prize at two candidates and 0.23 at eight, within 0.04 of the same tests restricted to reference-valid ones, so validity is no longer the limit, discrimination is. One rule examined after the registered endpoints combines them: strict tests as a gate, then the judge's score as a ranker, collect 0.42 [0.31, 0.52] at two candidates and 0.28 [0.15, 0.40] at eight. These are the largest point estimates, and their intervals overlap those of the tests alone and of the judge alone, so the combination is a lead, not a result. The asymmetry of Section 2 says why it could work: the tests' large β is healed by having several candidates, and the judge's ranking does what a gate with α near half cannot.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">5</div><h2>Independence, measured before running anything</h2></div>
+    <p>The remaining lever is to take the verifier from a family whose errors are not the solver's, and we checked how much that lever moves before choosing the test-writing model. A verifier whose errors are not aligned with the solver's collects more at equal (α, β): in the formula, a verifier with α 0.2 on average but rising in proportion to task difficulty collects 0.32 of the prize among the top seven SWE-bench submissions at four candidates, against 0.67 for the same mean α spread evenly. Whether two model families have unaligned errors can be read off existing matrices. On the SWE-bench Verified leaderboard, 91 submissions with a known model family and accuracy at least 0.30, the residual correlation between systems after the one-difficulty-factor item-response fit is at most 0.09 everywhere: within family, Qwen +0.092 [+0.06, +0.13], OpenAI +0.035, Claude +0.008 across 40 systems on different scaffolds and versions; between families, −0.03 to +0.03. For Qwen rollouts the least aligned verifier families are Claude (−0.018 [−0.03, −0.01]) and OpenAI (DeepSeek, on two systems, is as low but wide); the most aligned, Qwen itself. The lever exists, but it moves alignment by hundredths, while the difficulty factor alone gives raw correlations of 0.4 to 0.5 between families; our Claude-written tests were chosen by this table, and their false-accept rate, not their family, is what limited them. On the text corpus of the earlier notes the same quick look (additive residual, six models) puts Haiku's errors least shared with Mistral and Opus and most with DeepSeek, more than with Sonnet of the same vendor: family by name and family by errors are not the same thing.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">6</div><h2>What this says</h2></div>
+    <div class="note">
+      <span class="eyebrow">Reading</span>
+      <p>A verifier's two error rates, measured per task, predict what a selector collects; a pooled pair does not (it overpredicts the threshold rule by 4 to 7 points, and per-task rates remove a third to two thirds of that error), and the single rate of the earlier draft, which merged the two, is coarser still. With any false-accept rate the selector never reaches the oracle, and it loses most where the prize is, on hard tasks. Model verifiers, a trained critic and an untrained judge alike, cluster their errors by task, and it is their false-reject rate, not their false-accept rate, that rises with difficulty; more candidates heal that side, so a judge collects a third to a half of the prize at two candidates and a fifth to a third at eight or more. Model-written tests, whether by a second model from the issue text (39%), by a second model after reading the code (46%) or by the solver itself (69%), accept wrong patches at those rates; what they supply is recall. The rule with the largest point estimate, examined after the registered endpoints, uses both: tests as a gate, a judge as a ranker, 0.28 of the prize at eight candidates, with an interval that overlaps the tests alone. The verifier the formula asks for, one with a small false-accept rate that does not use the hidden tests, is the one still to be found.</p>
+    </div>
+    <p>What this note does not say. It does not say that execution-based verifiers cannot be strict: the reference-validated tests are, and a test agent with more than five tests, or one that reads the failing hidden test's neighbourhood, may be. It does not say that the judge's 0.15 to 0.19 is what a trained critic would collect on these candidates; the R2E critic collected 0.38 at eight on its own. And it does not rank families: the residuals are small and the test writers were one model.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">7</div><h2>Limitations</h2></div>
+    <ul>
+      <li><strong>Two benchmarks, two solvers.</strong> R2E-Gym's agent on SWE-bench Verified and Qwen3-Coder-480B on SWE-rebench; one verifier per kind, one test-writing model, asked for at most five tests per issue.</li>
+      <li><strong>The 200 issues are contested by construction</strong> and have a public image (122 contested issues had none). Shares are shares on contested issues; error rates are unaffected.</li>
+      <li><strong>The R2E look was a first analysis</strong> before its pre-registered part, on the same data. The two runs of our own were pre-registered in full; of their five primary endpoints the two about tests being strict failed, two were undecided, and the per-task-rate endpoint held. The gate-then-rank hybrid was not among them.</li>
+      <li><strong>Per-task rates are estimated from about 13 candidates per half</strong> on R2E and 4 on the runs; the split-half test is coarse, and a small misfit would hide in its noise.</li>
+      <li><strong>The threshold rule with a uniform pick</strong> is the formula's rule; argmax and hybrids are measured, not derived.</li>
+      <li><strong>Hidden tests are themselves imperfect</strong>; "correct" means "passes the benchmark's tests". The R2E release carries no licence statement and is cited through its paper.</li>
+      <li><strong>Two data sets could not be used.</strong> The LLM-as-a-Verifier repository (<a href="https://arxiv.org/abs/2607.05391">arXiv:2607.05391</a>) ships Terminal-Bench rewards but not the judge's scores. The one SWE-bench Verified submission with five rollouts per bug and cross-run tests (W&B Programmer, o1) stores only the submitted patch; replaying its trajectories reproduces the published patch on 69% of the 500 reference cases, too few for labels. Its README also says the hidden tests were used to decide where to run the cross-check, so its leaderboard number is not a selector's pass@1, which bears on the 82 submissions that declare an internal selector.</li>
+      <li><strong>Judge and test writer ran under a subscription</strong>, through the command-line client with tools removed or restricted to reading; the model in every record is Claude Haiku 5.5.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">8</div><h2>Sources</h2></div>
+    <p>Data: R2E-Gym, Jain, Singh, Shetty, Zheng, Sen and Stoica, <em>R2E-Gym: Procedural Environments and Hybrid Verifiers for Scaling Open-Weights SWE Agents</em>, <a href="https://arxiv.org/abs/2504.07164">arXiv:2504.07164</a>, release <span class="mono">R2E-Gym/32B_predictions</span> on Hugging Face; Nebius, <span class="mono">nebius/SWE-rebench-openhands-trajectories</span> (CC-BY-4.0) and the <span class="mono">swerebench</span> environment images; the SWE-bench Verified leaderboard matrix and item-response fit of <a href="../agents-fail-together/">Agents with Tools Fail Together</a>. Theory: Dorner, Chen, Cruz and Yang, <em>ROC-n-reroll</em>, <a href="https://arxiv.org/abs/2507.12399">arXiv:2507.12399</a>; Stroebl, Kapoor and Narayanan, <a href="https://arxiv.org/abs/2411.17501">arXiv:2411.17501</a>.</p>
+    <p>Code and pre-registrations: the formula and simulation (<span class="mono">sim_select.py</span>), the R2E analyses (E1), the released-rollout analysis (E3), the two runs (E5, E5b: PREREG.md, idempotent <span class="mono">run.sh</span>, verbatim model outputs, cloud execution engine) and the family-residual matrices are to be released as a companion repository. The paper draft that this note updates: <a href="../paper-draft-aggregation-operators/">Exploring the Boundaries of Multi-Agent Ensembles</a>, v10, Sections 2.2 and 7.7.</p>
+    <p>Earlier notes: <a href="../effective-independence/">Effective Independence</a>, <a href="../where-the-swarm-pays/">Where the Swarm Pays</a>, <a href="../agents-fail-together/">Agents with Tools Fail Together</a>, <a href="../decomposition-buys-budget/">Decomposition Buys Budget at Best, Nothing Usually</a>.</p>
+    <p style="margin-top:1.1em">Not yet archived with a DOI. Cite as: Latipov, A. (2026). <em>What an Unreliable Verifier Collects</em>. https://alatip.github.io/what-an-unreliable-verifier-collects/</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <p class="foot"><a href="../">← notes</a> · <a href="https://github.com/Alatip">github.com/Alatip</a></p>
+  </div>
+</section>
+</div>
+</body>
+</html>
