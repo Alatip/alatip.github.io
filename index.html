@@ -54,6 +54,12 @@ a{color:var(--accent)}
   </details>
 
   <div class="post">
+    <div class="date">19 October 2026</div>
+    <h2><a href="selection-operators/">Paper 1. Selection Operators in Language-Model Ensembles: How Much of the Gap to the Oracle They Collect</a></h2>
+    <p>The first paper of the series split out of the working draft, as one clean study: voting, routing and judge panels over a pool of language models, measured by the share of the gap between the best member and the oracle they collect, on 941 re-audited problems, public correctness matrices and the SWE-bench leaderboard. Voting and routing collect nothing over a best member chosen on held-out data; where operators do beat the best member, the gain is usually insurance against a member that gives no answer. Every number is reproduced by released code. · <a href="selection-operators/">read</a> · <a href="https://doi.org/10.5281/zenodo.23475205">pdf, doi</a> · <a href="https://doi.org/10.5281/zenodo.23454436">code, doi</a></p>
+  </div>
+
+  <div class="post">
     <div class="date">13 October 2026</div>
     <h2><a href="what-an-unreliable-verifier-collects/">Draft Paper (v10). What an Unreliable Verifier Collects</a></h2>
     <p>A selector with an external check is the one operator that can reach the oracle on agent tasks, and this note measures what an imperfect check collects: a formula with false-accept and false-reject rates per task, checked on a released critic (R2E-Gym, 500 SWE-bench Verified bugs) and on pre-registered runs of a Claude Haiku judge and two test writers over the same 1,600 Qwen3-Coder candidates. Model verifiers err by rejecting correct patches on hard tasks; model-written tests accept 39–69% of wrong patches even after reading the code. Tests as a gate before a ranking judge collect 0.28 of the prize at eight candidates. · <a href="what-an-unreliable-verifier-collects/">read</a> · <a href="https://doi.org/10.5281/zenodo.23336060">full text, doi</a></p>

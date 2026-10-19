@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="First paper of the series split from the working draft: voting, routing and judge panels over a pool of language models, measured by the share of the gap between the best member and the oracle they collect. Preprint v1 on Zenodo with reproducible code and data.">
+<title>Paper 1. Selection operators in language-model ensembles: how much of the gap to the oracle they collect</title>
+<link rel="canonical" href="https://alatip.github.io/selection-operators/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Paper 1. Selection operators in language-model ensembles: how much of the gap to the oracle they collect">
+<meta property="og:description" content="First paper of the series split from the working draft: voting, routing and judge panels over a pool of language models, measured by the share of the gap between the best member and the oracle they collect. Preprint v1 on Zenodo with reproducible code and data.">
+<meta property="og:url" content="https://alatip.github.io/selection-operators/">
+<meta name="author" content="Aziz Latipov">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"Paper 1. Selection operators in language-model ensembles: how much of the gap to the oracle they collect","datePublished":"2026-10-19","author":{"@type":"Person","name":"Aziz Latipov","url":"https://alatip.github.io/"},"url":"https://alatip.github.io/selection-operators/"}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --paper:#F8F9FA; --card:#FFFFFF; --sunk:#F0F2F5;
+  --ink:#12161C; --ink2:#39424F; --muted:#6B7684; --rule:#DDE1E7; --hair:#EAEDF1;
+  --accent:#14548C; --accent-soft:#E4EDF6;
+  --a:#14548C; --b:#BF5B04; --truth:#39424F;
+  --warn-bg:#FBF2E4; --warn-ink:#8A5A00;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0F1216; --card:#161A20; --sunk:#1C2128;
+    --ink:#E6EAEF; --ink2:#B6BFCA; --muted:#828D9B; --rule:#2A313A; --hair:#222932;
+    --accent:#7FB3E0; --accent-soft:#152838;
+    --a:#4D93D0; --b:#D4762A; --truth:#B6BFCA;
+    --warn-bg:#2A2214; --warn-ink:#D8AA5C;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0F1216; --card:#161A20; --sunk:#1C2128;
+  --ink:#E6EAEF; --ink2:#B6BFCA; --muted:#828D9B; --rule:#2A313A; --hair:#222932;
+  --accent:#7FB3E0; --accent-soft:#152838;
+  --a:#4D93D0; --b:#D4762A; --truth:#B6BFCA;
+  --warn-bg:#2A2214; --warn-ink:#D8AA5C;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"Source Serif 4",Georgia,serif; font-size:17.5px; line-height:1.62;
+  -webkit-font-smoothing:antialiased; font-variant-numeric:oldstyle-nums;
+}
+.page{max-width:1000px; margin:0 auto; padding:0 24px 110px}
+.col{max-width:640px; margin:0 auto}
+.col > * + *{margin-top:1.05em}
+p{margin:0}
+h1,h2,h3{margin:0; line-height:1.2; text-wrap:balance; font-weight:600}
+h1{font-size:clamp(2rem,4.6vw,2.85rem); letter-spacing:-.012em}
+h2{font-size:1.42rem}
+h3{font-size:1.08rem}
+a{color:var(--accent)}
+strong{font-weight:600}
+code,.mono,.eyebrow{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace}
+code{font-size:.84em; background:var(--sunk); padding:.1em .35em; border-radius:3px}
+.eyebrow{font-size:.68rem; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); font-weight:500}
+
+header{padding:82px 0 30px}
+.byline{display:flex; flex-wrap:wrap; gap:6px 20px; margin-top:1.1em; font-family:"JetBrains Mono",monospace; font-size:.74rem; color:var(--muted)}
+.abstract{
+  margin-top:2em; padding:22px 26px; background:var(--card);
+  border-top:2px solid var(--ink); border-bottom:1px solid var(--rule);
+  font-size:.97rem; line-height:1.6; color:var(--ink2);
+}
+.abstract .eyebrow{display:block; margin-bottom:.7em}
+.abstract strong{color:var(--ink)}
+
+section{padding-top:56px}
+.sec-head{display:flex; gap:14px; align-items:baseline; margin-bottom:20px}
+.sec-num{font-family:"JetBrains Mono",monospace; font-size:.78rem; color:var(--accent); padding-top:.3em; flex:none; font-weight:500}
+
+.eq{
+  background:var(--card); border:1px solid var(--rule); border-radius:4px;
+  padding:16px 20px; overflow-x:auto; font-family:"JetBrains Mono",monospace;
+  font-size:.88rem; line-height:1.85;
+}
+.eq .cm{color:var(--muted)}
+.note{background:var(--accent-soft); padding:16px 20px; border-radius:4px; font-size:.95rem}
+.note.warn{background:var(--warn-bg)}
+.note .eyebrow{display:block; margin-bottom:.45em; color:var(--ink2)}
+
+.tw{overflow-x:auto; border:1px solid var(--rule); border-radius:4px; background:var(--card)}
+table{border-collapse:collapse; width:100%; font-size:.88rem; font-family:"JetBrains Mono",monospace}
+th,td{padding:9px 13px; text-align:right; border-bottom:1px solid var(--hair)}
+th:first-child,td:first-child{text-align:left}
+thead th{font-size:.66rem; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:500; background:var(--sunk)}
+tbody tr:last-child td{border-bottom:none}
+td.hi{color:var(--ink); font-weight:500}
+td.dim{color:var(--muted)}
+.tnum{font-variant-numeric:tabular-nums}
+
+figure{margin:0; max-width:880px; margin-inline:auto}
+.fig{background:var(--card); border:1px solid var(--rule); border-radius:4px; overflow:hidden}
+.fig-b{padding:18px 14px 6px}
+figcaption{padding:0 24px 20px; font-size:.85rem; color:var(--muted); line-height:1.55; max-width:66ch}
+figcaption b{color:var(--ink2); font-weight:600}
+.legend{display:flex; flex-wrap:wrap; gap:6px 22px; padding:16px 24px 0; font-size:.8rem; color:var(--ink2); font-family:"JetBrains Mono",monospace}
+.legend span{display:inline-flex; align-items:center; gap:7px}
+.legend i{width:15px; height:2.5px; border-radius:2px}
+.legend i.dash{background:none; border-top:2px dashed var(--truth); height:0}
+svg{display:block; width:100%; height:auto; overflow:visible}
+
+ol,ul{margin:0; padding-left:1.25em}
+li{margin:.42em 0}
+.refs{font-size:.88rem; color:var(--ink2)}
+.refs li{margin:.55em 0}
+.refs .mono{color:var(--muted); font-size:.92em}
+hr.r{border:none; border-top:1px solid var(--rule); margin:0}
+.foot{padding-top:52px; font-size:.86rem; color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="page">
+<header>
+  <div class="col">
+    <div class="eyebrow">Paper 1 of a series · preprint v1 · Ensembles</div>
+    <h1 style="margin-top:.5em">Selection operators in language-model ensembles: how much of the gap to the oracle they collect</h1>
+    <p style="margin-top:.6em; font-size:1.12rem; color:var(--ink2)">The first paper split out of the working draft v8, rewritten as one clean study with one corpus, one method and code that reproduces every number. Preprint, not peer reviewed; the PDF is the deliverable.</p>
+    <div class="byline">
+      <span>19 October 2026</span><span>preprint v1</span><span><a href="https://doi.org/10.5281/zenodo.23475205">PDF on Zenodo</a></span><span><a href="https://doi.org/10.5281/zenodo.23475205">doi:10.5281/zenodo.23475205</a></span><span><a href="https://doi.org/10.5281/zenodo.23454436">code and data, doi</a></span>
+    </div>
+    <div class="abstract">
+      <span class="eyebrow">Abstract</span>
+      Voting, routing and judge panels over a pool of language models return an answer a member already gave. The share of problems solved by at least one member (the oracle) is a ceiling, and the gap between the oracle and the best member&#x27;s accuracy (the prize) is all a selection operator can add. We measure the share operators collect on a 941-problem corpus of four benchmarks (MMLU-Pro, GPQA Diamond, GSM-Hard, olympiad mathematics) answered by seven models from five vendors, its subsets without frontier models, two public correctness matrices, and the SWE-bench Verified leaderboard, with prizes from 1 to 32 points. Voting is level with or below the best member chosen on held-out data; routing by dataset collects nothing on held-out data; a judge panel in the full pool solves 1.4–3.1 points less than the best member; judge unanimity lets through 8.3% of wrong candidates. Where operators beat the best member, the gain is usually insurance against a member giving no answer; only a judge panel in a pool of three without a strong model collects about a fifth of the prize, which survives no multiplicity correction under the main tie rule. The data are consistent with one shared difficulty factor linking members&#x27; errors: it predicts voting accuracy within 0–3.5 points, whereas independent errors promise up to 27 points, never reached. We recommend reporting the oracle and the prize, choosing the best model on held-out data, and separating problems where it gave no answer.
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">1</div><h2>What changed since the working draft</h2></div>
+    <p>The <a href="../paper-draft-aggregation-operators/">working draft v8</a> put every operator from the earlier notes into one long text. It is now being split into a series of shorter papers, each with a single question. This first one covers only <strong>selection operators</strong>: schemes that return an answer one of the members already gave (voting, routing, judge panels, certification).</p>
+    <ul>
+      <li><strong>One corpus, re-audited.</strong> 941 problems (MMLU-Pro, GPQA Diamond, GSM-Hard, olympiad mathematics) answered by seven models from five vendors, with a 65,536-token answer limit instead of 8,192; the draft used 733 problems.</li>
+      <li><strong>One yardstick.</strong> The best member is chosen on held-out problems, and every comparison is stated as a share of the prize, the gap between the best member and the oracle.</li>
+      <li><strong>Reproducible.</strong> Every number in the text is produced by released code, and an automated check compares the text with the code's output. Code and derived data: <a href="https://doi.org/10.5281/zenodo.23454436">doi:10.5281/zenodo.23454436</a>, <a href="https://github.com/Alatip/paper-1">github.com/Alatip/paper-1</a>.</li>
+      <li><strong>Reviewed before release.</strong> A separate model reviewed the code, numbers and text, and wrote unit tests from the mathematical specification alone; how the work was split between me and the AI tools is stated in the paper.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">2</div><h2>Status</h2></div>
+    <p>Preprint v1, archived on Zenodo before arXiv submission. Later versions go under the same record (all versions: 10.5281/zenodo.23475204). The remaining papers of the series will follow.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">3</div><h2>Cite</h2></div>
+    <p>Latipov, A. (2026). <em>Selection operators in language-model ensembles: how much of the gap to the oracle they collect</em> (preprint v1). Zenodo. <a href="https://doi.org/10.5281/zenodo.23475205">https://doi.org/10.5281/zenodo.23475205</a></p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <p class="foot"><a href="../">← notes</a> · <a href="https://github.com/Alatip">github.com/Alatip</a></p>
+  </div>
+</section>
+</div>
+</body>
+</html>
