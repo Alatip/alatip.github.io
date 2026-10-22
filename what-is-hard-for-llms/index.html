@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="A three-day log of looking for problems today's models cannot solve: the hardest public items were mostly defects, fresh competition sets are nearly saturated, and a 100-step synthetic deduction is solved without error, bounded by output length, not logic.">
+<title>What Is Hard for LLMs in Our Problem Sets: Interim Results</title>
+<link rel="canonical" href="https://alatip.github.io/what-is-hard-for-llms/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="What Is Hard for LLMs in Our Problem Sets: Interim Results">
+<meta property="og:description" content="A three-day log of looking for problems today's models cannot solve: the hardest public items were mostly defects, fresh competition sets are nearly saturated, and a 100-step synthetic deduction is solved without error, bounded by output length, not logic.">
+<meta property="og:url" content="https://alatip.github.io/what-is-hard-for-llms/">
+<meta name="author" content="Aziz Latipov">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"What Is Hard for LLMs in Our Problem Sets: Interim Results","datePublished":"2026-10-22","author":{"@type":"Person","name":"Aziz Latipov"}}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<style>
+:root{
+  --paper:#F8F9FA; --card:#FFFFFF; --sunk:#F0F2F5;
+  --ink:#12161C; --ink2:#39424F; --muted:#6B7684; --rule:#DDE1E7; --hair:#EAEDF1;
+  --accent:#14548C; --accent-soft:#E4EDF6;
+  --a:#14548C; --b:#BF5B04; --truth:#39424F;
+  --warn-bg:#FBF2E4; --warn-ink:#8A5A00;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0F1216; --card:#161A20; --sunk:#1C2128;
+    --ink:#E6EAEF; --ink2:#B6BFCA; --muted:#828D9B; --rule:#2A313A; --hair:#222932;
+    --accent:#7FB3E0; --accent-soft:#152838;
+    --a:#4D93D0; --b:#D4762A; --truth:#B6BFCA;
+    --warn-bg:#2A2214; --warn-ink:#D8AA5C;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0F1216; --card:#161A20; --sunk:#1C2128;
+  --ink:#E6EAEF; --ink2:#B6BFCA; --muted:#828D9B; --rule:#2A313A; --hair:#222932;
+  --accent:#7FB3E0; --accent-soft:#152838;
+  --a:#4D93D0; --b:#D4762A; --truth:#B6BFCA;
+  --warn-bg:#2A2214; --warn-ink:#D8AA5C;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"Source Serif 4",Georgia,serif; font-size:17.5px; line-height:1.62;
+  -webkit-font-smoothing:antialiased; font-variant-numeric:oldstyle-nums;
+}
+.page{max-width:1000px; margin:0 auto; padding:0 24px 110px}
+.col{max-width:640px; margin:0 auto}
+.col > * + *{margin-top:1.05em}
+p{margin:0}
+h1,h2,h3{margin:0; line-height:1.2; text-wrap:balance; font-weight:600}
+h1{font-size:clamp(2rem,4.6vw,2.85rem); letter-spacing:-.012em}
+h2{font-size:1.42rem}
+h3{font-size:1.08rem}
+a{color:var(--accent)}
+strong{font-weight:600}
+code,.mono,.eyebrow{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace}
+code{font-size:.84em; background:var(--sunk); padding:.1em .35em; border-radius:3px}
+.eyebrow{font-size:.68rem; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); font-weight:500}
+
+header{padding:82px 0 30px}
+.byline{display:flex; flex-wrap:wrap; gap:6px 20px; margin-top:1.1em; font-family:"JetBrains Mono",monospace; font-size:.74rem; color:var(--muted)}
+.abstract{
+  margin-top:2em; padding:22px 26px; background:var(--card);
+  border-top:2px solid var(--ink); border-bottom:1px solid var(--rule);
+  font-size:.97rem; line-height:1.6; color:var(--ink2);
+}
+.abstract .eyebrow{display:block; margin-bottom:.7em}
+.abstract strong{color:var(--ink)}
+
+section{padding-top:56px}
+.sec-head{display:flex; gap:14px; align-items:baseline; margin-bottom:20px}
+.sec-num{font-family:"JetBrains Mono",monospace; font-size:.78rem; color:var(--accent); padding-top:.3em; flex:none; font-weight:500}
+
+.eq{
+  background:var(--card); border:1px solid var(--rule); border-radius:4px;
+  padding:16px 20px; overflow-x:auto; font-family:"JetBrains Mono",monospace;
+  font-size:.88rem; line-height:1.85;
+}
+.eq .cm{color:var(--muted)}
+.note{background:var(--accent-soft); padding:16px 20px; border-radius:4px; font-size:.95rem}
+.note.warn{background:var(--warn-bg)}
+.note .eyebrow{display:block; margin-bottom:.45em; color:var(--ink2)}
+
+.tw{overflow-x:auto; border:1px solid var(--rule); border-radius:4px; background:var(--card)}
+table{border-collapse:collapse; width:100%; font-size:.88rem; font-family:"JetBrains Mono",monospace}
+th,td{padding:9px 13px; text-align:right; border-bottom:1px solid var(--hair)}
+th:first-child,td:first-child{text-align:left}
+thead th{font-size:.66rem; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:500; background:var(--sunk)}
+tbody tr:last-child td{border-bottom:none}
+td.hi{color:var(--ink); font-weight:500}
+td.dim{color:var(--muted)}
+.tnum{font-variant-numeric:tabular-nums}
+
+figure{margin:0; max-width:880px; margin-inline:auto}
+.fig{background:var(--card); border:1px solid var(--rule); border-radius:4px; overflow:hidden}
+.fig-b{padding:18px 14px 6px}
+figcaption{padding:0 24px 20px; font-size:.85rem; color:var(--muted); line-height:1.55; max-width:66ch}
+figcaption b{color:var(--ink2); font-weight:600}
+.legend{display:flex; flex-wrap:wrap; gap:6px 22px; padding:16px 24px 0; font-size:.8rem; color:var(--ink2); font-family:"JetBrains Mono",monospace}
+.legend span{display:inline-flex; align-items:center; gap:7px}
+.legend i{width:15px; height:2.5px; border-radius:2px}
+.legend i.dash{background:none; border-top:2px dashed var(--truth); height:0}
+svg{display:block; width:100%; height:auto; overflow:visible}
+
+ol,ul{margin:0; padding-left:1.25em}
+li{margin:.42em 0}
+.refs{font-size:.88rem; color:var(--ink2)}
+.refs li{margin:.55em 0}
+.refs .mono{color:var(--muted); font-size:.92em}
+hr.r{border:none; border-top:1px solid var(--rule); margin:0}
+.foot{padding-top:52px; font-size:.86rem; color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<style>.col p+p,.col p+ul,.col p+ol,.col ul+p,.col ol+p,.col div.note+p,.col p+div.note{margin-top:1.05em} .note .eyebrow{display:block;margin-bottom:.45em} .note p{margin:0}</style>
+</head>
+<body>
+<div class="page">
+<header>
+  <div class="col">
+    <div class="eyebrow">Technical note · Lab log · Difficulty · Interim</div>
+    <h1 style="margin-top:.5em">What Is Hard for LLMs in Our Problem Sets: Interim Results</h1>
+    <p style="margin-top:.6em; font-size:1.12rem; color:var(--ink2)">What does "hard" mean for current language models on the problem sets we use? An interim log of three days of runs: the hardest public items were mostly broken, fresh competition sets fell to the two cheaper Claude models, and a 100-step synthetic deduction was solved without error, bounded by the length of the answer rather than by logic.</p>
+    <div class="byline">
+      <span>22 October 2026</span><span>lab log, interim</span><span>not pre-registered as a whole</span>
+    </div>
+    <div class="abstract">
+      <span class="eyebrow">Abstract</span>
+      This is a log, in order, of what was run between 18 and 20 October 2026 and what came out. It started from one question: do models line up in the same order on every benchmark? They do roughly within a domain and not across domains or roles. It turned into a search for problems hard enough to rank today's strongest models. <strong>In the hardest 5% of a public 52–67-model matrix, about 40% of the items are benchmark defects</strong> (wrong gold, ambiguous wording, answer format), and they can be told apart from genuinely hard items without labels: on hard items, solving goes with model strength (r<sub>pb</sub> +0.29), on defects it does not (+0.05). <strong>On fresh, hard, auto-graded sets (2025–26 olympiads, AIMO, Reasoning Gym, Project Euler) a cascade of Haiku 5.5 → Opus 5.5 → Fable 5.1 solved everything except items that were themselves broken.</strong> On a synthetic forward-chaining test built so that it cannot be broken, <strong>Opus 5.5 made no error up to 100 steps, Haiku 5.5 none up to 40</strong>; the limit in sight was the 128k-token ceiling on one answer. Qwen3.8-27B held to depth 20 and broke at 30. Some of its peers broke differently, by answering short and guessing. Only research-level problems taken from new arXiv papers have so far resisted.
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">1</div><h2>Why ask what is hard</h2></div>
+    <p>Every earlier note ended up at the same place: what matters happens on the hard problems. In <a href="../where-the-swarm-pays/">Where the Swarm Pays</a>, on the problems all seven models got wrong, the gold label, the question or the grader was at fault on 45 of 48. A panel of models carries fewer independent votes than its size suggests (<a href="../effective-independence/">Effective Independence</a>), and the same holds for agents with tools (<a href="../agents-fail-together/">Agents with Tools Fail Together</a>). Decomposition buys budget at best, so it cannot help where a model runs out of ideas rather than tokens (<a href="../decomposition-buys-budget/">Decomposition Buys Budget at Best, Nothing Usually</a>). <a href="../no-free-lunch/">There Is No Free Lunch After All</a> states, before any measurement, a claim about where the boundary of what a model can solve lies. All of these lean on "the hard problems" of our sets as if that were a well-defined thing. This log checks what that set contains for current models: how much is real difficulty, how much is broken items, and where today's strongest models stop.</p>
+    <p>The earlier notes lean on a "single difficulty factor": items are hard or easy for every model at once, which is why model errors are so correlated. A natural follow-up is whether the <em>models</em> also line up on one scale. Is the best model always the best, in voting, in judging, in solving, on every benchmark?</p>
+    <p>On fitted IRT abilities over the public matrices of Chen (2026; 52–67 models), the order is stable inside one domain and moves across domains:</p>
+    <div class="tw"><table>
+      <thead><tr><th>pair of benchmarks</th><th>models</th><th>Spearman ρ</th><th>Kendall τ</th></tr></thead>
+      <tbody class="tnum">
+        <tr><td>MATH-hard ↔ MATH-500</td><td>52</td><td>0.96</td><td>0.84</td></tr>
+        <tr><td>ARC ↔ MMLU (Open LLM Leaderboard)</td><td>28</td><td>0.91</td><td>0.78</td></tr>
+        <tr><td>MMLU-Pro ↔ MATH-500</td><td>52</td><td>0.70</td><td>0.53</td></tr>
+        <tr><td>MMLU-Pro ↔ MATH-hard</td><td>52</td><td>0.66</td><td>0.49</td></tr>
+      </tbody>
+    </table></div>
+    <p>Across the three Chen sets the median model moves 9 places of 52 between its best and worst set, and 22 models move more than 10. Claude Opus 4.8 is 17th on MMLU-Pro and 1st on MATH-500. Role reorders models more than the benchmark does. In our own corpus Haiku 4.5 is 5th–6th of 7 as a solver and 3rd of 6 as a judge picking the right candidate. Opus 5.5, added as a sixth judge, picked the right candidate on 0.968 of 62 contested items, against 0.919 for Sonnet 5.5 and 0.66–0.69 for DeepSeek V3.2, Qwen 3.7 Plus and GLM 5.3 Flash.</p>
+    <div class="note"><span class="eyebrow">A caveat that shaped the rest</span><p>On our own corpus the top places are within noise. On GSM-Hard, Opus 5.5 and Haiku 4.5 differ by one item of 128: Opus slipped a carry in 997,067 + 10, and on another item answered in hours where the gold is in minutes. Near the ceiling a benchmark cannot order strong models, and that is what sent the rest of these three days toward harder problems.</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">2</div><h2>The hardest public items are often broken</h2></div>
+    <p>We took the hardest 5% of each Chen set by solve rate: 53 items, out of 1,010 with at least 20 models each. Opus 5.5 and Fable 5.1 audited them independently. Each solved the item without seeing its solve rate, then judged the gold, the wording and the answer format. They agreed that an item is or is not a defect on 44 of 51. Both flagged a wrong gold in, for example, an arithmetic-series item whose gold has the wrong sign (−3, not 3; Claude re-derived it in a two-line computation).</p>
+    <div class="tw"><table>
+      <thead><tr><th>tier</th><th>items</th><th>share</th><th>labelled</th><th>defect (both auditors)</th></tr></thead>
+      <tbody class="tnum">
+        <tr><td>nobody solved</td><td>2</td><td>0.2%</td><td>2</td><td>2</td></tr>
+        <tr><td>only top-10 models solved</td><td>6</td><td>0.6%</td><td>4</td><td>1</td></tr>
+        <tr><td>&lt;10% of models solved</td><td>29</td><td>2.9%</td><td>18</td><td>11</td></tr>
+        <tr><td>the rest</td><td>973</td><td>96.3%</td><td>27</td><td>4</td></tr>
+      </tbody>
+    </table></div>
+    <p>The 13 unlabelled items in the hard tiers are all AIME problems. Counting them as genuinely hard, <strong>14–15 of the 37 hard items (38–41%) are defects</strong>. The two items nobody solved are both defects.</p>
+    <p>Defects also leave a trace in who solves them. For each item we correlated "this model solved it" with the model's overall accuracy:</p>
+    <div class="tw"><table>
+      <thead><tr><th>group</th><th>items</th><th>median solve rate</th><th>r<sub>pb</sub> [95% CI]</th><th>top-10 solve</th><th>bottom-10 solve</th></tr></thead>
+      <tbody class="tnum">
+        <tr><td>genuinely hard (both)</td><td>22</td><td>0.25</td><td>+0.29 [+0.20, +0.37]</td><td>0.53</td><td>0.10</td></tr>
+        <tr><td>disputed / other</td><td>13</td><td>0.30</td><td>+0.37 [+0.24, +0.47]</td><td>0.69</td><td>0.11</td></tr>
+        <tr><td>defect (both)</td><td>18</td><td>0.04</td><td>+0.05 [−0.06, +0.17]</td><td>0.21</td><td>0.07</td></tr>
+      </tbody>
+    </table></div>
+    <p>A permutation test puts the gap between genuine and defect items at +0.24 (p = 0.003). It holds at matched solve rates: with ≤ 10% solving, +0.14 against −0.05 (p = 0.02). Hard items are solved, rarely, by strong models. Defects are "solved" by whoever happens to land on the gold. That gives a label-free detector: <em>an item almost nobody solves, whose solving is unrelated to model strength, is almost certainly broken.</em> The detector was found post hoc and still needs a pre-registered test on another matrix.</p>
+    <p>Removing the defects makes the picture cleaner, but less than it looks. Against a control that drops equally many clean items at matched solve rate, the error correlation falls by 0.02–0.08, with every 95% interval including zero. The gain of majority voting over the best model does not move (±0.005).</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">3</div><h2>Fresh hard sets fall to the cheap end of a cascade</h2></div>
+    <p>Next, sets with verifiable answers and dates after the models' training: final-answer olympiads 2025–26 from MathArena (AIME, HMMT, BRUMO, SMT, CMIMC, APEX), the public AIMO reference problems, Reasoning Gym at its "hard" presets, and Project Euler 943–992. Every item went through a cascade, one attempt per step and the next model only on failure: Haiku 5.5 → Opus 5.5 → Fable 5.1. Answers came in three conditions: no tools (A), a calculator (B), and sandboxed Python (C, Euler only). All runs used subscription Claude via the CLI with effort max.</p>
+    <div class="tw"><table>
+      <thead><tr><th>set</th><th>items</th><th>first solved by Haiku</th><th>by Opus</th><th>by Fable</th><th>nobody</th></tr></thead>
+      <tbody class="tnum">
+        <tr><td>MathArena, items &lt;50% of its models solved · A</td><td>57</td><td>39</td><td>16</td><td>0</td><td>2</td></tr>
+        <tr><td>MathArena, same · B (calculator)</td><td>57</td><td>48</td><td>8</td><td>0</td><td>1</td></tr>
+        <tr><td>AIMO public reference · A and B</td><td>30</td><td>29</td><td>0</td><td>0</td><td>1</td></tr>
+        <tr><td>Reasoning Gym hard presets · A and B</td><td>60</td><td>59</td><td>1</td><td>0</td><td>0</td></tr>
+        <tr><td>Project Euler 943–992 · C, agreement of two models</td><td>50</td><td>46</td><td>4</td><td>—</td><td>0</td></tr>
+      </tbody>
+    </table></div>
+    <p>Each item no one solved, in every set, was broken:</p>
+    <ul>
+      <li><strong>cmimc_2025:7.</strong> All five of our attempts answer 932, and the gold is 930. A short exact computation, written and run by Claude, gives 932. MathArena had scored 27% of its models (42% of its top 10) correct, for answering 930.</li>
+      <li><strong>aimo2:192e23.</strong> All six attempts give the exact count, 4046·4045!!, and the gold 250 is that number mod 1000 (computed the same way). The AIMO rules ask for answers mod 1000, but the problem text does not.</li>
+      <li><strong>apex_shortlist:35</strong> is the one honest miss: unsolved without tools (Opus 28, gold 31), solved by Haiku with the calculator.</li>
+    </ul>
+    <p>The calculator helped Haiku on 9 MathArena items and hurt it on none. Part of that is not arithmetic. Without tools, 13 Haiku attempts ran into the 128k-token ceiling on one response. With the calculator the model thinks in pieces between calls, and only 7 did. On Reasoning Gym's hard presets nothing differed by task or by calculator: every task was 9–10 of 10 for Haiku. Raising the generators' parameters until Haiku drops to about half takes 9-word cryptarithms, bitwise difficulty 8, or 12–15-person knights-and-knaves. There most misses are again the 128k ceiling, not wrong answers. Two generators cannot go harder at all: zebra puzzles stop at 7 people and futoshiki at 9×9.</p>
+    <p>Project Euler has no published answers, so an answer counted when two different models agreed. Haiku and Opus agreed on 46 of 50, and on the other 4 Fable sided with Opus. With Python available these are not a reasoning test, so the no-tool stage was skipped.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">4</div><h2>Research-level problems resist (partial)</h2></div>
+    <p>MathArena also builds final-answer problems out of new arXiv papers. Its best models (GPT-6.x, Fable 5.1, Opus 5.5) solve 82–96% of each month, so we took the hard tail of June, August and September 2026: 51 items where fewer than half of MathArena's models were correct. The cascade went Haiku A→B→C → Opus A→B→C → Fable A→B→C.</p>
+    <p>The run was stopped after 7 items. Two are solved, both by Opus: a problem on rainbow cycles in triangle-free graphs, <em>without tools</em>, and one on a dimension threshold for Batyrev's non-negativity conjecture, with Python. The other five resisted every model and condition tried. Their failures include Haiku spending 11M tokens with the calculator to answer "+∞", Opus spending 3.2M tokens with Python to a wrong function, and Fable answering that the exact value is not established. Four of the five were solved by no MathArena model either. Before calling them hard they need the defect check from section 2.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">5</div><h2>Long chains of inference: length, not logic</h2></div>
+    <p>To measure reasoning depth without defects or contamination we wrote a generator. It has 8 people, made-up property words, facts, and rules of the form "Everyone who is A and B is C". A goal property is reachable by exactly one person in exactly <em>d</em> rule applications (<em>depth</em>). Each chain rule has <em>w</em> premises (<em>width</em>), the extra ones being facts that must be matched to the person. The other seven people are near misses, each lacking one fact in the second half of the chain. There are 2<em>d</em> noise rules and dead decoy branches. Every item is checked by forward chaining. The answer is a name, so a guess is right one time in eight. No tools are given: with Python this is a 20-line script.</p>
+    <div class="tw"><table>
+      <thead><tr><th>model</th><th>deepest point, all correct</th><th>wrong names</th><th>output tokens there</th></tr></thead>
+      <tbody class="tnum">
+        <tr><td>Opus 5.5</td><td>d100, w8 (≈31k-token problem)</td><td>0</td><td>~106k</td></tr>
+        <tr><td>Haiku 5.5</td><td>d40, w3</td><td>0</td><td>~86k</td></tr>
+        <tr><td>Qwen3.8-27B (FP8)</td><td>d20, w2 (3/3); d30 2/3; d40 1/3</td><td>0</td><td>14–39k at d20</td></tr>
+      </tbody>
+    </table></div>
+    <p>Neither Claude model gave a wrong name anywhere. Output grows with depth and faster with width. For Opus it is 3k tokens at d10 w2, ~90k at d70 w5, and ~106k at d100 w8, close to the 128k ceiling on one answer. Haiku writes 3–5 times more than Opus on the same item. We stopped the sweep there: 100 steps while matching seven facts per step across eight candidates is already well beyond what a person does in their head.</p>
+    <p>Qwen3.8-27B breaks between 20 and 30 steps. A control at d30 with width 2 fails as often as width 3 does, so depth is what breaks it, and it breaks by running out of output or looping, never by naming the wrong person. Models released around the same time, run on the same items within a $5 cap, split into two styles of failure:</p>
+    <div class="tw"><table>
+      <thead><tr><th>model</th><th>d20 w2</th><th>d30 w2</th><th>d40 w2</th><th>how it fails</th></tr></thead>
+      <tbody class="tnum">
+        <tr><td>Qwen3.8-27B</td><td>3/3</td><td>2/3</td><td>1/3</td><td>output ceiling, loops</td></tr>
+        <tr><td>DeepSeek V4 Pro</td><td>2/3</td><td>1/3</td><td>3/3</td><td>wrong names after 2–6k tokens</td></tr>
+        <tr><td>DeepSeek V4 Flash</td><td>2/3</td><td>2/3</td><td>2/3</td><td>both</td></tr>
+        <tr><td>GLM 5.3</td><td>2/3</td><td>1/3</td><td>0/3</td><td>output ceiling</td></tr>
+        <tr><td>Gemma 4 26B-A4B</td><td>2/2</td><td>0/3</td><td>0/3</td><td>output ceiling</td></tr>
+      </tbody>
+    </table></div>
+    <p>Some models walk the chain until the output runs out. Others answer after a few thousand tokens and pick a plausible near miss; DeepSeek V4 Pro once wrote that a person "appears uniquely satisfying all conditions in the intended solution". With three items per point these are impressions, not rates.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">6</div><h2>Things we learned about the tooling</h2></div>
+    <ul>
+      <li><strong>The 128k ceiling is per response and comes from the API.</strong> Raising <code>CLAUDE_CODE_MAX_OUTPUT_TOKENS</code> in Claude Code does not lift it. Without tools it bounds every attempt, whatever budget is set.</li>
+      <li><strong>Thinking can be saved, as a summary.</strong> A flag missing from <code>claude --help</code>, <code>--thinking-display summarized</code>, with <code>--output-format stream-json --verbose</code>, returns a summary of the thinking for Haiku 5.5, Opus 5.5 and Fable 5.1. The raw thinking is not available (allowed values: summarized, omitted, highlights).</li>
+      <li><strong>Headless runs saw the account's connectors.</strong> In the first smoke test one model reported a tool result asking it to create a document. From then on every run used <code>--strict-mcp-config --safe-mode</code>, and the contaminated attempts were discarded.</li>
+      <li><strong>Graders lie in one direction.</strong> Five classes of correct answers were first marked wrong: π read as a symbol, prefixes like <code>C=</code> and <code>f(n)=</code>, <code>\dbinom</code>, and <code>\sqrt5</code> without braces. All flips went from wrong to right, and Claude re-checked every one.</li>
+      <li><strong>Safety filters fire on harmless long problems.</strong> Opus 5.5 and Fable 5.1 refused a handful of made-up-word puzzles and arXiv problems as policy violations. These are recorded as errors and are not scored.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">7</div><h2>What this says</h2></div>
+    <p>For the strongest current models, "hard" in public benchmarks is first a question of data quality. The bottom of a solve-rate ranking collects broken items, and the models' disagreement with the gold there tells you more about the gold. Fresh competition mathematics, even its hardest tail, is within reach of Haiku plus Opus at one attempt each.</p>
+    <p>For long deductive chains the binding constraint is how much a model may write, not whether each step is right. Writing the reasoning out turns depth into length. What separates models is whether they keep walking or start guessing, and how many tokens a step costs them.</p>
+    <p>The problems that resisted are research-level ones built from new papers. That is where the next measurement belongs, together with the defect check, since four of those five items were solved by no model at all.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">8</div><h2>Limitations</h2></div>
+    <ul>
+      <li><strong>A log, not a study.</strong> Individual runs had pre-registrations (each folder has PREREG.md with predictions and logged deviations), but the sequence was decided as results came in. The defect detector was found post hoc.</li>
+      <li><strong>Small cells.</strong> The deduction runs have 3 items per point and the cascade sets 30–60 items. Only the hard-tail correlation has intervals.</li>
+      <li><strong>Labels are model audits.</strong> Defect calls come from Opus and Fable. Where possible Claude checked them with a short computation (cmimc_2025:7, aimo2:192e23, the arithmetic series). No item was checked by a person.</li>
+      <li><strong>Effort max, one attempt, subscription CLI.</strong> No sampling variance was measured, and the 128k ceiling applied to all Claude runs.</li>
+      <li><strong>Project Euler answers are agreements, not checks.</strong> They were not submitted to projecteuler.net.</li>
+      <li><strong>The arXiv run is partial</strong> (7 of 51), and the Sonnet 5.5 comparison was started and stopped.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">9</div><h2>Sources</h2></div>
+    <p>Matrices: Chen 2026, HF <code>josefchen/co-failure-67-models</code> (CC-BY 4.0). Competition and arXiv problems with model outputs: HF <code>MathArena/*</code>. AIMO reference problems: HF mirrors of the Kaggle sets. Procedural tasks: Reasoning Gym 0.1.25. Runs, prompts, raw answers with thinking summaries, and scripts are in the swarm-lbd repository under <code>experiments/</code> (difficulty-components, matharena-hard, aimo-public, procedural-rg, procedural-hard, euler, arxivmath-hard, deduction-depth).</p>
+    <p>Earlier notes: <a href="../where-the-swarm-pays/">Where the Swarm Pays</a>, <a href="../agents-fail-together/">Agents with Tools Fail Together</a>, <a href="../decomposition-buys-budget/">Decomposition Buys Budget at Best, Nothing Usually</a>.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <p class="foot"><a href="../">← notes</a> · <a href="https://github.com/Alatip">github.com/Alatip</a></p>
+  </div>
+</section>
+</div>
+</body>
+</html>
