@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Second paper of the series split from the working draft: self-consistency, debate, answer synthesis and task decomposition, measured against their own starting point and at the same cost in dollars on a preregistered set of 200 problems. Preprint v1 on Zenodo with reproducible code and data.">
+<title>Paper 2. Generative operators in language-model ensembles: what they add to their starting point and what they cost</title>
+<link rel="canonical" href="https://alatip.github.io/generative-operators/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Paper 2. Generative operators in language-model ensembles: what they add to their starting point and what they cost">
+<meta property="og:description" content="Second paper of the series split from the working draft: self-consistency, debate, answer synthesis and task decomposition, measured against their own starting point and at the same cost in dollars on a preregistered set of 200 problems. Preprint v1 on Zenodo with reproducible code and data.">
+<meta property="og:url" content="https://alatip.github.io/generative-operators/">
+<meta name="author" content="Aziz Latipov">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"Paper 2. Generative operators in language-model ensembles: what they add to their starting point and what they cost","datePublished":"2026-10-29","author":{"@type":"Person","name":"Aziz Latipov","url":"https://alatip.github.io/"},"url":"https://alatip.github.io/generative-operators/"}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --paper:#F8F9FA; --card:#FFFFFF; --sunk:#F0F2F5;
+  --ink:#12161C; --ink2:#39424F; --muted:#6B7684; --rule:#DDE1E7; --hair:#EAEDF1;
+  --accent:#14548C; --accent-soft:#E4EDF6;
+  --a:#14548C; --b:#BF5B04; --truth:#39424F;
+  --warn-bg:#FBF2E4; --warn-ink:#8A5A00;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0F1216; --card:#161A20; --sunk:#1C2128;
+    --ink:#E6EAEF; --ink2:#B6BFCA; --muted:#828D9B; --rule:#2A313A; --hair:#222932;
+    --accent:#7FB3E0; --accent-soft:#152838;
+    --a:#4D93D0; --b:#D4762A; --truth:#B6BFCA;
+    --warn-bg:#2A2214; --warn-ink:#D8AA5C;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0F1216; --card:#161A20; --sunk:#1C2128;
+  --ink:#E6EAEF; --ink2:#B6BFCA; --muted:#828D9B; --rule:#2A313A; --hair:#222932;
+  --accent:#7FB3E0; --accent-soft:#152838;
+  --a:#4D93D0; --b:#D4762A; --truth:#B6BFCA;
+  --warn-bg:#2A2214; --warn-ink:#D8AA5C;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"Source Serif 4",Georgia,serif; font-size:17.5px; line-height:1.62;
+  -webkit-font-smoothing:antialiased; font-variant-numeric:oldstyle-nums;
+}
+.page{max-width:1000px; margin:0 auto; padding:0 24px 110px}
+.col{max-width:640px; margin:0 auto}
+.col > * + *{margin-top:1.05em}
+p{margin:0}
+h1,h2,h3{margin:0; line-height:1.2; text-wrap:balance; font-weight:600}
+h1{font-size:clamp(2rem,4.6vw,2.85rem); letter-spacing:-.012em}
+h2{font-size:1.42rem}
+h3{font-size:1.08rem}
+a{color:var(--accent)}
+strong{font-weight:600}
+code,.mono,.eyebrow{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace}
+code{font-size:.84em; background:var(--sunk); padding:.1em .35em; border-radius:3px}
+.eyebrow{font-size:.68rem; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); font-weight:500}
+
+header{padding:82px 0 30px}
+.byline{display:flex; flex-wrap:wrap; gap:6px 20px; margin-top:1.1em; font-family:"JetBrains Mono",monospace; font-size:.74rem; color:var(--muted)}
+.abstract{
+  margin-top:2em; padding:22px 26px; background:var(--card);
+  border-top:2px solid var(--ink); border-bottom:1px solid var(--rule);
+  font-size:.97rem; line-height:1.6; color:var(--ink2);
+}
+.abstract .eyebrow{display:block; margin-bottom:.7em}
+.abstract strong{color:var(--ink)}
+
+section{padding-top:56px}
+.sec-head{display:flex; gap:14px; align-items:baseline; margin-bottom:20px}
+.sec-num{font-family:"JetBrains Mono",monospace; font-size:.78rem; color:var(--accent); padding-top:.3em; flex:none; font-weight:500}
+
+.eq{
+  background:var(--card); border:1px solid var(--rule); border-radius:4px;
+  padding:16px 20px; overflow-x:auto; font-family:"JetBrains Mono",monospace;
+  font-size:.88rem; line-height:1.85;
+}
+.eq .cm{color:var(--muted)}
+.note{background:var(--accent-soft); padding:16px 20px; border-radius:4px; font-size:.95rem}
+.note.warn{background:var(--warn-bg)}
+.note .eyebrow{display:block; margin-bottom:.45em; color:var(--ink2)}
+
+.tw{overflow-x:auto; border:1px solid var(--rule); border-radius:4px; background:var(--card)}
+table{border-collapse:collapse; width:100%; font-size:.88rem; font-family:"JetBrains Mono",monospace}
+th,td{padding:9px 13px; text-align:right; border-bottom:1px solid var(--hair)}
+th:first-child,td:first-child{text-align:left}
+thead th{font-size:.66rem; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:500; background:var(--sunk)}
+tbody tr:last-child td{border-bottom:none}
+td.hi{color:var(--ink); font-weight:500}
+td.dim{color:var(--muted)}
+.tnum{font-variant-numeric:tabular-nums}
+
+figure{margin:0; max-width:880px; margin-inline:auto}
+.fig{background:var(--card); border:1px solid var(--rule); border-radius:4px; overflow:hidden}
+.fig-b{padding:18px 14px 6px}
+figcaption{padding:0 24px 20px; font-size:.85rem; color:var(--muted); line-height:1.55; max-width:66ch}
+figcaption b{color:var(--ink2); font-weight:600}
+.legend{display:flex; flex-wrap:wrap; gap:6px 22px; padding:16px 24px 0; font-size:.8rem; color:var(--ink2); font-family:"JetBrains Mono",monospace}
+.legend span{display:inline-flex; align-items:center; gap:7px}
+.legend i{width:15px; height:2.5px; border-radius:2px}
+.legend i.dash{background:none; border-top:2px dashed var(--truth); height:0}
+svg{display:block; width:100%; height:auto; overflow:visible}
+
+ol,ul{margin:0; padding-left:1.25em}
+li{margin:.42em 0}
+.refs{font-size:.88rem; color:var(--ink2)}
+.refs li{margin:.55em 0}
+.refs .mono{color:var(--muted); font-size:.92em}
+hr.r{border:none; border-top:1px solid var(--rule); margin:0}
+.foot{padding-top:52px; font-size:.86rem; color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="page">
+<header>
+  <div class="col">
+    <div class="eyebrow">Paper 2 of a series · preprint v1 · Ensembles</div>
+    <h1 style="margin-top:.5em">Generative operators in language-model ensembles: what they add to their starting point and what they cost</h1>
+    <p style="margin-top:.6em; font-size:1.12rem; color:var(--ink2)">The second paper split out of the working draft v8: the operators that write a new answer instead of picking one, each measured against its own starting point and at the same cost. Preprint, not peer reviewed; the PDF is the deliverable.</p>
+    <div class="byline">
+      <span>29 October 2026</span><span>preprint v1</span><span><a href="https://doi.org/10.5281/zenodo.23768976">PDF on Zenodo</a></span><span><a href="https://doi.org/10.5281/zenodo.23768976">doi:10.5281/zenodo.23768976</a></span><span><a href="https://doi.org/10.5281/zenodo.23768545">code and data, doi</a></span>
+    </div>
+    <div class="abstract">
+      <span class="eyebrow">Abstract</span>
+      Self-consistency, debate, answer synthesis and task decomposition promise that extra language-model calls give a better answer than one. We call such operators generative and ask two questions of each: how much it adds to its starting point — a single answer or a vote of the same members — and whether the gain holds at the same cost. All four are measured on the same problems, with one pool of seven previous-generation models and cost in dollars. Hypotheses from set A, the nearly saturated corpus of paper 1, were tested on a preregistered set B of 200 problems. The freedom of a generative operator is barely used: a correct answer that no member gave appeared on 0–2 of 200 problems. At first sight GLM 4.7 Flash self-consistency is the one gain that survives the Holm correction (+19.0 points). A closer look at how this comparison was scored shows that its starting point, the first sample, is often empty; measured instead against the first sample that gave an answer, voting adds only 4.5 points, not significant after correction. So no operator shows a gain over its own starting point that survives correction; the design resolves about 5–6 points, so smaller gains are not excluded. Gains over the vote larger than about 6.5 points are unlikely given the data. Seven-model debate and synthesis add about 2 points to the vote of the same answers, with intervals that include zero, at noticeably higher cost. The answers themselves explain why: each problem has its own chance of success for a model, close to 0 or 1, so repeated samples can change the outcome only on the few problems in between; in debate the members converge (mean member accuracy on the debated problems from 0.564 to 0.773), mostly onto the answer that already led the vote; and part of the vote&#x27;s advantage is the tie rule: with ties split evenly the vote solves 0.755 instead of 0.770, and debate and synthesis then add +3.5 and +4.0 points, still not a gain that survives correction. Decomposition helped none of the three models; on set A only the length limit made it help. At the same cost five operators beat the best model of the pool, but for debate and synthesis 10 of those 12 points already come from the vote of the members&#x27; first answers; GLM voting and GLM decomposition lose to the best model. The problems are almost all mathematical, with a short answer.
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">1</div><h2>What this paper adds to the series</h2></div>
+    <p><a href="../selection-operators/">Paper 1</a> covered <strong>selection operators</strong>, which return an answer one of the members already gave, so their ceiling is the oracle. This paper covers the other half, <strong>generative operators</strong>: repeated samples of one model with voting (self-consistency), debate, answer synthesis and task decomposition. They can in principle give a correct answer that no member gave.</p>
+    <ul>
+      <li><strong>Its own starting point and the same cost.</strong> Each operator is compared with what it adds compute to (a single answer or a vote of the same members) and with the best model of the pool whose single answer costs no more, in dollars.</li>
+      <li><strong>Preregistered test set.</strong> The hypotheses came from the paper-1 corpus, which is nearly saturated; they were tested on a separate set of 200 harder problems (HLE, MathArena, OlympiadBench, LAB-Bench), with the analysis plan written down before the operators were run. Deviations from the plan are listed in the paper.</li>
+      <li><strong>How the answers behave.</strong> A section on what repeated samples, votes and debate rounds actually look like explains why the operators add so little: a model's samples differ only on the problems that are borderline for it, and debate moves members onto the answer that already led the vote.</li>
+      <li><strong>Reproducible.</strong> Every number in the text is produced by released code, and an automated check compares the text with the code's output. Code and derived data: <a href="https://doi.org/10.5281/zenodo.23768545">doi:10.5281/zenodo.23768545</a> (version 1.0.2), <a href="https://github.com/Alatip/paper-2">github.com/Alatip/paper-2</a>.</li>
+      <li><strong>Reviewed before release.</strong> A separate model reviewed the code, numbers and text in several rounds; how the work was split between me and the AI tools is stated in the paper.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">2</div><h2>Status</h2></div>
+    <p>Preprint v1, archived on Zenodo before arXiv submission. Later versions go under the same record (all versions: 10.5281/zenodo.23768975). The remaining papers of the series will follow.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">3</div><h2>Cite</h2></div>
+    <p>Latipov, A. (2026). <em>Generative operators in language-model ensembles: what they add to their starting point and what they cost</em> (preprint v1). Zenodo. <a href="https://doi.org/10.5281/zenodo.23768976">https://doi.org/10.5281/zenodo.23768976</a></p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <p class="foot"><a href="../">← notes</a> · <a href="https://github.com/Alatip">github.com/Alatip</a></p>
+  </div>
+</section>
+</div>
+</body>
+</html>
