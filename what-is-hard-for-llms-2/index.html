@@ -129,7 +129,7 @@ hr.r{border:none; border-top:1px solid var(--rule); margin:0}
     <h1 style="margin-top:.5em">What Is Hard for LLMs, Part 2: Optimization Instead of an Answer (Interim Results)</h1>
     <p style="margin-top:.6em; font-size:1.12rem; color:var(--ink2)">A benchmark with no top score: agents make an interpreter for a new virtual machine execute fewer machine instructions without changing its behaviour. First results for four Claude models at three effort settings.</p>
     <div class="byline">
-      <span>6 November 2026</span><span>interim report</span><span>exploratory, rules fixed before each series</span>
+      <span>6 November 2026</span><span>interim report</span><span>exploratory, rules fixed before each series</span><span><a href="https://doi.org/10.5281/zenodo.24011976">doi:10.5281/zenodo.24011976</a></span>
     </div>
     <div class="abstract">
       <span class="eyebrow">Abstract</span>
@@ -615,6 +615,7 @@ window.addEventListener('resize',()=>draw());
     <p><strong>Going further costs correctness.</strong> Opus 5.5 and Fable 5.1 each failed the gate in 3 of 9 runs, against 1 of 9 for Haiku 5.5 and for Sonnet 5.5, and their broken versions reach up to 8.05. Most failures come from rewriting or fusing opcode sequences, which is also where most of the gain comes from. An error that survives to the cap was not found later: in all four continued runs that had failed, the agent spent another $12 to $54 and kept improving the score, but the original failure stayed. Whether these models would find such errors if asked directly to check their own work is an open question for the next runs.</p>
     <p>Quern is one task, but the shape behind it is general. A function <i>F</i> is given as a working implementation; a hidden set of inputs <i>X</i> with correct outputs <i>Y</i> is the gate; a generator produces random inputs <i>X′</i> whose correct outputs <i>Y′</i> are cheap to obtain, and that is fuzzing; the agent builds an <i>F′</i> that matches <i>F</i> on both and is cheaper by a counted cost on workloads it does not see. Within the same class, the virtual machine can grow harder, or virtual machines can be generated from a description, a new one for each release. With the same counter of machine instructions, the agent could get a small compiler for a new language, or routines and data structures written for the bench. Other costs and machines are possible too: peak memory, allocations, output size, or circuits whose cost is counted after synthesis and whose correctness is checked by formal equivalence, a proof rather than a set of tests. All of these are ideas; none has been built or tested by us.</p>
     <p class="callout">The specification and the setup for running the bench are available on request: write to <a href="mailto:aziz.latypov@gmail.com">aziz.latypov@gmail.com</a>.</p>
+    <p style="margin-top:1.1em">Archived with a DOI: <a href="https://doi.org/10.5281/zenodo.24011976">10.5281/zenodo.24011976</a> (all versions: 10.5281/zenodo.24011975). Cite as: Latipov, A. (2026). <em>What Is Hard for LLMs, Part 2: Optimization Instead of an Answer (Interim Results)</em>. Zenodo. https://doi.org/10.5281/zenodo.24011976</p>
   </div>
 </section>
 
