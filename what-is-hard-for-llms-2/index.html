@@ -1,0 +1,640 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="A synthetic benchmark with no ceiling: Claude Code agents on four Claude models make an interpreter for a new virtual machine cheaper; the stronger models score higher but break it more often.">
+<title>What Is Hard for LLMs, Part 2: Optimization Instead of an Answer (Interim Results)</title>
+<link rel="canonical" href="https://alatip.github.io/what-is-hard-for-llms-2/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="What Is Hard for LLMs, Part 2: Optimization Instead of an Answer (Interim Results)">
+<meta property="og:description" content="A synthetic benchmark with no ceiling: Claude Code agents on four Claude models make an interpreter for a new virtual machine cheaper; the stronger models score higher but break it more often.">
+<meta property="og:url" content="https://alatip.github.io/what-is-hard-for-llms-2/">
+<meta name="author" content="Aziz Latipov">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"What Is Hard for LLMs, Part 2: Optimization Instead of an Answer (Interim Results)","datePublished":"2026-11-06","author":{"@type":"Person","name":"Aziz Latipov"}}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap">
+
+<style>
+:root{
+  --paper:#F8F9FA; --card:#FFFFFF; --sunk:#F0F2F5;
+  --ink:#12161C; --ink2:#39424F; --muted:#6B7684; --rule:#DDE1E7; --hair:#EAEDF1;
+  --accent:#14548C; --accent-soft:#E4EDF6;
+  --a:#14548C; --b:#BF5B04; --truth:#39424F;
+  --warn-bg:#FBF2E4; --warn-ink:#8A5A00;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0F1216; --card:#161A20; --sunk:#1C2128;
+    --ink:#E6EAEF; --ink2:#B6BFCA; --muted:#828D9B; --rule:#2A313A; --hair:#222932;
+    --accent:#7FB3E0; --accent-soft:#152838;
+    --a:#4D93D0; --b:#D4762A; --truth:#B6BFCA;
+    --warn-bg:#2A2214; --warn-ink:#D8AA5C;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0F1216; --card:#161A20; --sunk:#1C2128;
+  --ink:#E6EAEF; --ink2:#B6BFCA; --muted:#828D9B; --rule:#2A313A; --hair:#222932;
+  --accent:#7FB3E0; --accent-soft:#152838;
+  --a:#4D93D0; --b:#D4762A; --truth:#B6BFCA;
+  --warn-bg:#2A2214; --warn-ink:#D8AA5C;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"Source Serif 4",Georgia,serif; font-size:17.5px; line-height:1.62;
+  -webkit-font-smoothing:antialiased; font-variant-numeric:oldstyle-nums;
+}
+.page{max-width:1000px; margin:0 auto; padding:0 24px 110px}
+.col{max-width:640px; margin:0 auto}
+.col > * + *{margin-top:1.05em}
+p{margin:0}
+h1,h2,h3{margin:0; line-height:1.2; text-wrap:balance; font-weight:600}
+h1{font-size:clamp(2rem,4.6vw,2.85rem); letter-spacing:-.012em}
+h2{font-size:1.42rem}
+h3{font-size:1.08rem}
+a{color:var(--accent)}
+strong{font-weight:600}
+code,.mono,.eyebrow{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace}
+code{font-size:.84em; background:var(--sunk); padding:.1em .35em; border-radius:3px}
+.eyebrow{font-size:.68rem; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); font-weight:500}
+
+header{padding:82px 0 30px}
+.byline{display:flex; flex-wrap:wrap; gap:6px 20px; margin-top:1.1em; font-family:"JetBrains Mono",monospace; font-size:.74rem; color:var(--muted)}
+.abstract{
+  margin-top:2em; padding:22px 26px; background:var(--card);
+  border-top:2px solid var(--ink); border-bottom:1px solid var(--rule);
+  font-size:.97rem; line-height:1.6; color:var(--ink2);
+}
+.abstract .eyebrow{display:block; margin-bottom:.7em}
+.abstract strong{color:var(--ink)}
+
+section{padding-top:56px}
+.sec-head{display:flex; gap:14px; align-items:baseline; margin-bottom:20px}
+.sec-num{font-family:"JetBrains Mono",monospace; font-size:.78rem; color:var(--accent); padding-top:.3em; flex:none; font-weight:500}
+
+.eq{
+  background:var(--card); border:1px solid var(--rule); border-radius:4px;
+  padding:16px 20px; overflow-x:auto; font-family:"JetBrains Mono",monospace;
+  font-size:.88rem; line-height:1.85;
+}
+.eq .cm{color:var(--muted)}
+.note{background:var(--accent-soft); padding:16px 20px; border-radius:4px; font-size:.95rem}
+.note.warn{background:var(--warn-bg)}
+.note .eyebrow{display:block; margin-bottom:.45em; color:var(--ink2)}
+
+.tw{overflow-x:auto; border:1px solid var(--rule); border-radius:4px; background:var(--card)}
+table{border-collapse:collapse; width:100%; font-size:.88rem; font-family:"JetBrains Mono",monospace}
+th,td{padding:9px 13px; text-align:right; border-bottom:1px solid var(--hair)}
+th:first-child,td:first-child{text-align:left}
+thead th{font-size:.66rem; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:500; background:var(--sunk)}
+tbody tr:last-child td{border-bottom:none}
+td.hi{color:var(--ink); font-weight:500}
+td.dim{color:var(--muted)}
+.tnum{font-variant-numeric:tabular-nums}
+
+figure{margin:0; max-width:880px; margin-inline:auto}
+.fig{background:var(--card); border:1px solid var(--rule); border-radius:4px; overflow:hidden}
+.fig-b{padding:18px 14px 6px}
+figcaption{padding:0 24px 20px; font-size:.85rem; color:var(--muted); line-height:1.55; max-width:66ch}
+figcaption b{color:var(--ink2); font-weight:600}
+.legend{display:flex; flex-wrap:wrap; gap:6px 22px; padding:16px 24px 0; font-size:.8rem; color:var(--ink2); font-family:"JetBrains Mono",monospace}
+.legend span{display:inline-flex; align-items:center; gap:7px}
+.legend i{width:15px; height:2.5px; border-radius:2px}
+.legend i.dash{background:none; border-top:2px dashed var(--truth); height:0}
+svg{display:block; width:100%; height:auto; overflow:visible}
+
+ol,ul{margin:0; padding-left:1.25em}
+li{margin:.42em 0}
+.refs{font-size:.88rem; color:var(--ink2)}
+.refs li{margin:.55em 0}
+.refs .mono{color:var(--muted); font-size:.92em}
+hr.r{border:none; border-top:1px solid var(--rule); margin:0}
+.foot{padding-top:52px; font-size:.86rem; color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<style>.col p+p,.col p+ul,.col p+ol,.col ul+p,.col ol+p,.col div.note+p,.col p+div.note{margin-top:1.05em} .note .eyebrow{display:block;margin-bottom:.45em} .note p{margin:0}</style>
+<style>.todo{border:1.5px dashed var(--warn-ink);background:var(--warn-bg);color:var(--warn-ink);padding:.7em .9em;border-radius:6px;margin:1em 0;font-size:.95rem}.todo b{display:block;margin-bottom:.3em}.fig{border:1.5px dashed var(--rule);padding:2.2em 1em;text-align:center;color:var(--muted);border-radius:6px;margin:1.2em 0}</style>
+<style>pre.code{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;font-variant-ligatures:none;font-size:.8rem;line-height:1.45;background:var(--sunk);border:1px solid var(--hair);border-radius:6px;padding:.8em 1em;overflow-x:auto;margin:1em 0;color:var(--ink)} .cap{font-size:.88rem;color:var(--muted);margin-top:-.4em}</style>
+<style>sup.fn{font-size:.7em;line-height:0} sup.fn a{text-decoration:none} .footnotes{font-size:.9rem;color:var(--ink2)} .footnotes ol{padding-left:1.2em} .footnotes li+li{margin-top:.5em}</style>
+<style>.muted{color:var(--muted)}</style>
+<style>.callout{border:none;background:color-mix(in srgb,var(--b) 4%,transparent);border-radius:6px;padding:.7em .9em;margin-top:1.4em!important;color:var(--ink)} .callout a{color:var(--b);text-decoration-color:var(--b)}</style>
+</head>
+<body>
+<div class="page">
+<header>
+  <div class="col">
+    <div class="eyebrow">Technical note · Benchmarks · Interim report</div>
+    <h1 style="margin-top:.5em">What Is Hard for LLMs, Part 2: Optimization Instead of an Answer (Interim Results)</h1>
+    <p style="margin-top:.6em; font-size:1.12rem; color:var(--ink2)">A benchmark with no top score: agents make an interpreter for a new virtual machine execute fewer machine instructions without changing its behaviour. First results for four Claude models at three effort settings.</p>
+    <div class="byline">
+      <span>6 November 2026</span><span>interim report</span><span>exploratory, rules fixed before each series</span>
+    </div>
+    <div class="abstract">
+      <span class="eyebrow">Abstract</span>
+      We propose benchmarks with no top score: make a given program execute fewer machine instructions while keeping its behaviour. A gate of hidden tests decides correctness, and fuzzing checks it again; cost is counted, not timed; spend in dollars gives score against budget. Because both the correct behaviour and the cost are known exactly, such a task shows whether, and under what conditions, a model can do hard work without introducing errors; on benchmarks built from real code this is hard to see through defects and measurement noise in the benchmark itself. We built one such task, an interpreter for the virtual machine Quern, and ran Haiku 5.5, Sonnet 5.5, Opus 5.5 and Fable 5.1 at three efforts, three attempts per cell; one chart shows how effort and model strength relate. Haiku 5.5 barely responds to effort (3.0 to 4.1). Sonnet 5.5 depends on it most (1.2 to 2.4 at low, 4.8 to 5.0 at high). Opus 5.5 does best; at low it reaches 4.4 to 4.6 for about $3, within the range Fable 5.1 reaches at any effort, at a third or less of the cost. Opus 5.5 and Fable 5.1 each fail the gate in 3 of 9 runs; their best passing results gain 7 to 19 percent over Sonnet 5.5 at high for 4.5 to 9 times the money, and errors surviving to the cap are not found later. In these runs, then, the stronger models reach higher scores but make more errors on the way.
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">1</div><h2>Why a different kind of task</h2></div>
+<p><a href="../what-is-hard-for-llms/">Part 1</a> looked for problems hard enough to separate today's strongest models and kept finding the same three things. Problems that almost no model solves are often broken. We audited the 37 problems with the lowest solve rates in a public matrix of 52–67 models. Nine of them (24%) have a confirmed defect: a wrong answer key or ambiguous wording. Between a quarter and 38% of the hardest items are not hard but broken; the upper figure also counts cases still open (details in <a href="../what-is-hard-for-llms/">Part 1</a>, section 2). Recent competition sets, their hardest tail included, fell to Haiku 5.5 and Opus 5.5 at one attempt each; Fable 5.1, last in the cascade, was not needed. A synthetic deduction of 100 steps was solved without error, and the limit in sight was the 128k-token ceiling on one answer. Only research-level problems built from new arXiv papers resisted, and four of the five that did were solved by no MathArena model either, so they still need a defect check.</p>
+    <p>We read all three as consequences of one format: a problem with a single checkable answer. Such a problem is solved or not. Once the strongest models solve it, it stops ordering them, and the items that remain unsolved are disproportionately those whose answer key is wrong. Harder sets meet the same wall later: they saturate in turn, and each has to be checked for defects before its misses mean anything.</p>
+    <p>This part tries a different kind of task. The agent gets a working interpreter for a small virtual machine and is asked to make it do less work without changing what it does. The result is a number with no fixed top: how many times fewer machine instructions the interpreter executes on workloads the agent has not seen. Correctness is kept out of that number and checked by a separate gate of hidden tests against a reference interpreter. Any failure sets the score to 0, and the failures are reported beside it. The virtual machine and its interpreter were written for this bench, so they are not in any model's training data. Spending is counted in dollars at official prices, so a run gives a curve of result against budget rather than one point.</p>
+    <p>This report asks two questions. Does such a task rank models the same way from run to run? And does a larger budget bring fewer errors? The runs so far give partial answers to both: the order of the models changes with the effort setting, and none of the correctness failures from the medium series went away with a larger budget. These rest on three attempts per cell and five longer runs, so both need more runs before they can be stated with confidence. Section 3 lists which parts of this design already exist in other benchmarks.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">2</div><h2>The task</h2></div>
+    <p>The task in plain words: Quern is a small virtual machine made up for this bench, and the agent receives a correct but slow interpreter for it, written in C. The agent has to change that interpreter so that it runs Quern programs with less work, while every program still prints exactly the same output and ends with the same exit code. What counts as "less work" is how many processor instructions the interpreter executes, and the result is checked on programs the agent never sees.</p>
+    <p>Several different things in this bench could each be called a program, and "instruction" could mean two different things, so the words below are used in one sense only:</p>
+    <ul>
+      <li><strong>Quern</strong>: the virtual machine defined by the specification.</li>
+      <li><strong>Interpreter</strong>: an implementation of Quern in C. The <strong>starting interpreter</strong> is the one the agent receives; the <strong>agent's interpreter</strong> is the one it hands in.</li>
+      <li><strong>Reference interpreter</strong>: an implementation of Quern in Python. Its output and exit code define correct behaviour.</li>
+      <li><strong>Quern program</strong>: code in Quern's assembly language that an interpreter runs. There are three kinds. A <strong>test</strong> checks behaviour and has an expected output and exit code. A <strong>workload</strong> is a longer program whose cost is measured. A <strong>random program</strong> is generated for fuzzing.</li>
+      <li><strong>Opcode</strong>: one Quern operation, such as <code>LOAD</code> or <code>LT</code>.</li>
+      <li><strong>Machine instructions</strong>: the processor instructions an interpreter executes, as counted by cachegrind<sup class="fn"><a href="#fn-cachegrind" id="fnref-cachegrind">1</a></sup>. The score is built from these.</li>
+      <li><strong>Gate</strong>: the hidden tests and hidden workloads that decide whether the agent's interpreter counts as correct.</li>
+      <li><strong>Fuzzing</strong>: running the agent's interpreter on many generated random programs and comparing it with the reference interpreter. It is done after each series and does not change the score.</li>
+    </ul>
+    <p>Quern is a dynamically typed stack machine with eight value types (nil, bool, 64-bit int, binary64 float, byte string, array, map and function), 66 opcodes, a binary file format that is checked before it runs, and exact rules for errors, limits and the text of printed numbers. All of it is fixed by an 835-line specification. Quern programs are written in a small assembly language and assembled into bytecode. This one, from the specification, computes a Fibonacci number recursively and prints <code>6765</code>:</p>
+    <pre class="code">.func fib 1 1
+    LOAD 0
+    ICONST 2
+    LT
+    JF rec
+    LOAD 0
+    RET
+rec:
+    LOAD 0
+    ICONST 1
+    SUB
+    CALL fib
+    LOAD 0
+    ICONST 2
+    SUB
+    CALL fib
+    ADD
+    RET
+.end
+.func main 0 0
+    ICONST 20
+    CALL fib
+    PRINTLN
+    HALT
+.end</pre>
+    <p class="cap">Example 2 of the worked examples in section 13 of the specification.</p>
+    <p>The starting interpreter has 1,268 lines, conforms to the specification and is slow in ordinary ways. It handles one opcode at a time, in a plain loop around one large <code>switch</code>:</p>
+    <pre class="code">for (;;) {
+    const Func *fn = &amp;funcs[cur_func];
+    const uint8_t *code = image + fn-&gt;off;
+    uint8_t op = code[pc];
+    uint32_t npc = pc + op_size(op);
+    switch (op) {
+    ...
+    case OP_LT: case OP_LE: case OP_GT: case OP_GE: {
+        Value a = vs[sp - 2], b = vs[sp - 1];
+        int r = 0, nan = 0;
+        if (is_num(a) &amp;&amp; is_num(b)) r = num_order(a, b, &amp;nan);
+        else if (a.tag == T_STR &amp;&amp; b.tag == T_STR) r = str_cmp(a, b);
+        else die(EXIT_TYPE);
+        int res = !nan &amp;&amp; (op == OP_LT ? r &lt; 0 : op == OP_LE ? r &lt;= 0 : op == OP_GT ? r &gt; 0 : r &gt;= 0);
+        vs[sp - 2] = vbool(res);
+        sp--;
+        break;
+    }
+    ...
+    case OP_JT:
+    case OP_JF: {
+        int t = truthy(vs[--sp]);
+        if (t == (op == OP_JT)) npc = rd_u32(code + pc + 1);
+        break;
+    }
+    ...
+    }
+    pc = npc;
+}</pre>
+    <p class="cap">The starting interpreter (excerpt). It was written by Haiku 5.5 from the specification and the open tests only.</p>
+    <p>Below are the same opcodes in the interpreter produced by Sonnet 5.5 (effort high, first attempt). The run ended by itself at $4.38, passed the gate, and executes 5.02 times fewer machine instructions on the hidden workloads.</p>
+    <pre class="code">#define NEXT(n) do { ip += (n); goto *ip-&gt;h; } while (0)
+...
+L_LT_LI_JF: {
+ Value a = fp[ip-&gt;b], b; b.tag = T_INT; b.u.i = (int64_t)(int16_t)ip-&gt;c;
+ int res;
+ if (LIKELY(a.tag == T_INT &amp;&amp; b.tag == T_INT)) res = a.u.i &lt; b.u.i;
+  else if (a.tag == T_FLOAT &amp;&amp; b.tag == T_FLOAT) res = a.u.f &lt; b.u.f;
+  else res = cmp_slow(OP_LT, a, b);
+ if (!res) { ip += ip-&gt;a; goto *ip-&gt;h; }
+ NEXT(4);
+}</pre>
+    <p class="cap">The same four opcodes in the agent's interpreter (excerpt from a 4,382-line file).</p>
+    <p>The starting interpreter handles the four opcodes that begin <code>fib</code> one by one. The agent's interpreter fuses them into one step and takes a short path when the values are integers.</p>
+    <p>The stand was built so that no part checks itself. Sonnet 5.5 at effort high wrote the specification. A separate Sonnet 5.5 session, given only the specification and never any C, wrote the assembler, the reference interpreter, the tests and the workloads, open and hidden. Writing the reference interpreter turned up nine unclear or contradictory places in the specification; two were corrected before any interpreter in C was written, and the rest are resolved in a list of fixes kept with it. Haiku 5.5 then wrote the starting interpreter from the specification and the open tests alone. Fable 5.1 reviewed the whole stand for critical bugs, and Opus 5.5 reviewed the tool layer and the isolation. Before any data was collected, Fable 5.1 found a way for an interpreter to hide its work from the machine-instruction count by running it in a child process; that is now a rule violation, detected in the source and in the binary.</p>
+    <p>Correctness is checked twice, by two different means. The gate runs 382 hidden tests, many of them on edge cases the open ones leave out, and 8 hidden workloads, and compares their output byte for byte, and their exit code, with the reference interpreter. It decides the score. After each series every final agent's interpreter also goes through random programs: about 10,000 from a generator frozen, with its hash recorded, before any agent's code was opened (one in eight of them is a deliberately damaged bytecode file, which the interpreter must reject correctly), and about 9,600 from a second generator that walks a grid of opcodes, operand values and the opcodes that produce and consume them. Each random program is run on the agent's interpreter and on the reference interpreter, and their output and exit code are compared; any mismatch is a defect in the agent's interpreter. The starting interpreter is run too, as a check on the generators themselves: it agreed with the reference interpreter on every random program (three damaged files, the same three in every series, on which the reference interpreter ran out of time, were dropped), so a mismatch cannot be blamed on a Quern program whose behaviour the specification leaves undefined. Fuzzing does not change the score, but it once found what the gate missed: the top result of the high series, 8.24, has a real memory error, which the gate passed and 43 of 10,000 random programs exposed (section 6).</p>
+    <p>The agent works in a Linux container. Its working directory holds the specification, the file <code>vm.c</code> to edit (the starting interpreter), a read-only copy of it, the assembler, a test runner, 101 open tests and 6 open workloads with their expected output, and a <code>measure</code> script that builds the interpreter and counts its machine instructions on the open workloads under cachegrind. The build command is fixed (<code>gcc -std=c11 -O2 -o vm vm.c -lm</code>). The source may not change code generation by pragmas or attributes, and it stays one self-contained file. Computed goto and any other plain C are allowed. The container has internet access, but no agent used it: across all runs there was no web search and no command that fetched anything from the network. The prompt says that the result is judged on hidden tests and hidden workloads of the same kind, and that any wrong result makes the score zero. A run has two phases: the task prompt, and once the agent stops, a fixed "Continue optimizing /work/vm.c. The same task and rules apply."</p>
+    <p>The agent is Claude Code 2.1.281, run headless (<code>claude -p</code>) on a subscription. Its built-in file and shell tools are switched off and replaced with MCP tools that run inside the run's own container. It has no <code>CLAUDE.md</code>, memory, skills, hooks or other MCP servers, and a preflight check confirms that it cannot read files on the host, directly or through a subagent. The hidden tests and hidden workloads never enter the agent's container. Each checkpoint is measured over a snapshot of the agent's interpreter in a separate container with no network.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">3</div><h2>What is new in this class, and what is not</h2></div>
+<p>Three things set this bench apart from the benchmarks of code optimization we know of, and each comes at a price.</p>
+    <ul>
+      <li><strong>The code is new.</strong> Quern and its interpreter did not exist before this bench, so no model has seen them or a fix for them. The price is that there is one task, not hundreds, and one kind of program<sup class="fn"><a href="#fn-one-kind" id="fnref-one-kind">2</a></sup>.</li>
+      <li><strong>The cost is counted, not timed.</strong> A count of machine instructions repeats exactly from run to run (the stand checks this on the starting interpreter), so one measurement is enough and no noise filter is needed. The price is that it is not speed: two interpreters with the same count can run at different speeds, and real time is not measured yet.</li>
+      <li><strong>Correctness is decided by tests the agent never sees</strong>, written by a separate session from the specification alone, and checked again afterwards with random programs. The price is that the hidden set keeps its value only while it stays closed.</li>
+    </ul>
+    <p>One more feature is shared with SWE-Opt: <strong>each result is compared with the code the agent started from</strong>, not with an expert's patch, so it has no ceiling, and a better agent can simply go further. The price is that the number alone does not show how far a result is from what is achievable. A reference point could be estimated, for example by writing each workload directly in C and counting its machine instructions, but we have not done this yet. SWE-Opt also keeps its performance tests from the agent.</p>
+    <p>What is not new: an agent changing code under tests and being scored on a speed-up, aggregating per-workload ratios into one mean, and asking how results grow with budget. GSO (in the table below) already compares more steps with more parallel attempts. In our bench, budget is counted differently: as dollars spent so far at official prices, with checkpoints along a single run. Within this shared frame, our bench still differs in the three ways listed above: code no model has seen, a cost that does not need a timer, and a correctness check the agent cannot see.</p>
+    <p>The closest benchmarks we found all take their tasks from real repositories and pull requests. We searched widely, but there may be others we missed:</p>
+    <div class="tw"><table>
+      <thead><tr><th>benchmark</th><th>tasks</th><th>what is measured</th><th>compared with</th><th>correctness</th></tr></thead>
+      <tbody>
+        <tr><td>GSO (<a href="https://arxiv.org/abs/2505.23671v3">arXiv 2505.23671v3</a>)</td><td>102, from 10 codebases, 5 languages</td><td>wall time</td><td>the human commit</td><td>LLM-written tests: output matches the original code</td></tr>
+        <tr><td>SWE-Perf (<a href="https://arxiv.org/abs/2507.12415v2">arXiv 2507.12415v2</a>)</td><td>140, from 9 Python repositories</td><td>wall time, with a significance test</td><td>the expert patch</td><td>existing unit tests that the expert patch sped up</td></tr>
+        <tr><td>SWE-fficiency (<a href="https://arxiv.org/abs/2511.06090v3">arXiv 2511.06090v3</a>)</td><td>498, from 9 Python repositories</td><td>wall time of a workload</td><td>the expert patch</td><td>repository tests that cover the changed code</td></tr>
+        <tr><td>SWE-Opt (<a href="https://arxiv.org/abs/2606.25530v2">arXiv 2606.25530v2</a>)</td><td>102, from 3 Python repositories</td><td>wall time, peak and time-weighted memory, with a noise filter</td><td>the original code (expert gains shown alongside)</td><td>the related unit tests</td></tr>
+        <tr><td>ISO-Bench (<a href="https://arxiv.org/abs/2602.19594v1">arXiv 2602.19594v1</a>)</td><td>54, from vLLM and SGLang</td><td>time to first token or throughput; an LLM judges what was targeted</td><td>expert solutions</td><td>model accuracy unchanged on LM-Eval, checked only where it sped up</td></tr>
+        <tr><td><strong>this bench</strong></td><td>a class of tasks, written for the bench (more in section 7)</td><td>machine instructions (cachegrind)</td><td>the starting interpreter</td><td>hidden tests and workloads; fuzzing with random programs</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">4</div><h2>How it is scored</h2></div>
+<p><strong>The score.</strong> On each of the 8 hidden workloads, the machine instructions of the agent's interpreter are divided by those of the starting interpreter. The score is the inverse of the geometric mean of these ratios<sup class="fn"><a href="#fn-geomean" id="fnref-geomean">3</a></sup>: 5.02 means about five times fewer machine instructions. Only workloads with correct output enter the mean, because a workload that crashes early looks cheap.</p>
+    <p><strong>A failed gate gives 0.</strong> If any hidden test or workload gives a wrong output or exit code, or the source breaks a rule, the score is 0. Beside the 0 we still report how many items failed and the same mean over the workloads that ran correctly, because "4.2 with two failures in edge cases" and "nothing works" are different outcomes. That number only describes what broke; it is not a result.</p>
+    <p>Two more numbers are recorded and do not enter the score: simulated cache misses, and the ratio of the score on the open workloads to the score on the hidden ones, which shows whether an agent fitted what it could see.</p>
+    <p><strong>Spending.</strong> The runs use a subscription, so there is no bill. Spending is counted as tokens times the official price of each model, with input, output, cache reads and cache writes each at its own price. We compute this from the token counts ourselves, because the dollar figures the CLI reports are wrong for two of the four models<sup class="fn"><a href="#fn-cli-usd" id="fnref-cli-usd">4</a></sup>. Prices, in dollars per million tokens:</p>
+    <div class="tw"><table>
+      <thead><tr><th>model</th><th>input</th><th>output</th><th>cache read</th><th>cache write (5 min / 1 h)</th></tr></thead>
+      <tbody class="tnum">
+        <tr><td>Haiku 5.5</td><td>0.10</td><td>0.50</td><td>0.01</td><td>0.125 / 0.20</td></tr>
+        <tr><td>Sonnet 5.5</td><td>2.00</td><td>10.00</td><td>0.10</td><td>2.50 / 4.00</td></tr>
+        <tr><td>Opus 5.5</td><td>4.00</td><td>20.00</td><td>0.20</td><td>5.00 / 8.00</td></tr>
+        <tr><td>Fable 5.1</td><td>10.00</td><td>50.00</td><td>0.25</td><td>12.50 / 20.00</td></tr>
+      </tbody>
+    </table></div>
+    <p class="cap">Haiku 5.5 has a higher tier for long prompts (input 0.50, output 2.50), applied per request.</p>
+    <p><strong>Effort and attempts.</strong> Claude Code passes an effort setting to the model (<code>--effort</code> low, medium or high), which governs how much the model reasons and so how many tokens it spends. Each model was run at all three settings. Each pair of model and effort has three independent attempts, every one starting from the same starting interpreter in a fresh container. A failure is called systematic for a model when the same hidden tests fail in at least two of its three attempts. Three attempts are few: they are enough to find a mechanism worth looking into, not to estimate how often it happens. A failure of the stand itself, such as Docker or the network, does not count as an attempt; the run is marked and repeated.</p>
+    <p><strong>How a run goes.</strong> A run has two phases: the task prompt, and after the agent stops, the fixed "continue" prompt. Along the way the agent's interpreter is saved at fixed marks of spending ($0.02, $0.03, … $2, then doubling), and each saved copy is put through the gate out of the agent's sight. A run ends in one of two ways: the agent stops on its own in the second phase, or it reaches the cap. The cap is $10 at effort low and medium and $20 at effort high, or 10 million tokens of uncached input and output, whichever comes first.</p>
+    <p>The stand also has a rule that stops a run once the open workloads stop improving. In the series it fired once, on Sonnet 5.5 at effort medium, first attempt, and that run was resumed until the agent stopped on its own. So every result here comes from a run that ended by itself or at the cap. In the longer continued runs of section 5 the rule is switched off.</p>
+    <p>A stop is taken only between two steps of the agent, and any spending past the cap is recorded. The score of a run is the score of its last saved copy.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">5</div><h2>Results of the series</h2></div>
+<p>Four Claude models, each at three effort settings (low, medium, high), three attempts each: 36 runs, all on the same starting interpreter and the same images. The series ran in the order medium, high, low, between 3 and 4 November 2026. The cap was $10 for low and medium and $20 for high, so the high column is not directly comparable with the other two.</p>
+    <div class="tw"><table>
+      <thead><tr><th>model</th><th>effort</th><th>score, attempts 1 · 2 · 3</th><th>gate</th><th>median spend</th><th>median tokens</th><th>median minutes</th><th>run ended</th></tr></thead>
+      <tbody class="tnum">
+        <tr><td>Haiku 5.5</td><td>low</td><td>3.05 · 3.50 · 3.36</td><td>3/3</td><td>$0.49</td><td>98k</td><td>21</td><td>itself</td></tr>
+        <tr><td></td><td>medium</td><td>3.48 · 3.84 · 3.52</td><td>3/3</td><td>$0.51</td><td>146k</td><td>17</td><td>itself</td></tr>
+        <tr><td></td><td>high</td><td>0 <span class="muted">(3.84)</span> · 3.47 · 4.08</td><td>2/3</td><td>$0.86</td><td>218k</td><td>23</td><td>itself</td></tr>
+        <tr><td>Sonnet 5.5</td><td>low</td><td>2.36 · 1.38 · 1.24</td><td>3/3</td><td>$0.23</td><td>6k</td><td>2</td><td>itself</td></tr>
+        <tr><td></td><td>medium</td><td>0 <span class="muted">(4.22)</span> · 2.92 · 2.64</td><td>2/3</td><td>$0.57</td><td>22k</td><td>4</td><td>itself</td></tr>
+        <tr><td></td><td>high</td><td>5.02 · 5.01 · 4.81</td><td>3/3</td><td>$4.38</td><td>187k</td><td>33</td><td>itself</td></tr>
+        <tr><td>Opus 5.5</td><td>low</td><td>4.50 · 4.42 · 4.64</td><td>3/3</td><td>$2.99</td><td>54k</td><td>12</td><td>itself</td></tr>
+        <tr><td></td><td>medium</td><td>0 <span class="muted">(6.82)</span> · 0 <span class="muted">(5.99)</span> · 5.36</td><td>1/3</td><td>$10.19</td><td>210k</td><td>45</td><td>cap</td></tr>
+        <tr><td></td><td>high</td><td>8.24† · 0 <span class="muted">(none correct)</span> · 5.46</td><td>2/3</td><td>$20.09</td><td>343k</td><td>79</td><td>cap</td></tr>
+        <tr><td>Fable 5.1</td><td>low</td><td>4.69 · 4.43 · 5.21</td><td>3/3</td><td>$10.65</td><td>110k</td><td>22</td><td>cap</td></tr>
+        <tr><td></td><td>medium</td><td>0 <span class="muted">(4.70)</span> · 0 <span class="muted">(4.01)</span> · 4.64</td><td>1/3</td><td>$10.05</td><td>108k</td><td>23</td><td>cap</td></tr>
+        <tr><td></td><td>high</td><td>5.37 · 0 <span class="muted">(4.56)</span> · 5.33</td><td>2/3</td><td>$20.12</td><td>213k</td><td>45</td><td>cap</td></tr>
+      </tbody>
+    </table></div>
+    <p class="cap">Score: how many times fewer machine instructions on the hidden workloads. 0 means the gate failed; in brackets, the same mean over the workloads that still ran correctly, for description only. Tokens: uncached input and output. Minutes: working time of the run, without the planned pause in one Opus 5.5 medium run. † Passed the gate, but random programs later found a real memory error in it (section 6).</p>
+    <div class="note"><span class="eyebrow">Did anyone cheat the gate?</span><p>We checked whether any result passes the gate without doing the work honestly. In all 36 runs the gate found no rule violations (pragmas or attributes that change code generation, child processes, inline assembly), and the harness logged no attempt to reach outside the container. A search of the 36 final interpreters for code that detects the measurement (Valgrind, environment variables, timers, <code>/proc</code>) or recognises particular workloads found nothing; the only file writes are profiling code that is compiled out. On the open workloads the score was 0.8 to 1.8 times the score on the hidden ones, so no run fitted what it could see to an extreme. The traces themselves, the agents' reasoning and commands, have not been read in full.</p></div>
+    <p>What can be read from this, with three attempts per cell:</p>
+    <ul>
+      <li><strong>Haiku 5.5</strong> reaches 3.0–4.1 for under $1.10 and always stops on its own. Effort changes little.</li>
+      <li><strong>Sonnet 5.5</strong> depends on effort more than any other model: 1.2–2.4 at low, 4.8–5.0 at high. It also always stops on its own, at high after about $4.40.</li>
+      <li><strong>Opus 5.5</strong> stops on its own at low, at about $3 and 4.4–4.6. At medium and high it runs to the cap, and two of its three medium runs fail the gate.</li>
+      <li><strong>Fable 5.1</strong> runs to the cap every time, at every effort, so its limit is not visible in this series. When the gate passes it scores 4.4–5.4, and like Opus 5.5 it fails two of three runs at medium.</li>
+      <li><strong>The gate</strong> passed 12 of 12 runs at low, 7 of 12 at medium and 9 of 12 at high.</li>
+    </ul>
+    <p>The order of the models changes with effort. At low, Fable 5.1 and Opus 5.5 lead and Sonnet 5.5 is last. At high, Sonnet 5.5 comes within about half a point of Fable 5.1 and of Opus 5.5's second-best run, for about a fifth of their spend. With three attempts per cell and different caps, none of these differences has been tested statistically.</p>
+    <p>Five runs that reached the cap and had failed the gate were later continued with no cap: the same session, model and effort, the same "continue" prompt, and nothing said about the hidden results. Four ran until the agent stopped on its own, at $22 to $64. Opus 5.5 at effort high, attempt 2, was stopped at $40. None of the four medium runs passed the gate at the end:</p>
+    <div class="tw"><table>
+      <thead><tr><th>run</th><th>in the series</th><th>continued to</th><th>at the end</th></tr></thead>
+      <tbody class="tnum">
+        <tr><td>Opus 5.5 medium, 1</td><td>0 <span class="muted">(6.82)</span> at $10</td><td>$22.54, stopped on its own</td><td>0 <span class="muted">(8.05)</span>: the same defect; a one-line fix of it passes the gate at 8.05</td></tr>
+        <tr><td>Opus 5.5 medium, 2</td><td>0 <span class="muted">(5.99)</span> at $10</td><td>$38.05, stopped on its own</td><td>0 <span class="muted">(6.77)</span>: the same defect; a one-line fix passes at 6.77</td></tr>
+        <tr><td>Fable 5.1 medium, 1</td><td>0 <span class="muted">(4.70)</span> at $10</td><td>$63.57, stopped on its own</td><td>0 <span class="muted">(6.36)</span>: the same hidden workload still fails</td></tr>
+        <tr><td>Fable 5.1 medium, 2</td><td>0 <span class="muted">(4.01)</span> at $10</td><td>$38.39, stopped on its own</td><td>0 <span class="muted">(4.82)</span>: failures grew from 2 to 3</td></tr>
+        <tr><td>Opus 5.5 high, 2</td><td>0 <span class="muted">(none correct)</span> at $20</td><td>$40, stopped at the mark</td><td>5.97, gate passed</td></tr>
+      </tbody>
+    </table></div>
+    <p>So the agents kept making the interpreter cheaper, but in the medium runs they did not find their own errors. The one run that ended up correct had broken only at the very end of the series, with an edit the cap cut off before it was checked. Eleven more continuations are in the queue, and they will be reported in a later note.</p>
+    <p>Read together, the two tables suggest two things.</p>
+    <ul>
+      <li><strong>Opus 5.5 and Fable 5.1 can go further than Sonnet 5.5, at a much higher price.</strong> Their best results that passed the gate are 8.24 (Opus 5.5, with the memory error of section 6), 5.97 (Opus 5.5 at $40), 5.46 (Opus 5.5 at $20) and 5.37 (Fable 5.1 at $20), against 5.02 for Sonnet 5.5 at $4.38. Leaving 8.24 aside, that is a gain of about 7 to 19 percent for 4.5 to 9 times the money. Their broken versions go further still, up to 8.05, which suggests that the extra room is real but harder to take without breaking something.</li>
+      <li><strong>An error that survives to the cap is not found later.</strong> In all four medium runs that failed the gate, the agent went on for another $12 to $54 and kept improving the score, but the original failure stayed. Why is open: the agents' own tests may never reach these cases, or the agents may stop checking what they already consider done. Telling these apart needs the traces read. This has not been done yet; it will be done in one of the next notes.</li>
+    </ul>
+    <p>Both readings rest on few runs: four continued failures from two models, and one or two passing results per cell at the top.</p>
+<div class="viz" id="viz">
+  <div class="ctl" role="toolbar" aria-label="Chart controls">
+    <div class="grp"><span class="lbl">x axis</span>
+      <button data-x="usd" class="on">dollars</button><button data-x="tok">tokens</button><button data-x="min">minutes</button></div>
+    <div class="grp"><span class="lbl">score</span>
+      <button data-g="1" class="on">with gate</button><button data-g="0">without gate</button></div>
+    <div class="grp"><span class="lbl">show</span>
+      <button data-v="final" class="on">final points</button><button data-v="path">paths</button></div>
+  </div>
+  <div class="ctl">
+    <div class="grp" id="mchips"></div>
+    <div class="grp" id="echips"></div>
+    <div class="grp"><button data-c="1" class="on" id="cbtn">continued runs</button></div>
+  </div>
+  <svg id="vsvg" viewBox="0 0 680 400" role="img" aria-label="Score against spending for every run"></svg>
+  <div class="tip" id="vtip" hidden></div>
+</div>
+<style>
+.viz{--m0:#2a78d6;--m1:#eb6834;--m2:#1baf7a;--m3:#6250d6;--grid:var(--hair);--axis:var(--muted);margin:1.2em 0;position:relative}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .viz{--m0:#3987e5;--m1:#d95926;--m2:#199e70;--m3:#9085e9}}
+:root[data-theme="dark"] .viz{--m0:#3987e5;--m1:#d95926;--m2:#199e70;--m3:#9085e9}
+.viz .ctl{display:flex;flex-wrap:wrap;gap:.5em 1.2em;margin-bottom:.5em;font-size:.82rem}
+.viz .grp{display:flex;flex-wrap:wrap;align-items:center;gap:.3em}
+.viz .lbl{color:var(--muted);margin-right:.2em}
+.viz button{font:inherit;font-size:.82rem;color:var(--ink2);background:var(--card);border:1px solid var(--rule);border-radius:999px;padding:.2em .75em;cursor:pointer}
+.viz button.on{background:var(--accent-soft);border-color:var(--accent);color:var(--ink)}
+.viz button .sw{display:inline-block;width:.7em;height:.7em;border-radius:50%;margin-right:.35em;vertical-align:-.05em}
+.viz svg{width:100%;height:auto;display:block;background:var(--card);border:1px solid var(--hair);border-radius:6px}
+.viz svg text{fill:var(--muted);font-size:11px;font-family:"JetBrains Mono",ui-monospace,monospace}
+.viz .tip{position:absolute;pointer-events:none;background:var(--card);border:1px solid var(--rule);border-radius:6px;padding:.5em .7em;font-size:.8rem;color:var(--ink);box-shadow:0 2px 8px rgba(0,0,0,.12);white-space:nowrap;z-index:2}
+.viz .tip b{font-weight:600}
+@media (max-width:520px){.viz svg text{font-size:19px}}
+</style>
+<script>
+(function(){
+const D=[{"id":"haiku55-low-1","model":"Haiku 5.5","effort":"low","attempt":1,"kind":"series","pts":[[0.0264,21468,1.5,1.0,1.0,true,0],[0.0313,23776,1.8,1.911,1.911,true,0],[0.0513,40245,3.2,2.38,2.38,true,0],[0.0709,42950,3.4,2.38,2.38,true,0],[0.1152,49417,4.0,2.546,2.546,true,0],[0.1551,52968,4.4,2.795,2.795,true,0],[0.2678,71550,8.4,0,2.88,false,21],[0.3512,78328,10.4,2.962,2.962,true,0],[0.4483,87151,11.6,3.037,3.037,true,0],[0.4984,89450,14.6,3.05,3.05,true,0]]},{"id":"haiku55-low-2","model":"Haiku 5.5","effort":"low","attempt":2,"kind":"series","pts":[[0.0221,24307,1.9,1.0,1.0,true,0],[0.0341,34193,2.4,0,null,false,0],[0.0752,52598,3.9,2.963,2.963,true,0],[0.109,56488,14.4,2.963,2.963,true,0],[0.1561,61525,15.0,2.963,2.963,true,0],[0.2555,69815,17.6,2.963,2.963,true,0],[0.297,74004,18.2,2.975,2.975,true,0],[0.3587,83179,19.2,3.285,3.285,true,0],[0.4915,97612,20.8,3.504,3.504,true,0]]},{"id":"haiku55-low-3","model":"Haiku 5.5","effort":"low","attempt":3,"kind":"series","pts":[[0.0209,23582,1.6,1.972,1.972,true,0],[0.0317,28468,2.0,1.967,1.967,true,0],[0.0652,49452,3.5,2.292,2.292,true,0],[0.0749,50829,4.7,2.292,2.292,true,0],[0.1066,54852,5.1,2.292,2.292,true,0],[0.1581,65200,5.9,0,2.734,false,5],[0.251,79693,8.1,2.503,2.503,true,0],[0.3506,93005,9.5,0,null,false,0],[0.4518,116909,44.1,3.356,3.356,true,0],[0.453,117813,44.4,3.356,3.356,true,0]]},{"id":"haiku55-medium-1","model":"Haiku 5.5","effort":"medium","attempt":1,"kind":"series","pts":[[0.2712,80395,6.2,3.193,3.193,true,0],[0.3366,109754,19.3,3.193,3.193,true,0],[0.3804,140921,25.5,3.478,3.478,true,0]]},{"id":"haiku55-medium-2","model":"Haiku 5.5","effort":"medium","attempt":2,"kind":"series","pts":[[0.0333,44661,3.2,2.731,2.731,true,0],[0.0537,46328,3.5,2.731,2.731,true,0],[0.0737,51503,3.9,3.021,3.021,true,0],[0.1109,56697,4.4,3.082,3.082,true,0],[0.1742,72188,5.5,3.472,3.472,true,0],[0.2633,89551,6.8,3.472,3.472,true,0],[0.3618,100964,9.2,3.545,3.545,true,0],[0.3922,116522,10.5,3.563,3.563,true,0],[0.5041,165890,15.6,3.831,3.831,true,0],[0.5986,173849,16.7,3.836,3.836,true,0]]},{"id":"haiku55-medium-3","model":"Haiku 5.5","effort":"medium","attempt":3,"kind":"series","pts":[[0.0242,16311,1.5,1.0,1.0,true,0],[0.0387,37346,2.7,1.0,1.0,true,0],[0.0677,38774,2.8,0,null,false,0],[0.0778,39951,2.9,0,null,false,0],[0.1011,41196,3.1,2.852,2.852,true,0],[0.1649,54722,4.2,0,null,false,0],[0.2527,67059,5.2,3.345,3.345,true,0],[0.3515,92300,6.7,3.345,3.345,true,0],[0.392,124988,10.4,3.458,3.458,true,0],[0.5068,146225,13.7,3.518,3.518,true,0]]},{"id":"haiku55-high-1","model":"Haiku 5.5","effort":"high","attempt":1,"kind":"series","pts":[[0.0461,59008,4.6,1.0,1.0,true,0],[0.1797,87549,5.8,2.73,2.73,true,0],[0.2557,132842,13.9,2.73,2.73,true,0],[0.3582,145017,15.0,2.73,2.73,true,0],[0.5039,159614,17.4,2.893,2.893,true,0],[0.6687,198500,32.6,2.997,2.997,true,0],[0.7041,231833,35.9,3.094,3.094,true,0],[1.0143,292690,45.2,0,3.854,false,2],[1.0864,316263,50.0,0,3.844,false,2]]},{"id":"haiku55-high-2","model":"Haiku 5.5","effort":"high","attempt":2,"kind":"series","pts":[[0.0222,15615,1.4,1.0,1.0,true,0],[0.0352,34886,2.8,1.0,1.0,true,0],[0.0793,43089,3.2,1.0,1.0,true,0],[0.106,48400,3.5,0,null,false,0],[0.1581,51401,3.9,0,2.489,false,17],[0.2634,68900,5.4,2.767,2.767,true,0],[0.3574,90560,7.0,3.161,3.161,true,0],[0.3687,102605,7.8,3.161,3.161,true,0],[0.5007,158458,13.7,3.24,3.24,true,0],[0.7169,187906,16.7,3.469,3.469,true,0],[0.8606,200282,18.6,3.468,3.468,true,0]]},{"id":"haiku55-high-3","model":"Haiku 5.5","effort":"high","attempt":3,"kind":"series","pts":[[0.052,68617,4.6,3.135,3.135,true,0],[0.1227,69955,4.8,3.135,3.135,true,0],[0.1695,77451,5.4,3.135,3.135,true,0],[0.2514,92598,6.9,3.135,3.135,true,0],[0.2936,140922,14.3,3.135,3.135,true,0],[0.3554,156892,15.8,3.426,3.426,true,0],[0.5062,174541,17.4,3.707,3.707,true,0],[0.6987,218000,23.2,4.077,4.077,true,0]]},{"id":"sonnet55-low-1","model":"Sonnet 5.5","effort":"low","attempt":1,"kind":"series","pts":[[0.0492,157,0.1,1.0,1.0,true,0],[0.2313,8053,0.8,0,null,false,0],[0.2724,8298,0.9,2.271,2.271,true,0],[0.293,8868,1.0,2.271,2.271,true,0],[0.3604,11163,2.4,2.333,2.333,true,0],[0.3896,12239,2.6,2.356,2.356,true,0]]},{"id":"sonnet55-low-2","model":"Sonnet 5.5","effort":"low","attempt":2,"kind":"series","pts":[[0.0343,286,0.2,1.0,1.0,true,0],[0.0684,505,0.2,1.0,1.0,true,0],[0.0901,1569,0.4,1.022,1.022,true,0],[0.1027,1713,0.5,1.022,1.022,true,0],[0.1094,2035,0.5,1.022,1.022,true,0],[0.1649,4354,1.2,1.199,1.199,true,0],[0.2275,6237,1.7,1.382,1.382,true,0]]},{"id":"sonnet55-low-3","model":"Sonnet 5.5","effort":"low","attempt":3,"kind":"series","pts":[[0.054,519,0.2,1.0,1.0,true,0],[0.0866,1849,0.4,1.068,1.068,true,0],[0.1009,2451,0.6,1.22,1.22,true,0],[0.1118,2927,0.7,1.22,1.22,true,0],[0.1425,4656,1.1,1.244,1.244,true,0]]},{"id":"sonnet55-medium-1","model":"Sonnet 5.5","effort":"medium","attempt":1,"kind":"series","pts":[[0.0487,102,0.1,1.0,1.0,true,0],[0.1078,192,0.2,1.0,1.0,true,0],[0.1615,341,0.3,1.0,1.0,true,0],[0.2847,6993,1.4,1.0,1.0,true,0],[0.4427,18034,2.4,1.0,1.0,true,0],[0.5381,24039,2.9,1.0,1.0,true,0],[0.5789,24908,3.1,0,3.536,false,31],[0.7252,30836,5.8,0,3.469,false,2],[1.0251,45223,7.8,0,4.222,false,2],[1.0612,46183,8.1,0,4.222,false,2],[1.09,46564,8.4,0,4.222,false,2]]},{"id":"sonnet55-medium-2","model":"Sonnet 5.5","effort":"medium","attempt":2,"kind":"series","pts":[[0.0492,178,0.1,1.0,1.0,true,0],[0.0564,252,0.2,1.0,1.0,true,0],[0.2719,11639,1.3,2.691,2.691,true,0],[0.3643,13242,2.4,2.804,2.804,true,0],[0.3809,13926,2.5,2.804,2.804,true,0],[0.5003,18965,4.0,2.898,2.898,true,0],[0.5699,22368,4.4,2.923,2.923,true,0]]},{"id":"sonnet55-medium-3","model":"Sonnet 5.5","effort":"medium","attempt":3,"kind":"series","pts":[[0.066,382,0.2,1.0,1.0,true,0],[0.2212,10572,1.1,0,null,false,0],[0.2703,10974,1.2,0,null,false,0],[0.3391,13115,2.5,2.667,2.667,true,0],[0.3507,13461,3.4,2.667,2.667,true,0],[0.4164,16514,3.9,2.641,2.641,true,0]]},{"id":"sonnet55-high-1","model":"Sonnet 5.5","effort":"high","attempt":1,"kind":"series","pts":[[0.0485,106,0.1,1.0,1.0,true,0],[0.1069,204,0.2,1.0,1.0,true,0],[0.1615,353,0.3,1.0,1.0,true,0],[0.285,6763,1.3,1.0,1.0,true,0],[0.482,23169,3.6,0,null,false,0],[0.6176,29572,4.3,0,null,false,0],[0.7442,36591,5.0,0,null,false,0],[1.0072,49134,7.0,3.81,3.81,true,0],[1.419,65358,10.2,4.538,4.538,true,0],[2.0125,90182,14.2,4.927,4.927,true,0],[2.1441,100252,15.3,4.927,4.927,true,0],[4.0202,166596,30.4,4.863,4.863,true,0],[4.3771,175109,32.8,5.019,5.019,true,0]]},{"id":"sonnet55-high-2","model":"Sonnet 5.5","effort":"high","attempt":2,"kind":"series","pts":[[0.0638,204,0.2,1.0,1.0,true,0],[0.0868,348,0.3,1.0,1.0,true,0],[0.1624,836,0.5,1.0,1.0,true,0],[0.2522,2574,0.9,1.0,1.0,true,0],[0.3589,8307,1.7,1.0,1.0,true,0],[0.5194,22320,3.7,1.0,1.0,true,0],[0.8648,46668,5.9,1.0,1.0,true,0],[1.1457,66872,7.5,1.0,1.0,true,0],[1.4045,76689,9.1,4.248,4.248,true,0],[2.0216,97429,13.5,4.233,4.233,true,0],[2.4356,121382,26.4,4.233,4.233,true,0],[4.0123,175394,41.3,4.93,4.93,true,0],[4.4007,194829,45.4,5.009,5.009,true,0]]},{"id":"sonnet55-high-3","model":"Sonnet 5.5","effort":"high","attempt":3,"kind":"series","pts":[[0.0635,204,0.2,1.0,1.0,true,0],[0.0858,278,0.2,1.0,1.0,true,0],[0.1181,353,0.2,1.0,1.0,true,0],[0.1699,1248,0.4,1.0,1.0,true,0],[0.3007,7483,1.5,1.0,1.0,true,0],[0.3679,8868,1.8,1.0,1.0,true,0],[0.6512,30232,4.8,0,null,false,0],[0.7255,31738,5.0,0,null,false,0],[1.031,52561,7.3,0,null,false,0],[1.4301,69742,9.5,4.51,4.51,true,0],[1.9469,93635,12.7,4.626,4.626,true,0],[2.0253,94422,13.0,4.626,4.626,true,0],[4.0133,171175,30.9,4.813,4.813,true,0],[4.2384,187281,33.1,4.813,4.813,true,0]]},{"id":"opus55-low-1","model":"Opus 5.5","effort":"low","attempt":1,"kind":"series","pts":[[0.054,106,0.1,1.0,1.0,true,0],[0.2819,801,0.4,1.0,1.0,true,0],[0.5143,9522,1.5,0,null,false,0],[0.7091,11376,2.9,2.337,2.337,true,0],[1.1417,27761,5.2,3.489,3.489,true,0],[1.4052,30900,5.8,3.94,3.94,true,0],[1.6855,35658,6.9,4.031,4.031,true,0],[2.0001,41308,8.2,4.128,4.128,true,0],[3.1144,60643,13.2,4.504,4.504,true,0]]},{"id":"opus55-low-2","model":"Opus 5.5","effort":"low","attempt":2,"kind":"series","pts":[[0.0259,114,0.1,1.0,1.0,true,0],[0.038,257,0.2,1.0,1.0,true,0],[0.2578,882,0.3,1.0,1.0,true,0],[0.4254,6844,1.1,0,null,false,0],[0.5241,8225,1.4,2.406,2.406,true,0],[0.8924,21185,3.3,3.375,3.375,true,0],[1.052,23133,3.7,3.411,3.411,true,0],[1.4218,29570,5.2,3.658,3.658,true,0],[1.5464,31675,5.6,3.658,3.658,true,0],[2.008,39950,7.4,3.895,3.895,true,0],[2.9893,54102,11.2,4.423,4.423,true,0]]},{"id":"opus55-low-3","model":"Opus 5.5","effort":"low","attempt":3,"kind":"series","pts":[[0.2402,1257,0.4,1.0,1.0,true,0],[0.4093,8651,1.2,0,null,false,0],[0.5204,9512,1.5,2.51,2.51,true,0],[0.7067,13802,3.0,0,null,false,0],[1.0186,18435,5.4,2.796,2.796,true,0],[1.4532,27605,7.2,0,null,false,46],[2.0388,38684,9.3,4.179,4.179,true,0],[2.236,42310,10.0,4.418,4.418,true,0],[2.8163,50814,12.0,4.644,4.644,true,0]]},{"id":"opus55-medium-1","model":"Opus 5.5","effort":"medium","attempt":1,"kind":"series","pts":[[0.0541,110,0.1,1.0,1.0,true,0],[0.0811,325,0.3,1.0,1.0,true,0],[0.2993,615,0.4,1.0,1.0,true,0],[0.5208,842,0.5,1.0,1.0,true,0],[0.7754,6919,1.6,1.0,1.0,true,0],[1.9007,58321,10.6,1.0,1.0,true,0],[2.3345,58465,10.7,1.0,1.0,true,0],[4.1916,110606,19.1,0,4.224,false,2],[8.0572,176567,32.8,0,6.242,false,2],[10.1859,213942,42.5,0,6.818,false,2]]},{"id":"opus55-medium-1-cont","model":"Opus 5.5","effort":"medium","attempt":1,"kind":"continued","pts":[[0.0541,110,0.1,1.0,1.0,true,0],[0.0811,325,0.3,1.0,1.0,true,0],[0.2993,615,0.4,1.0,1.0,true,0],[0.5208,842,0.5,1.0,1.0,true,0],[0.7754,6919,1.6,1.0,1.0,true,0],[1.9007,58321,10.6,1.0,1.0,true,0],[2.3345,58465,10.7,1.0,1.0,true,0],[4.1916,110606,19.1,0,4.224,false,2],[8.0572,176567,32.8,0,6.242,false,2],[10.1859,213942,42.5,0,6.818,false,2],[16.0578,253671,52.3,0,6.878,false,2],[18.0554,270913,57.0,0,6.94,false,2],[22.5393,307169,67.9,0,8.052,false,2]]},{"id":"opus55-medium-2","model":"Opus 5.5","effort":"medium","attempt":2,"kind":"series","pts":[[0.0261,121,0.1,1.0,1.0,true,0],[0.1466,288,0.2,1.0,1.0,true,0],[0.2659,365,0.3,1.0,1.0,true,0],[0.4825,816,0.4,1.0,1.0,true,0],[0.5223,1198,0.5,1.0,1.0,true,0],[1.1639,28273,5.6,1.0,1.0,true,0],[1.4213,28667,5.8,1.0,1.0,true,0],[2.3365,68921,10.6,0,null,false,349],[4.1539,101280,22.8,4.432,4.432,true,0],[8.0939,168528,45.2,0,5.963,false,2],[10.196,210002,53.1,0,5.99,false,2]]},{"id":"opus55-medium-2-cont","model":"Opus 5.5","effort":"medium","attempt":2,"kind":"continued","pts":[[0.0261,121,0.1,1.0,1.0,true,0],[0.1466,288,0.2,1.0,1.0,true,0],[0.2659,365,0.3,1.0,1.0,true,0],[0.4825,816,0.4,1.0,1.0,true,0],[0.5223,1198,0.5,1.0,1.0,true,0],[1.1639,28273,5.6,1.0,1.0,true,0],[1.4213,28667,5.8,1.0,1.0,true,0],[2.3365,68921,10.6,0,null,false,349],[4.1539,101280,22.8,4.432,4.432,true,0],[8.0939,168528,45.2,0,5.963,false,2],[10.196,210002,53.1,0,5.99,false,2],[16.1166,237694,63.0,0,6.165,false,2],[30.4473,338705,148.8,0,6.532,false,2],[32.0855,349170,157.8,0,6.56,false,2],[38.0499,381297,188.9,0,6.765,false,2]]},{"id":"opus55-medium-3","model":"Opus 5.5","effort":"medium","attempt":3,"kind":"series","pts":[[0.1298,288,0.2,1.0,1.0,true,0],[0.2664,461,0.3,1.0,1.0,true,0],[0.5253,1329,0.5,1.0,1.0,true,0],[0.7523,7056,1.6,1.0,1.0,true,0],[1.0333,13967,2.9,1.0,1.0,true,0],[1.6994,38757,6.2,0,4.269,false,41],[2.0464,45210,7.5,4.094,4.094,true,0],[4.0542,77649,20.8,4.635,4.635,true,0],[8.0379,140969,35.9,5.196,5.196,true,0],[10.0178,172106,45.0,5.357,5.357,true,0]]},{"id":"opus55-high-1","model":"Opus 5.5","effort":"high","attempt":1,"kind":"series","pts":[[0.0538,112,0.1,1.0,1.0,true,0],[0.0847,281,0.1,1.0,1.0,true,0],[0.2169,388,0.2,1.0,1.0,true,0],[0.3329,539,0.2,1.0,1.0,true,0],[0.5522,685,0.3,1.0,1.0,true,0],[1.9597,66083,11.5,1.0,1.0,true,0],[3.2039,100879,15.3,0,4.788,false,9],[4.063,110115,17.2,5.985,5.985,true,0],[8.0011,169240,36.1,6.306,6.306,true,0],[16.0048,284903,72.8,7.887,7.887,true,0],[20.0571,326713,91.4,8.239,8.239,true,0]]},{"id":"opus55-high-2","model":"Opus 5.5","effort":"high","attempt":2,"kind":"series","pts":[[0.0458,185,0.1,1.0,1.0,true,0],[0.0551,306,0.2,1.0,1.0,true,0],[0.1117,535,0.2,1.0,1.0,true,0],[0.2971,609,0.3,1.0,1.0,true,0],[0.5084,755,0.4,1.0,1.0,true,0],[0.7195,4450,1.2,1.0,1.0,true,0],[1.334,25893,5.1,1.0,1.0,true,0],[1.5083,26140,5.1,1.0,1.0,true,0],[2.2852,63785,9.5,0,null,false,0],[4.1387,96498,15.9,4.993,4.993,true,0],[8.0455,166211,28.5,5.283,5.283,true,0],[16.0481,291550,58.2,5.805,5.805,true,0],[20.1233,342604,78.9,0,null,false,51]]},{"id":"opus55-high-2-cont","model":"Opus 5.5","effort":"high","attempt":2,"kind":"continued","pts":[[0.0458,185,0.1,1.0,1.0,true,0],[0.0551,306,0.2,1.0,1.0,true,0],[0.1117,535,0.2,1.0,1.0,true,0],[0.2971,609,0.3,1.0,1.0,true,0],[0.5084,755,0.4,1.0,1.0,true,0],[0.7195,4450,1.2,1.0,1.0,true,0],[1.334,25893,5.1,1.0,1.0,true,0],[1.5083,26140,5.1,1.0,1.0,true,0],[2.2852,63785,9.5,0,null,false,0],[4.1387,96498,15.9,4.993,4.993,true,0],[8.0455,166211,28.5,5.283,5.283,true,0],[16.0481,291550,58.2,5.805,5.805,true,0],[20.1233,342604,78.9,0,null,false,51],[32.0422,410577,120.6,5.893,5.893,true,0],[40.0368,470315,148.2,5.967,5.967,true,0]]},{"id":"opus55-high-3","model":"Opus 5.5","effort":"high","attempt":3,"kind":"series","pts":[[0.0469,243,0.1,1.0,1.0,true,0],[0.2568,353,0.2,1.0,1.0,true,0],[0.4329,543,0.3,1.0,1.0,true,0],[0.5354,1638,0.7,1.0,1.0,true,0],[0.7888,8188,1.9,1.0,1.0,true,0],[1.1139,17375,3.7,1.0,1.0,true,0],[1.4953,30176,5.8,1.0,1.0,true,0],[2.5683,71074,10.7,4.611,4.611,true,0],[4.0092,94745,15.7,4.611,4.611,true,0],[8.1599,184503,31.1,5.253,5.253,true,0],[16.022,298504,66.0,5.426,5.426,true,0],[20.0907,343826,77.2,5.464,5.464,true,0]]},{"id":"fable51-low-1","model":"Fable 5.1","effort":"low","attempt":1,"kind":"series","pts":[[0.181,124,0.1,1.0,1.0,true,0],[0.8181,811,0.3,1.0,1.0,true,0],[1.4553,1836,0.5,1.0,1.0,true,0],[2.4475,18315,4.3,1.0,1.0,true,0],[4.4681,51633,9.1,3.396,3.396,true,0],[8.1669,82535,16.0,4.432,4.432,true,0],[10.6471,109984,21.9,4.687,4.687,true,0]]},{"id":"fable51-low-2","model":"Fable 5.1","effort":"low","attempt":2,"kind":"series","pts":[[0.024,149,0.1,1.0,1.0,true,0],[0.0925,252,0.1,1.0,1.0,true,0],[0.1135,377,0.1,1.0,1.0,true,0],[0.4463,502,0.1,1.0,1.0,true,0],[0.7069,629,0.2,1.0,1.0,true,0],[1.0824,883,0.3,1.0,1.0,true,0],[1.6158,5049,1.4,1.0,1.0,true,0],[2.7663,22841,5.6,1.0,1.0,true,0],[4.1137,43113,8.5,1.0,1.0,true,0],[8.2473,77812,16.7,4.44,4.44,true,0],[11.1581,93414,20.8,4.426,4.426,true,0]]},{"id":"fable51-low-3","model":"Fable 5.1","effort":"low","attempt":3,"kind":"series","pts":[[0.0236,141,0.1,1.0,1.0,true,0],[0.0639,406,0.2,1.0,1.0,true,0],[0.6096,753,0.3,1.0,1.0,true,0],[1.2556,1978,0.6,1.0,1.0,true,0],[1.4564,4649,1.3,1.0,1.0,true,0],[3.8242,47782,7.8,3.434,3.434,true,0],[4.7431,50077,8.4,3.434,3.434,true,0],[8.449,88987,18.0,0,null,false,0],[10.4536,109667,22.1,5.214,5.214,true,0]]},{"id":"fable51-medium-1","model":"Fable 5.1","effort":"medium","attempt":1,"kind":"series","pts":[[0.1842,188,0.1,1.0,1.0,true,0],[0.792,864,0.2,1.0,1.0,true,0],[1.4114,1549,0.5,1.0,1.0,true,0],[2.1339,8955,2.1,1.0,1.0,true,0],[5.2197,58216,10.7,0,3.956,false,1],[8.2555,87794,17.3,0,4.703,false,1],[10.0462,99400,49.9,0,4.703,false,1]]},{"id":"fable51-medium-1-cont","model":"Fable 5.1","effort":"medium","attempt":1,"kind":"continued","pts":[[0.1842,188,0.1,1.0,1.0,true,0],[0.792,864,0.2,1.0,1.0,true,0],[1.4114,1549,0.5,1.0,1.0,true,0],[2.1339,8955,2.1,1.0,1.0,true,0],[5.2197,58216,10.7,0,3.956,false,1],[8.2555,87794,17.3,0,4.703,false,1],[10.0462,99400,49.9,0,4.703,false,1],[16.231,123436,55.0,0,4.695,false,1],[32.1196,262884,93.5,0,5.778,false,1],[40.1396,326717,118.2,0,6.002,false,1],[48.7309,389460,153.9,0,6.038,false,1],[63.5658,492295,226.9,0,6.358,false,1]]},{"id":"fable51-medium-2","model":"Fable 5.1","effort":"medium","attempt":2,"kind":"series","pts":[[0.0243,155,0.1,1.0,1.0,true,0],[0.1388,258,0.1,1.0,1.0,true,0],[0.1604,383,0.1,1.0,1.0,true,0],[0.3526,530,0.2,1.0,1.0,true,0],[0.6097,675,0.2,1.0,1.0,true,0],[0.8082,813,0.2,1.0,1.0,true,0],[1.1745,1165,0.4,1.0,1.0,true,0],[1.4645,3272,0.9,1.0,1.0,true,0],[2.0754,9942,2.5,1.0,1.0,true,0],[5.1719,65848,12.1,0,3.867,false,4],[8.0497,84465,17.4,0,3.949,false,4],[10.0199,107612,22.2,0,4.006,false,2]]},{"id":"fable51-medium-2-cont","model":"Fable 5.1","effort":"medium","attempt":2,"kind":"continued","pts":[[0.0243,155,0.1,1.0,1.0,true,0],[0.1388,258,0.1,1.0,1.0,true,0],[0.1604,383,0.1,1.0,1.0,true,0],[0.3526,530,0.2,1.0,1.0,true,0],[0.6097,675,0.2,1.0,1.0,true,0],[0.8082,813,0.2,1.0,1.0,true,0],[1.1745,1165,0.4,1.0,1.0,true,0],[1.4645,3272,0.9,1.0,1.0,true,0],[2.0754,9942,2.5,1.0,1.0,true,0],[5.1719,65848,12.1,0,3.867,false,4],[8.0497,84465,17.4,0,3.949,false,4],[10.0199,107612,22.2,0,4.006,false,2],[16.317,132196,30.9,0,4.209,false,2],[32.2488,266285,71.2,0,4.796,false,3],[35.8629,287937,77.9,0,4.796,false,3],[38.3901,305523,82.8,0,4.825,false,3]]},{"id":"fable51-medium-3","model":"Fable 5.1","effort":"medium","attempt":3,"kind":"series","pts":[[0.0262,192,0.1,1.0,1.0,true,0],[0.1037,354,0.1,1.0,1.0,true,0],[0.64,742,0.2,1.0,1.0,true,0],[1.238,1004,0.3,1.0,1.0,true,0],[3.1653,34408,7.7,1.0,1.0,true,0],[5.5901,68999,12.6,3.833,3.833,true,0],[8.1851,91134,18.6,4.642,4.642,true,0],[10.0827,108898,22.6,4.642,4.642,true,0]]},{"id":"fable51-high-1","model":"Fable 5.1","effort":"high","attempt":1,"kind":"series","pts":[[0.1841,186,0.1,1.0,1.0,true,0],[0.2614,348,0.1,1.0,1.0,true,0],[0.8028,846,0.2,1.0,1.0,true,0],[1.4179,1393,0.3,1.0,1.0,true,0],[2.5998,18035,4.4,1.0,1.0,true,0],[7.6236,106497,21.6,1.0,1.0,true,0],[9.0706,125345,24.8,1.0,1.0,true,0],[16.1097,193526,39.6,5.174,5.174,true,0],[20.1197,231572,48.8,5.367,5.367,true,0]]},{"id":"fable51-high-2","model":"Fable 5.1","effort":"high","attempt":2,"kind":"series","pts":[[0.0262,193,0.1,1.0,1.0,true,0],[0.1037,355,0.1,1.0,1.0,true,0],[0.6397,741,0.2,1.0,1.0,true,0],[1.2428,1105,0.3,1.0,1.0,true,0],[1.9698,8193,2.1,1.0,1.0,true,0],[2.1999,8513,2.1,1.0,1.0,true,0],[5.8173,65374,12.3,3.69,3.69,true,0],[8.348,84973,17.7,3.69,3.69,true,0],[16.2874,131969,26.6,4.048,4.048,true,0],[20.0839,163574,33.9,0,4.556,false,6]]},{"id":"fable51-high-3","model":"Fable 5.1","effort":"high","attempt":3,"kind":"series","pts":[[0.027,209,0.1,1.0,1.0,true,0],[0.0934,516,0.1,1.0,1.0,true,0],[0.705,1036,0.2,1.0,1.0,true,0],[1.3144,1450,0.4,1.0,1.0,true,0],[1.8161,5312,1.3,1.0,1.0,true,0],[2.2099,10865,2.6,1.0,1.0,true,0],[7.155,98942,20.1,1.0,1.0,true,0],[9.6084,137394,25.6,0,null,false,293],[16.1368,181543,36.0,5.068,5.068,true,0],[20.5439,213466,44.7,5.327,5.327,true,0]]}];
+const MODELS=['Haiku 5.5','Sonnet 5.5','Opus 5.5','Fable 5.1'], EFF=['low','medium','high'];
+const st={x:'usd',g:1,v:'final',m:new Set(MODELS),e:new Set(EFF),c:1};
+const svg=document.getElementById('vsvg'), tip=document.getElementById('vtip'), root=document.getElementById('viz');
+const NS='http://www.w3.org/2000/svg', W=680,H=400,L=52,R=16,T=14,B=44;
+const col=m=>'var(--m'+MODELS.indexOf(m)+')';
+const XI={usd:0,tok:1,min:2}, XL={usd:'spending, $ (log scale)',tok:'budget tokens (log scale)',min:'working minutes (log scale)'};
+function el(n,a,p){const e=document.createElementNS(NS,n);for(const k in a)e.setAttribute(k,a[k]);(p||svg).appendChild(e);return e}
+function yv(p){return st.g? (p[5]?p[3]:0) : (p[4]==null?0:p[4])}
+function fmtx(v){if(st.x==='usd')return v<1?'$'+v.toFixed(2):'$'+Math.round(v);if(st.x==='tok')return v>=1e6?(v/1e6)+'M':v>=1e3?Math.round(v/1e3)+'k':v;return v<10?v.toFixed(1):Math.round(v)}
+function shape(g,cx,cy,eff,c,filled,cross){
+  const s=5.2, fill=filled?c:'var(--card)';
+  if(cross){el('path',{d:`M${cx-s} ${cy-s}L${cx+s} ${cy+s}M${cx-s} ${cy+s}L${cx+s} ${cy-s}`,stroke:c,'stroke-width':2.2,'stroke-linecap':'round'},g);return}
+  if(eff==='low')el('circle',{cx,cy,r:s,fill,stroke:c,'stroke-width':2},g);
+  else if(eff==='medium')el('rect',{x:cx-s+.6,y:cy-s+.6,width:2*s-1.2,height:2*s-1.2,rx:1.2,fill,stroke:c,'stroke-width':2},g);
+  else el('path',{d:`M${cx} ${cy-s-1}L${cx+s+.8} ${cy+s-.2}L${cx-s-.8} ${cy+s-.2}Z`,fill,stroke:c,'stroke-width':2,'stroke-linejoin':'round'},g);
+}
+function draw(){
+  svg.innerHTML='';
+  const vis=D.filter(r=>st.m.has(r.model)&&st.e.has(r.effort)&&(st.c||r.kind==='series'));
+  const xi=XI[st.x];
+  let xs=[];vis.forEach(r=>(st.v==='path'?r.pts:[r.pts[r.pts.length-1]]).forEach(p=>{if(p[xi]>0)xs.push(p[xi])}));
+  if(!xs.length)xs=[1,10];
+  let x0=Math.log10(Math.min(...xs)),x1=Math.log10(Math.max(...xs));x0=Math.floor(x0*2)/2;x1=Math.ceil(x1*2)/2;if(x1-x0<1)x1=x0+1;
+  const ymax=9, X=v=>L+(Math.log10(v)-x0)/(x1-x0)*(W-L-R), Y=v=>T+(1-v/ymax)*(H-T-B);
+  for(let y=0;y<=ymax;y++){el('line',{x1:L,x2:W-R,y1:Y(y),y2:Y(y),stroke:'var(--grid)','stroke-width':1});el('text',{x:L-8,y:Y(y)+4,'text-anchor':'end'}).textContent=y}
+  const narrow=svg.clientWidth<520;for(let k=Math.ceil(x0);k<=Math.floor(x1);k++)(narrow?[1]:[1,2,5]).forEach(m=>{const v=m*Math.pow(10,k),lv=Math.log10(v);if(lv<x0-1e-9||lv>x1+1e-9)return;el('line',{x1:X(v),x2:X(v),y1:T,y2:H-B,stroke:'var(--grid)','stroke-width':1});el('text',{x:X(v),y:H-B+16,'text-anchor':'middle'}).textContent=fmtx(v)});
+  el('text',{x:(L+W-R)/2,y:H-8,'text-anchor':'middle'}).textContent=XL[st.x];
+  const yl=el('text',{x:14,y:(T+H-B)/2,'text-anchor':'middle',transform:`rotate(-90 14 ${(T+H-B)/2})`});yl.textContent=st.g?'score (0 if the gate failed)':'score, failed runs at their descriptive value';
+  el('line',{x1:L,x2:W-R,y1:Y(1),y2:Y(1),stroke:'var(--axis)','stroke-width':1,'stroke-dasharray':'3 3'});
+  const gl=el('g',{}), gp=el('g',{});
+  vis.forEach(r=>{
+    const c=col(r.model);
+    if(st.v==='path'){
+      let pts=r.pts.filter(p=>p[xi]>0);
+      if(r.kind==='continued'){const sr=D.find(q=>q.kind==='series'&&q.id+'-cont'===r.id);if(sr){const f=sr.pts[sr.pts.length-1][0];pts=pts.filter(p=>p[0]>=f-1e-6)}}
+      el('polyline',{points:pts.map(p=>X(p[xi])+','+Y(yv(p))).join(' '),fill:'none',stroke:c,'stroke-width':2,'stroke-opacity':.55,'stroke-dasharray':r.kind==='continued'?'5 4':'none','stroke-linejoin':'round'},gl);
+    }
+    const p=r.pts[r.pts.length-1]; if(!(p[xi]>0))return;
+    const g=el('g',{},gp), cx=X(p[xi]), cy=Y(yv(p));
+    el('circle',{cx,cy,r:11,fill:'transparent'},g);
+    if(st.g&&!p[5])shape(g,cx,cy,r.effort,c,false,true); else shape(g,cx,cy,r.effort,c,p[5],false);
+    if(r.kind==='continued')el('circle',{cx,cy,r:9,fill:'none',stroke:c,'stroke-width':1,'stroke-dasharray':'2 2'},g);
+    g.addEventListener('mouseenter',ev=>show(ev,r,p));g.addEventListener('mousemove',ev=>move(ev));g.addEventListener('mouseleave',()=>tip.hidden=true);
+  });
+}
+function show(ev,r,p){
+  const flag=(r.model==='Opus 5.5'&&r.effort==='high'&&r.attempt===1&&r.kind==='series')?' †':'';
+  tip.innerHTML=`<b>${r.model}</b>, ${r.effort}, attempt ${r.attempt}${r.kind==='continued'?' (continued, no cap)':''}<br>`+
+   (p[5]?`score <b>${p[3].toFixed(2)}</b>${flag}, gate passed`:`score <b>0</b>, gate failed (${p[6]} item${p[6]===1?'':'s'})${p[4]!=null?'; descriptive '+p[4].toFixed(2):'; no workload correct'}`)+
+   `<br>$${p[0].toFixed(2)} · ${Math.round(p[1]/1000)}k tokens · ${Math.round(p[2])} min`;
+  tip.hidden=false;move(ev);
+}
+function move(ev){const b=root.getBoundingClientRect();let x=ev.clientX-b.left+14,y=ev.clientY-b.top+14;tip.style.left='0px';const w=tip.offsetWidth;if(x+w>b.width)x=ev.clientX-b.left-w-14;tip.style.left=x+'px';tip.style.top=y+'px'}
+const mc=document.getElementById('mchips'), ec=document.getElementById('echips');
+MODELS.forEach((m,i)=>{const b=document.createElement('button');b.className='on';b.innerHTML=`<span class="sw" style="background:var(--m${i})"></span>${m}`;b.onclick=()=>{st.m.has(m)?st.m.delete(m):st.m.add(m);b.classList.toggle('on');draw()};mc.appendChild(b)});
+const SH={low:'○',medium:'□',high:'△'};
+EFF.forEach(e=>{const b=document.createElement('button');b.className='on';b.textContent=SH[e]+' '+e;b.onclick=()=>{st.e.has(e)?st.e.delete(e):st.e.add(e);b.classList.toggle('on');draw()};ec.appendChild(b)});
+function radio(attr,key,conv){root.querySelectorAll('button[data-'+attr+']').forEach(b=>b.onclick=()=>{root.querySelectorAll('button[data-'+attr+']').forEach(x=>x.classList.remove('on'));b.classList.add('on');st[key]=conv(b.dataset[attr]);draw()})}
+radio('x','x',v=>v);radio('g','g',v=>+v);radio('v','v',v=>v);
+document.getElementById('cbtn').onclick=function(){st.c=st.c?0:1;this.classList.toggle('on');draw()};
+draw();
+window.addEventListener('resize',()=>draw());
+})();
+</script>
+
+    <p class="cap">Every run of the series, and the five continued runs (dashed ring). Colour is the model, shape is the effort; a filled mark passed the gate, a cross failed it. "Without gate" puts a failed run at its descriptive value, as a hollow mark. "Paths" draws each run through its checkpoints; the continued part is dashed. The dotted line at 1 is the starting interpreter. Minutes are working time, without pauses between a stop and a resume. Tokens are budget tokens, uncached input and output: a rough proxy for how long the model worked, not a measure of speed.</p>
+    <div class="tw"><table>
+      <thead><tr><th>model</th><th>effort</th><th>best score that passed the gate (attempt)</th><th>spend</th><th>tokens</th><th>minutes</th><th>$ per million tokens</th></tr></thead>
+      <tbody class="tnum">
+        <tr><td>Haiku 5.5</td><td>low</td><td>3.50 <span class="muted">(2)</span></td><td>$0.49</td><td>98k</td><td>21</td><td>$5</td></tr>
+        <tr><td></td><td>medium</td><td>3.84 <span class="muted">(2)</span></td><td>$0.60</td><td>174k</td><td>17</td><td>$3</td></tr>
+        <tr><td></td><td>high</td><td>4.08 <span class="muted">(3)</span></td><td>$0.70</td><td>218k</td><td>23</td><td>$3</td></tr>
+        <tr><td>Sonnet 5.5</td><td>low</td><td>2.36 <span class="muted">(1)</span></td><td>$0.39</td><td>12k</td><td>3</td><td>$32</td></tr>
+        <tr><td></td><td>medium</td><td>2.92 <span class="muted">(2)</span></td><td>$0.57</td><td>22k</td><td>4</td><td>$25</td></tr>
+        <tr><td></td><td>high</td><td>5.02 <span class="muted">(1)</span></td><td>$4.38</td><td>175k</td><td>33</td><td>$25</td></tr>
+        <tr><td>Opus 5.5</td><td>low</td><td>4.64 <span class="muted">(3)</span></td><td>$2.82</td><td>51k</td><td>12</td><td>$55</td></tr>
+        <tr><td></td><td>medium</td><td>5.36 <span class="muted">(3)</span></td><td>$10.02</td><td>172k</td><td>45</td><td>$58</td></tr>
+        <tr><td></td><td>high</td><td>8.24† <span class="muted">(1)</span></td><td>$20.06</td><td>327k</td><td>91</td><td>$61</td></tr>
+        <tr><td>Fable 5.1</td><td>low</td><td>5.21 <span class="muted">(3)</span></td><td>$10.45</td><td>110k</td><td>22</td><td>$95</td></tr>
+        <tr><td></td><td>medium</td><td>4.64 <span class="muted">(3)</span></td><td>$10.08</td><td>109k</td><td>23</td><td>$93</td></tr>
+        <tr><td></td><td>high</td><td>5.37 <span class="muted">(1)</span></td><td>$20.12</td><td>232k</td><td>49</td><td>$87</td></tr>
+      </tbody>
+    </table></div>
+    <p class="cap">One row per model and effort: the attempt with the highest score among those that passed the gate, from the series only. "$ per million tokens" divides the run's whole spend, cache reads and writes included, by its budget tokens (uncached input and output), so it shows how expensive each budget token was for that model. † As in the table above.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">6</div><h2>Where the agents break their interpreters</h2></div>
+<p>Of the 36 runs, 8 failed the gate: one of Haiku 5.5, one of Sonnet 5.5, three of Opus 5.5 and three of Fable 5.1, none at effort low. One more passed the gate with a real defect. Each failure was traced to its cause, all but one down to the line of code. They fall into five kinds:</p>
+    <div class="tw"><table>
+      <thead><tr><th>kind of defect</th><th>runs</th><th>found by</th></tr></thead>
+      <tbody>
+        <tr><td><strong>A rewrite that is right for integers and wrong for a float zero.</strong> "Subtract a constant <i>k</i>" becomes "add −<i>k</i>". When <i>k</i> is the integer 0, −<i>k</i> is still 0, and a negative float zero loses its sign.</td><td>Sonnet 5.5 medium 1; Opus 5.5 medium 1 and 2</td><td>the gate (the same two hidden tests in all three)</td></tr>
+        <tr><td><strong>A fused handler reads its operands in the wrong roles.</strong> Several opcodes are merged into one, and two of their operands are swapped.</td><td>Fable 5.1 medium 1 and 2 (in run 2, two such handlers)</td><td>the gate (a hidden workload; in run 2 also a test)</td></tr>
+        <tr><td><strong>A fused conditional jump that crashes.</strong> Traced to the fused form of "load a local, then jump if it is true", not yet to a line of code.</td><td>Haiku 5.5 high 1</td><td>the gate</td></tr>
+        <tr><td><strong>A last edit that was never checked.</strong> The final command before the cap changed the interpreter, and the run stopped before the agent tested it. The checkpoint at $16 passes the gate in both runs.</td><td>Opus 5.5 high 2 (every workload crashes); Fable 5.1 high 2 (6 failures)</td><td>the gate</td></tr>
+        <tr><td><strong>A memory error in the allocator.</strong> A size class is off by one: a freed block of 512 bytes is handed out for requests of up to 640 bytes, and writing goes past its end.</td><td>Opus 5.5 high 1, the 8.24</td><td>random programs, 43 of 10,000; the gate passed it</td></tr>
+      </tbody>
+    </table></div>
+    <p>Three things stand out.</p>
+    <ul>
+      <li><strong>Most failures come from the same kind of change.</strong> The first three kinds are all rewrites or fusions of opcode sequences, which is also where most of the gain comes from (section 2). The agents broke the interpreter in the place where they sped it up.</li>
+      <li><strong>Some failures repeat.</strong> Two of three Opus 5.5 runs at medium have the float-zero defect, and two of three Fable 5.1 runs at medium have the operand-role defect. The float-zero defect is also the only failure shared by two models: Sonnet 5.5 made it too, in its own code. Each run wrote its own faulty code.</li>
+      <li><strong>Neither check proves that no defect is left.</strong> The hidden tests reach the float-zero defect in only one program shape: a copy of Sonnet 5.5's interpreter fixed at the one site they reach passes all of them, yet is still wrong at two other sites. The random programs hit the same defect in only one program of 10,000, and missed it in one of the three interpreters that have it. The memory error in the 8.24 was found only by them, at a rate of 43 in 10,000.</li>
+    </ul>
+    <p>The one-character fix of the allocator keeps the 8.24 and passes both the gate and the random programs. By the rules written before the series, the score stays as measured, and it is shown here only with this flag.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">7</div><h2>Widening the class of tasks</h2></div>
+    <p>Quern is one task. The method behind it is not tied to interpreters: code written for the bench, a cost that is counted rather than timed, and a correctness check the agent cannot see.</p>
+    <p>In general terms, every task of this kind has the same shape. There is a function <i>F</i>, given as a working implementation and treated as a black box. On a hidden set of inputs <i>X</i>, its correct outputs <i>Y</i> are computed in advance: this is the gate. A generator produces a much larger set of random inputs <i>X′</i>, and for each of them the correct output <i>Y′</i> is cheap to obtain: this is fuzzing. The agent has to build an <i>F′</i> that</p>
+    <ul>
+      <li>keeps the behaviour of <i>F</i>: it gives <i>Y</i> on <i>X</i> and <i>Y′</i> on <i>X′</i>;</li>
+      <li>and is cheaper than <i>F</i> by a cost that is fixed in advance and measured on workloads the agent does not see.</li>
+    </ul>
+    <p>Any <i>F</i> that has these three ingredients, a reliable source of correct outputs, a generator of inputs, and a cost that can be counted, can become a task of this class. The three lines below are three ways to choose <i>F</i>.</p>
+    <figure class="dg">
+    <svg viewBox="0 0 680 300" role="img" aria-label="The same scheme as a diagram: hidden tests, random inputs and hidden workloads each go to both the given F and the agent's F prime; the first two compare outputs, the third compares cost.">
+      <defs><marker id="dgarr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="dg-head"/></marker></defs>
+      <g transform="translate(0,20)">
+      <rect x="8" y="10" width="150" height="52" rx="8" class="dg-in"/>
+      <text x="83" y="32" class="dg-sym" text-anchor="middle">X</text>
+      <text x="83" y="50" class="dg-sm" text-anchor="middle">hidden tests</text>
+      <line x1="158" y1="36" x2="228" y2="22" class="dg-ar" marker-end="url(#dgarr)"/>
+      <line x1="158" y1="36" x2="228" y2="52" class="dg-ar" marker-end="url(#dgarr)"/>
+      <rect x="232" y="4" width="120" height="30" rx="6" class="dg-f"/>
+      <text x="292" y="24" class="dg-t" text-anchor="middle">F  given</text>
+      <rect x="232" y="40" width="120" height="30" rx="6" class="dg-fp"/>
+      <text x="292" y="60" class="dg-t" text-anchor="middle">F′  agent's</text>
+      <line x1="352" y1="19" x2="420" y2="34" class="dg-ar"/>
+      <line x1="352" y1="55" x2="420" y2="38" class="dg-ar"/>
+      <line x1="420" y1="36" x2="452" y2="36" class="dg-ar" marker-end="url(#dgarr)"/>
+      <rect x="456" y="10" width="140" height="52" rx="8" class="dg-q"/>
+      <text x="526" y="32" class="dg-t" text-anchor="middle">same output</text>
+      <text x="526" y="50" class="dg-t" text-anchor="middle">and exit code?</text>
+      <text x="608" y="41" class="dg-role">the gate</text>
+    </g>
+      <g transform="translate(0,112)">
+      <rect x="8" y="10" width="150" height="52" rx="8" class="dg-in"/>
+      <text x="83" y="32" class="dg-sym" text-anchor="middle">X′</text>
+      <text x="83" y="50" class="dg-sm" text-anchor="middle">random inputs</text>
+      <line x1="158" y1="36" x2="228" y2="22" class="dg-ar" marker-end="url(#dgarr)"/>
+      <line x1="158" y1="36" x2="228" y2="52" class="dg-ar" marker-end="url(#dgarr)"/>
+      <rect x="232" y="4" width="120" height="30" rx="6" class="dg-f"/>
+      <text x="292" y="24" class="dg-t" text-anchor="middle">F  given</text>
+      <rect x="232" y="40" width="120" height="30" rx="6" class="dg-fp"/>
+      <text x="292" y="60" class="dg-t" text-anchor="middle">F′  agent's</text>
+      <line x1="352" y1="19" x2="420" y2="34" class="dg-ar"/>
+      <line x1="352" y1="55" x2="420" y2="38" class="dg-ar"/>
+      <line x1="420" y1="36" x2="452" y2="36" class="dg-ar" marker-end="url(#dgarr)"/>
+      <rect x="456" y="10" width="140" height="52" rx="8" class="dg-q"/>
+      <text x="526" y="32" class="dg-t" text-anchor="middle">same output</text>
+      <text x="526" y="50" class="dg-t" text-anchor="middle">and exit code?</text>
+      <text x="608" y="41" class="dg-role">fuzzing</text>
+    </g>
+      <g transform="translate(0,204)">
+      <rect x="8" y="10" width="150" height="52" rx="8" class="dg-in"/>
+      <text x="83" y="32" class="dg-sym" text-anchor="middle">W</text>
+      <text x="83" y="50" class="dg-sm" text-anchor="middle">hidden workloads</text>
+      <line x1="158" y1="36" x2="228" y2="22" class="dg-ar" marker-end="url(#dgarr)"/>
+      <line x1="158" y1="36" x2="228" y2="52" class="dg-ar" marker-end="url(#dgarr)"/>
+      <rect x="232" y="4" width="120" height="30" rx="6" class="dg-f"/>
+      <text x="292" y="24" class="dg-t" text-anchor="middle">F  given</text>
+      <rect x="232" y="40" width="120" height="30" rx="6" class="dg-fp"/>
+      <text x="292" y="60" class="dg-t" text-anchor="middle">F′  agent's</text>
+      <line x1="352" y1="19" x2="420" y2="34" class="dg-ar"/>
+      <line x1="352" y1="55" x2="420" y2="38" class="dg-ar"/>
+      <line x1="420" y1="36" x2="452" y2="36" class="dg-ar" marker-end="url(#dgarr)"/>
+      <rect x="456" y="10" width="140" height="52" rx="8" class="dg-q"/>
+      <text x="526" y="32" class="dg-t" text-anchor="middle">F′ cheaper</text>
+      <text x="526" y="50" class="dg-t" text-anchor="middle">than F?</text>
+      <text x="608" y="41" class="dg-role">the score</text>
+    </g>
+    </svg>
+    <figcaption class="cap">Each row is one check. Tests and random inputs go to both <i>F</i> and <i>F′</i>, and their outputs must match; in Quern the correct outputs come from the reference interpreter. Hidden workloads go to both as well, and only the counted cost is compared.</figcaption>
+  </figure>
+    <p>The random inputs are there because the set of possible inputs has no end: a Quern program can be of any length, so any fixed set of tests leaves almost all of them unchecked. A generator lets the check reach much further than the tests do, but it still only samples, which is why section 6 found a defect that both checks nearly missed. Where equivalence can be proved for every input at once, by an equivalence checker for circuits or a proof in a system such as Lean, that proof can replace both checks and is stronger than either. For a program of the size of a Quern interpreter such a proof would be a large project of its own; for smaller functions it may be within reach.</p>
+    <p>The task can be widened along three lines. What follows are ideas and sketches that we expect to work; none of them has been built or tested by us.</p>
+  <style>
+  .dg{margin:1.2em 0}.dg svg{width:100%;height:auto;display:block}
+  .dg .dg-in{fill:var(--sunk);stroke:var(--rule)}
+  .dg .dg-f{fill:var(--card);stroke:var(--muted)}
+  .dg .dg-fp{fill:var(--accent-soft);stroke:var(--accent)}
+  .dg .dg-q{fill:var(--card);stroke:var(--rule)}
+  .dg .dg-ar{stroke:var(--muted);stroke-width:1.5;fill:none}
+  .dg .dg-head{fill:var(--muted)}
+  .dg text{fill:var(--ink);font-family:"Source Serif 4",Georgia,serif}
+  .dg .dg-sym{font-size:17px;font-style:italic;font-weight:600}
+  .dg .dg-sm{font-size:12px;fill:var(--ink2)}
+  .dg .dg-t{font-size:13px}
+  .dg .dg-role{font-size:12px;fill:var(--muted);font-family:"JetBrains Mono",ui-monospace,monospace}
+  @media (max-width:520px){.dg .dg-t{font-size:16px}.dg .dg-sm{font-size:15px}.dg .dg-role{font-size:14px}}
+  </style>
+    <p><strong>Harder within the same class.</strong> The virtual machine itself can grow: more opcodes, and harder ones, such as closures, exceptions or garbage collection. This makes the task harder but not different; an agent that speeds up one interpreter will reach for the same tools on the next. The more useful step is to generate virtual machines from a description, a new one for each release of the bench. There would then be many tasks rather than one, and a solution to an old machine published somewhere would not help with a new one.</p>
+    <p><strong>Other programs with the same counter.</strong> The machine-instruction count works for any program that runs on a CPU. Instead of an interpreter, the agent could get a small compiler for a new language and be asked to make it emit code that executes fewer instructions, which is a different kind of work: improving programs through the tool that generates them. It could also get computational routines written for the bench, such as a filter, a hash or a parser for a new format, or a data structure behind a fixed interface, with workloads given as sequences of calls.</p>
+    <p><strong>Other costs and other machines.</strong> Some costs other than instructions are also counted, not timed: peak memory and the number of allocations, or the size of an output, for example a compressor for a new format that must restore its input exactly. Circuits are a further case: the cost of a new design can be counted as cells or area after synthesis, and correctness can be checked by formal equivalence, which is a proof rather than a set of tests and so would close the gap shown in section 6. GPU kernels are the obvious next target and already have a benchmark, KernelBench (Ouyang et al., 2025, <a href="https://arxiv.org/abs/2502.10517">arXiv 2502.10517</a>), which measures time; counting the work of a GPU kernel instead of timing it would need a simulator, which is much slower.</p>
+    <p>Each new class has the same price as Quern: a specification, a reference implementation, hidden tests written without seeing any solution, and a generator of random inputs for fuzzing. When models write these, the specification itself has defects: writing the Quern reference turned up nine.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">8</div><h2>Limitations</h2></div>
+<ul>
+      <li><strong>Exploratory.</strong> The rules of each series were written down before it ran, but the series were planned one after another, medium first, and each plan was made after the previous results were seen.</li>
+      <li><strong>Small cells and unequal caps.</strong> Three attempts per model and effort. The cap was $10 at low and medium and $20 at high, so effort and budget are partly mixed. No difference between models has been tested statistically.</li>
+      <li><strong>A count, not time.</strong> The score counts machine instructions under cachegrind on aarch64 in a Linux container. Real running time was not measured, and it can rank two interpreters differently.</li>
+      <li><strong>One task.</strong> One virtual machine and one starting interpreter, written by Haiku 5.5. A more or less efficient starting interpreter would change every score.</li>
+      <li><strong>Written by models.</strong> The specification, the reference interpreter, the tests and the workloads were written by Sonnet 5.5, and nine places in the specification needed fixing. The hidden tests cover some behaviours in only one form (section 6), and fuzzing only samples. Neither proves that a passing interpreter is correct.</li>
+      <li><strong>Claude evaluated by a stand built with Claude.</strong> Only Claude models were run, and Claude models built the stand. A bias in favour of how Claude models work cannot be ruled out until other vendors' models have run.</li>
+      <li><strong>Not quite the usual Claude Code.</strong> The built-in file and shell tools were replaced by MCP tools running in a container, and the CLI was pinned to version 2.1.281. An agent in its usual setup may behave differently.</li>
+      <li><strong>Dollars are notional.</strong> All runs used a subscription. Dollars are tokens times official prices, computed by us; nothing was billed per token.</li>
+      <li><strong>Traces not read.</strong> The check for cheating in section 5 is automatic: rules, isolation, a search of the source and the open-to-hidden ratio. What the agents reasoned and why they missed their own errors has not been read.</li>
+      <li><strong>Continuations partial.</strong> Five of sixteen are done. One continuation, of Opus 5.5 high 1, was lost to a stand failure (the agent's files outgrew the size limit for saved copies), discarded without being looked at, and is being repeated from the start. The decision to repeat was made when attempt 1 was already known to be the best of its three, so the repeat will be reported apart from the series, where attempt 1 stays as it was.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">9</div><h2>Conclusion</h2></div>
+    <p>Part 1 found that problems with a single checkable answer stop separating the strongest models once they solve them, and that the items left unsolved are too often broken. This part tried a task with no fixed top instead.</p>
+    <p>We proposed a synthetic benchmark with controlled parameters. Quern and its interpreter were written for this bench, so no model has seen them. The cost is a count of machine instructions, which repeats exactly from run to run. Correctness is decided by a gate of hidden tests and hidden workloads against the reference interpreter, and checked again by fuzzing with random programs. Spending is counted in dollars at official prices, so a run gives a curve of score against budget. Because both the correct behaviour and the cost are known exactly, such a task can show whether, and under what conditions, a model does hard work without introducing errors, which on benchmarks built from real code is hard to separate from defects and measurement noise in the benchmark itself.</p>
+    <p>The measurements are 36 runs: four models at three effort settings, three attempts each, with a cap of $10 at low and medium and $20 at high. Three attempts per cell are few, so every reading below is noisy and none has been tested statistically. We give them as impressions to check with more runs.</p>
+    <p><strong>Haiku 5.5</strong> barely responds to effort. It reaches 3.0–4.1, passes the gate in 8 of 9 runs and always stops on its own. Its spend grows with effort (a median of $0.49, $0.51 and $0.86) while its score grows little. The starting interpreter was written by Haiku 5.5 itself, which may shift its results in a direction we cannot tell.</p>
+    <p><strong>Sonnet 5.5</strong> depends on effort more than any other model: 1.2–2.4 at low, 4.8–5.0 at high, where it stops on its own after about $4.40. Its score seems to follow what it spends rather than the setting: the one low attempt that spent as much as the medium runs ($0.39) also scored close to them (2.36, against 2.64–2.92).</p>
+    <p><strong>Opus 5.5</strong> gives the best results in these runs. At low it stops on its own at about $3 with 4.4–4.6, close to the range Fable 5.1 reaches at any effort (4.4–5.4 when the gate passes) for a third or less of its spend. At medium and high it runs to the cap and goes further.</p>
+    <p><strong>Fable 5.1</strong> is the most expensive and runs to the cap at every effort, so its limit is not visible here. It spends long before it first changes the interpreter: the first saved change comes at $3.8 to $16 of spend, so in one high run the copy saved at $9 was still the starting interpreter. Its two passing results at high are close to each other (5.33 and 5.37), where Opus 5.5 spreads from 5.46 to 8.24; with two runs each this is only a hint.</p>
+    <p>Compared with Sonnet 5.5 at high, which scores 5.02 for $4.38, the best results of Opus 5.5 and Fable 5.1 that passed the gate are 5.37 to 5.97, for $20 to $40. That is a gain of about 7 to 19 percent for 4.5 to 9 times the money. The 8.24 of Opus 5.5 is left out here because of its memory error.</p>
+    <p><strong>Going further costs correctness.</strong> Opus 5.5 and Fable 5.1 each failed the gate in 3 of 9 runs, against 1 of 9 for Haiku 5.5 and for Sonnet 5.5, and their broken versions reach up to 8.05. Most failures come from rewriting or fusing opcode sequences, which is also where most of the gain comes from. An error that survives to the cap was not found later: in all four continued runs that had failed, the agent spent another $12 to $54 and kept improving the score, but the original failure stayed. Whether these models would find such errors if asked directly to check their own work is an open question for the next runs.</p>
+    <p>Quern is one task, but the shape behind it is general. A function <i>F</i> is given as a working implementation; a hidden set of inputs <i>X</i> with correct outputs <i>Y</i> is the gate; a generator produces random inputs <i>X′</i> whose correct outputs <i>Y′</i> are cheap to obtain, and that is fuzzing; the agent builds an <i>F′</i> that matches <i>F</i> on both and is cheaper by a counted cost on workloads it does not see. Within the same class, the virtual machine can grow harder, or virtual machines can be generated from a description, a new one for each release. With the same counter of machine instructions, the agent could get a small compiler for a new language, or routines and data structures written for the bench. Other costs and machines are possible too: peak memory, allocations, output size, or circuits whose cost is counted after synthesis and whose correctness is checked by formal equivalence, a proof rather than a set of tests. All of these are ideas; none has been built or tested by us.</p>
+    <p class="callout">The specification and the setup for running the bench are available on request: write to <a href="mailto:aziz.latypov@gmail.com">aziz.latypov@gmail.com</a>.</p>
+  </div>
+</section>
+
+<section class="footnotes">
+  <div class="col">
+    <div class="sec-head"><h2>Notes</h2></div>
+    <ol>
+      <li id="fn-cachegrind">Cachegrind is a tool of Valgrind, a framework for analysing programs at run time. It runs a program on a simulated processor, counts every machine instruction the program executes and simulates its cache misses. Unlike wall-clock time, the count does not depend on how busy the machine is, so one run per measurement is enough. It is still a model, not a measurement of time: two programs with the same count can run at different speeds. Here it runs inside a Linux container on aarch64. <a href="#fnref-cachegrind">↩</a></li>
+      <li id="fn-one-kind">Here the task is one kind of program: an interpreter for one virtual machine. The same method carries over to other programs without much difficulty: code written for the bench, a count of the work done instead of a timer, and a correctness check the agent never sees. Section 7 says more about how the class of tasks can be widened. <a href="#fnref-one-kind">↩</a></li>
+      <li id="fn-geomean">The geometric mean is the usual way to combine ratios to a reference: SPEC CPU reports it, and Fleming and Wallace (1986) argued for it for normalized benchmark results. With ratios it has two useful properties. The result does not depend on which interpreter is taken as the reference: the mean of the inverted ratios is the inverse of the mean. And a single workload with a very large gain cannot dominate the result the way it would in an arithmetic mean. It has known critics too, for example Smith (1988), who argues for summarizing total time instead. P. J. Fleming and J. J. Wallace, "How not to lie with statistics: the correct way to summarize benchmark results", <em>Communications of the ACM</em> 29(3), 1986. J. E. Smith, "Characterizing computer performance with a single number", <em>Communications of the ACM</em> 31(10), 1988. <a href="#fnref-geomean">↩</a></li>
+      <li id="fn-cli-usd">Claude Code reports its own dollar estimate with each result, together with a field <code>costBasis</code>. For Opus 5.5 and Fable 5.1 it says <code>list</code>, and the estimate matches ours to the cent on every run. For Sonnet 5.5 and Haiku 5.5 it says <code>unknown</code>, and the estimate is too high: exactly twice ours for Sonnet 5.5, which is what Opus 5.5 prices would give, and 8 to 14 times ours for Haiku 5.5. The likely reason is dates: version 2.1.281, which we pinned for the whole series, was released on 23 September 2026, after Opus 5.5 and before Sonnet 5.5 and Haiku 5.5, so its price table does not have those two models and it seems to fall back to Opus 5.5 prices. This is only the estimate the CLI displays; it says nothing about what is billed. Our figure uses the same token counts as the CLI and the official price list. <a href="#fnref-cli-usd">↩</a></li>
+    </ol>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <p class="foot"><a href="../">← notes</a> · <a href="https://github.com/Alatip">github.com/Alatip</a></p>
+  </div>
+</section>
+</div>
+</body>
+</html>
