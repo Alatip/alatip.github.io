@@ -66,6 +66,12 @@ a{color:var(--accent)}
   <a class="mapbtn" href="llm-capabilities-map/">LLM Capabilities Map →</a>
   <nav class="cats" id="cats" aria-label="Categories"></nav>
 
+  <div class="post" data-cats="interp" data-kw="weight editing; attention heads; multi-digit arithmetic; Qwen3.5-4B; preregistered">
+    <div class="date">12 November 2026</div>
+    <h2><a href="repair-the-step/">Repairing One Step in the Weights</a></h2>
+    <p>A first test of "train the step, not the task" from <a href="no-free-lunch/">There Is No Free Lunch After All</a>. Qwen3.5-4B fails long multiplication at one step, taking the digit at a given place, and one attention head does that lookup. A rank-16 change to 256 rows of that head's query weights, fitted on half of the items, cut wrong digits on the held-out half from 9.9% to 1.6% with the other measured skills within preregistered bounds. The step is repaired; the task is not, because the final answer is assembled elsewhere.</p>
+  </div>
+
   <div class="post" data-cats="benchmarks" data-kw="capability map; benchmarks; lab reports; leaderboards; interactive">
     <div class="date">11 November 2026 · interactive page</div>
     <h2><a href="llm-capabilities-map/">LLM Capabilities Map</a></h2>
@@ -168,7 +174,7 @@ a{color:var(--accent)}
 // Categories (Aziz 2026-11-11): may overlap; a note without data-cats is AI Ensembles; empty categories are not shown.
 (function(){
   var CATS=[['ensembles','AI Ensembles'],['swarms','AI Swarms'],['cybersec','AI CyberSec'],['safety','AI Safety'],
-            ['control','AI Control'],['benchmarks','AI Benchmarks'],['economics','AI Economics']];
+            ['control','AI Control'],['benchmarks','AI Benchmarks'],['economics','AI Economics'],['interp','AI Interpretability']];
   var NAME={};CATS.forEach(function(c){NAME[c[0]]=c[1]});
   var posts=[].slice.call(document.querySelectorAll('.post'));
   var cnt={};

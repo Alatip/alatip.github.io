@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Qwen3.5-4B fails long multiplication at one step: taking the digit at a given place. The step is traced to one attention head's query and repaired by a rank-16 change to 256 rows of one weight matrix, checked on held-out items.">
+<title>Repairing One Step in the Weights</title>
+<link rel="canonical" href="https://alatip.github.io/repair-the-step/">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Repairing One Step in the Weights">
+<meta property="og:description" content="Qwen3.5-4B fails long multiplication at one step: taking the digit at a given place. The step is traced to one attention head's query and repaired by a rank-16 change to 256 rows of one weight matrix, checked on held-out items.">
+<meta property="og:url" content="https://alatip.github.io/repair-the-step/">
+<meta property="og:image" content="https://alatip.github.io/repair-the-step/card.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Attention of one head of Qwen3.5-4B over the digits of a number, before and after a rank-16 edit of its query weights">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="author" content="Aziz Latipov">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"Repairing One Step in the Weights","datePublished":"2026-11-12","author":{"@type":"Person","name":"Aziz Latipov","url":"https://alatip.github.io/"},"url":"https://alatip.github.io/repair-the-step/"}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --paper:#F8F9FA; --card:#FFFFFF; --sunk:#F0F2F5;
+  --ink:#12161C; --ink2:#39424F; --muted:#6B7684; --rule:#DDE1E7; --hair:#EAEDF1;
+  --accent:#14548C; --accent-soft:#E4EDF6;
+  --a:#14548C; --b:#BF5B04; --truth:#39424F;
+  --warn-bg:#FBF2E4; --warn-ink:#8A5A00;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0F1216; --card:#161A20; --sunk:#1C2128;
+    --ink:#E6EAEF; --ink2:#B6BFCA; --muted:#828D9B; --rule:#2A313A; --hair:#222932;
+    --accent:#7FB3E0; --accent-soft:#152838;
+    --a:#4D93D0; --b:#D4762A; --truth:#B6BFCA;
+    --warn-bg:#2A2214; --warn-ink:#D8AA5C;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0F1216; --card:#161A20; --sunk:#1C2128;
+  --ink:#E6EAEF; --ink2:#B6BFCA; --muted:#828D9B; --rule:#2A313A; --hair:#222932;
+  --accent:#7FB3E0; --accent-soft:#152838;
+  --a:#4D93D0; --b:#D4762A; --truth:#B6BFCA;
+  --warn-bg:#2A2214; --warn-ink:#D8AA5C;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:"Source Serif 4",Georgia,serif; font-size:17.5px; line-height:1.62;
+  -webkit-font-smoothing:antialiased; font-variant-numeric:oldstyle-nums;
+}
+.page{max-width:1000px; margin:0 auto; padding:0 24px 110px}
+.col{max-width:640px; margin:0 auto}
+.col > * + *{margin-top:1.05em}
+p{margin:0}
+h1,h2,h3{margin:0; line-height:1.2; text-wrap:balance; font-weight:600}
+h1{font-size:clamp(2rem,4.6vw,2.85rem); letter-spacing:-.012em}
+h2{font-size:1.42rem}
+h3{font-size:1.08rem}
+a{color:var(--accent)}
+strong{font-weight:600}
+code,.mono,.eyebrow{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace}
+code{font-size:.84em; background:var(--sunk); padding:.1em .35em; border-radius:3px}
+.eyebrow{font-size:.68rem; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); font-weight:500}
+
+header{padding:82px 0 30px}
+.byline{display:flex; flex-wrap:wrap; gap:6px 20px; margin-top:1.1em; font-family:"JetBrains Mono",monospace; font-size:.74rem; color:var(--muted)}
+.abstract{
+  margin-top:2em; padding:22px 26px; background:var(--card);
+  border-top:2px solid var(--ink); border-bottom:1px solid var(--rule);
+  font-size:.97rem; line-height:1.6; color:var(--ink2);
+}
+.abstract .eyebrow{display:block; margin-bottom:.7em}
+.abstract strong{color:var(--ink)}
+
+section{padding-top:56px}
+.sec-head{display:flex; gap:14px; align-items:baseline; margin-bottom:20px}
+.sec-num{font-family:"JetBrains Mono",monospace; font-size:.78rem; color:var(--accent); padding-top:.3em; flex:none; font-weight:500}
+
+.eq{
+  background:var(--card); border:1px solid var(--rule); border-radius:4px;
+  padding:16px 20px; overflow-x:auto; font-family:"JetBrains Mono",monospace;
+  font-size:.88rem; line-height:1.85;
+}
+.eq .cm{color:var(--muted)}
+.note{background:var(--accent-soft); padding:16px 20px; border-radius:4px; font-size:.95rem}
+.note.warn{background:var(--warn-bg)}
+.note .eyebrow{display:block; margin-bottom:.45em; color:var(--ink2)}
+
+.tw{overflow-x:auto; border:1px solid var(--rule); border-radius:4px; background:var(--card)}
+table{border-collapse:collapse; width:100%; font-size:.88rem; font-family:"JetBrains Mono",monospace}
+th,td{padding:9px 13px; text-align:right; border-bottom:1px solid var(--hair)}
+th:first-child,td:first-child{text-align:left}
+thead th{font-size:.66rem; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:500; background:var(--sunk)}
+tbody tr:last-child td{border-bottom:none}
+td.hi{color:var(--ink); font-weight:500}
+td.dim{color:var(--muted)}
+.tnum{font-variant-numeric:tabular-nums}
+
+figure{margin:0; max-width:880px; margin-inline:auto}
+.fig{background:var(--card); border:1px solid var(--rule); border-radius:4px; overflow:hidden}
+.fig-b{padding:18px 14px 6px}
+figcaption{padding:0 24px 20px; font-size:.85rem; color:var(--muted); line-height:1.55; max-width:66ch}
+figcaption b{color:var(--ink2); font-weight:600}
+.legend{display:flex; flex-wrap:wrap; gap:6px 22px; padding:16px 24px 0; font-size:.8rem; color:var(--ink2); font-family:"JetBrains Mono",monospace}
+.legend span{display:inline-flex; align-items:center; gap:7px}
+.legend i{width:15px; height:2.5px; border-radius:2px}
+.legend i.dash{background:none; border-top:2px dashed var(--truth); height:0}
+svg{display:block; width:100%; height:auto; overflow:visible}
+
+ol,ul{margin:0; padding-left:1.25em}
+li{margin:.42em 0}
+.refs{font-size:.88rem; color:var(--ink2)}
+.refs li{margin:.55em 0}
+.refs .mono{color:var(--muted); font-size:.92em}
+hr.r{border:none; border-top:1px solid var(--rule); margin:0}
+.foot{padding-top:52px; font-size:.86rem; color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<style>.col p+p,.col p+ul,.col p+ol,.col ul+p,.col ol+p,.col div.note+p,.col p+div.note{margin-top:1.05em} .note .eyebrow{display:block;margin-bottom:.45em} .note p{margin:0}</style>
+<style>
+.strip{display:flex; gap:4px; align-items:flex-end; flex-wrap:wrap}
+.cell{width:34px; text-align:center; font-family:"JetBrains Mono",monospace}
+.cell .d{display:block; height:40px; line-height:40px; border-radius:3px; font-size:1.05rem; color:var(--ink);
+  border:1px solid var(--rule); position:relative}
+.cell .d.true{outline:2px solid var(--ink); outline-offset:1px}
+.cell .v{display:block; font-size:.62rem; color:var(--muted); margin-top:3px}
+.cell.comma{width:10px} .cell.comma .d{border:none; background:none!important}
+.rowlab{font-family:"JetBrains Mono",monospace; font-size:.72rem; color:var(--ink2); width:118px; flex:none;
+  align-self:center; padding-bottom:14px}
+.ex{padding:16px 22px 4px}
+.ex + .ex{padding-top:4px}
+.ctx{font-family:"JetBrains Mono",monospace; font-size:.78rem; color:var(--ink2); padding:16px 22px 0; line-height:1.6}
+</style>
+</head>
+<body>
+<div class="page">
+<header>
+  <div class="col">
+    <div class="eyebrow">Working note · Limits of learning</div>
+    <h1 style="margin-top:.5em">Repairing One Step in the Weights</h1>
+    <p style="margin-top:.6em; font-size:1.12rem; color:var(--ink2)">A first test of "train the step, not the task" on Qwen3.5-4B: find the step that breaks long multiplication, find where the model does it, change 256 rows of one weight matrix, check on items the edit never saw.</p>
+    <div class="byline">
+      <span>12 November 2026</span><span>working note</span><span>one model, 40 items</span><span>preregistered test</span>
+    </div>
+    <div class="abstract">
+      <span class="eyebrow">In short</span>
+      Qwen3.5-4B multiplies a 5-digit number by a 4-digit one correctly in 32 of 40 tries. Every failure is in the final sum, and inside the sum the arithmetic is right: the model <strong>takes the wrong digit</strong>, usually the one a place to the left or right. One attention head, layer 23 head 0, does that lookup by content: each source digit carries a place label, and the head's query asks for a place. On errors the query is blurred between the right place and its neighbour. A rank-16 change to the 256 rows of that head's query weights, fitted on half of the items and judged once on the other half, cut wrong digits from <strong>9.9% to 1.6%</strong> on the held-out items, with the other measured skills within the preregistered bounds. The step is repaired; the task is not, because the model builds its final answer without using its own column lines.
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">1</div><h2>The idea being tested</h2></div>
+    <p>In <a href="../no-free-lunch/">There Is No Free Lunch After All</a> (8 September) I wrote down a claim and a corollary. A task is a chain of steps, and its success is limited by the weakest one. So the useful thing to improve is that step, not the task: "Train the step, not the task." The note planned to find the step by feeding the model a correct prefix up to step <em>t</em> and to fix it with step-targeted training data. It also warned that a model trained on its weakest step may become "brittle one step to the side," so the price has to be measured as well as the gain.</p>
+    <p>This note is the first measurement. Two things changed from the plan. The repair is a direct, local change to the weights rather than new training data. And the step is found in two stages: first by behaviour (which step fails), then inside the model (which component does that step and how it goes wrong).</p>
+    <p>The setup is deliberately small: Qwen3.5-4B in bf16 on a laptop, greedy decoding, thinking off, one process with no batching, up to 16,384 new tokens per answer. The main task is 40 products of a 5-digit and a 4-digit number, for example 56544 × 3166.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">2</div><h2>Finding the step</h2></div>
+    <p>Four small experiments, each narrowing the failure.</p>
+    <div class="tw"><table>
+      <thead><tr><th>experiment</th><th>result</th><th>what it says</th></tr></thead>
+      <tbody>
+        <tr><td>Arithmetic expressions, no tool vs a calculator tool</td><td class="tnum">52/60 vs 60/60</td><td>failures are in long sums and digit assembly, never in one-digit facts</td></tr>
+        <tr><td>Each step alone (one-digit multiply, two- to four-number add, subtract)</td><td class="tnum">49/50</td><td>the steps are fine in isolation</td></tr>
+        <tr><td>Multiplication from scratch; with the correct partial products already written</td><td class="tnum">32/40; 40/40</td><td>all failures are in summing the partial products</td></tr>
+        <tr><td>Partial products given, sum forced "column by column"</td><td class="tnum">6/40</td><td>column lines: 133 of 339 have a wrong digit, 0 of 339 wrong arithmetic</td></tr>
+      </tbody>
+    </table></div>
+    <p>The last row is the useful one. Asked to add four numbers place by place, the model writes lines whose sums are always right and whose digits often are not. For 96804 × 4798 the partial products are 387,216,000, 67,762,800, 8,712,360 and 774,432, and the model writes "Hundred-thousands: 2 + 7 + <strong>8</strong> + 7 = 25". The hundred-thousands digit of 8,712,360 is 7; the 8 next to it is the millions digit. So the weak step is not adding. It is <strong>taking the digit at place <em>k</em> of a number written earlier in the context</strong>. Of 746 digits written this way, 89 are wrong; most often the model took the digit one place over in the same number, next most often the same place of another number.</p>
+    <p>The forced column format is worse than the model's own (6/40 vs 32/40) because it calls this weak step dozens of times per answer. That makes it a good place to study the step and a bad way to solve the task.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">3</div><h2>Where the model takes the digit</h2></div>
+    <p>Items are split by number: even items for all the looking and fitting, odd items held out. Everything in this section is measured on the even half, by re-running the model on its own text (teacher forcing) and reading the position where it writes a digit.</p>
+    <ul>
+      <li><strong>One head does the lookup.</strong> Of the 128 attention heads in Qwen3.5-4B's eight full-attention layers, layer 23 head 0 puts the most weight on the source digit: 0.57 on right digits. On wrong ones it splits, 0.28 on the right digit and 0.29 on the one the model then writes.</li>
+      <li><strong>It looks by content, not by distance.</strong> Splitting the head's score into its position part (the 64 rotary dimensions) and its content part shows the content part carries 96% of the margin. Each source digit carries a place label; the query asks for a place.</li>
+      <li><strong>On errors the request is blurred.</strong> When the model takes the neighbouring place, the content margin between the right place and its neighbour falls from +1.85 to +0.17. The request is written right before layer 23, by the MLPs of layers 20–22; on these errors their contribution turns negative. The place labels on the source digits depend on another head, layer 15 head 1, acting at earlier tokens.</li>
+      <li><strong>The head matters, but is not the only route.</strong> Replacing its output with a perfect lookup fixes 28 of 53 wrong digits; pointing it at the neighbour breaks 56 of 103 right ones. So a repair of this head alone could be expected to fix about half of the errors.</li>
+    </ul>
+    <figure class="fig" style="margin-top:1.6em">
+  <div class="ctx">Writing the hundred-thousands digit of 8,712,360: the right digit is 7, the original model wrote 8, the edited one 7. Here the head already leaned to the right digit and the model still wrote the wrong one; after the edit the head looks at nothing else.</div>
+  <div class="ex"><div class="strip"><div class="rowlab">original model</div><div class="cell"><span class="d" style="background:color-mix(in srgb, var(--a) 13%, transparent)">8</span><span class="v">0.08</span></div><div class="cell comma"><span class="d">,</span><span class="v">&nbsp;</span></div><div class="cell"><span class="d true" style="background:color-mix(in srgb, var(--a) 82%, transparent)">7</span><span class="v">0.52</span></div><div class="cell"><span class="d" style="background:color-mix(in srgb, var(--a) 27%, transparent)">1</span><span class="v">0.17</span></div><div class="cell"><span class="d" style="background:color-mix(in srgb, var(--a) 1%, transparent)">2</span><span class="v">0.01</span></div><div class="cell comma"><span class="d">,</span><span class="v">&nbsp;</span></div><div class="cell"><span class="d" style="background:color-mix(in srgb, var(--a) 0%, transparent)">3</span><span class="v">0.00</span></div><div class="cell"><span class="d" style="background:color-mix(in srgb, var(--a) 0%, transparent)">6</span><span class="v">0.00</span></div><div class="cell"><span class="d" style="background:color-mix(in srgb, var(--a) 0%, transparent)">0</span><span class="v">0.00</span></div></div></div>
+  <div class="ex"><div class="strip"><div class="rowlab">after the edit</div><div class="cell"><span class="d" style="background:color-mix(in srgb, var(--a) 0%, transparent)">8</span><span class="v">0.00</span></div><div class="cell comma"><span class="d">,</span><span class="v">&nbsp;</span></div><div class="cell"><span class="d true" style="background:color-mix(in srgb, var(--a) 100%, transparent)">7</span><span class="v">1.00</span></div><div class="cell"><span class="d" style="background:color-mix(in srgb, var(--a) 0%, transparent)">1</span><span class="v">0.00</span></div><div class="cell"><span class="d" style="background:color-mix(in srgb, var(--a) 0%, transparent)">2</span><span class="v">0.00</span></div><div class="cell comma"><span class="d">,</span><span class="v">&nbsp;</span></div><div class="cell"><span class="d" style="background:color-mix(in srgb, var(--a) 0%, transparent)">3</span><span class="v">0.00</span></div><div class="cell"><span class="d" style="background:color-mix(in srgb, var(--a) 0%, transparent)">6</span><span class="v">0.00</span></div><div class="cell"><span class="d" style="background:color-mix(in srgb, var(--a) 0%, transparent)">0</span><span class="v">0.00</span></div></div></div>
+  <div class="fig-b"><svg viewBox="0 0 760 200" role="img" aria-label="Attention of layer 23 head 0 on held-out cases"><line x1="150.0" y1="14" x2="150.0" y2="176" stroke="var(--hair)"/><text x="150.0" y="192" font-size="12.5" fill="var(--muted)" text-anchor="middle" font-family="JetBrains Mono">0.0</text><line x1="214.0" y1="14" x2="214.0" y2="176" stroke="var(--hair)"/><text x="214.0" y="192" font-size="12.5" fill="var(--muted)" text-anchor="middle" font-family="JetBrains Mono">0.2</text><line x1="278.0" y1="14" x2="278.0" y2="176" stroke="var(--hair)"/><text x="278.0" y="192" font-size="12.5" fill="var(--muted)" text-anchor="middle" font-family="JetBrains Mono">0.4</text><line x1="342.0" y1="14" x2="342.0" y2="176" stroke="var(--hair)"/><text x="342.0" y="192" font-size="12.5" fill="var(--muted)" text-anchor="middle" font-family="JetBrains Mono">0.6</text><line x1="406.0" y1="14" x2="406.0" y2="176" stroke="var(--hair)"/><text x="406.0" y="192" font-size="12.5" fill="var(--muted)" text-anchor="middle" font-family="JetBrains Mono">0.8</text><line x1="470.0" y1="14" x2="470.0" y2="176" stroke="var(--hair)"/><text x="470.0" y="192" font-size="12.5" fill="var(--muted)" text-anchor="middle" font-family="JetBrains Mono">1.0</text><text x="0" y="30" font-size="14" fill="var(--ink)" font-family="JetBrains Mono">right digits</text><text x="0" y="44" font-size="12.5" fill="var(--muted)" font-family="JetBrains Mono">n = 326</text><rect x="150" y="22" width="165.5" height="17" fill="var(--truth)" rx="2"/><rect x="315.5" y="22" width="93.2" height="17" fill="var(--truth)" opacity=".28" rx="2"/><text x="414.7" y="34" font-size="13.5" fill="var(--ink2)" font-family="JetBrains Mono">original: right 0.52, neighbours 0.29</text><rect x="150" y="44" width="298.2" height="17" fill="var(--a)" rx="2"/><rect x="448.2" y="44" width="16.3" height="17" fill="var(--a)" opacity=".28" rx="2"/><text x="470.5" y="56" font-size="13.5" fill="var(--ink2)" font-family="JetBrains Mono">edited: right 0.93, neighbours 0.05</text><text x="0" y="92" font-size="14" fill="var(--ink)" font-family="JetBrains Mono">wrong digits</text><text x="0" y="106" font-size="12.5" fill="var(--muted)" font-family="JetBrains Mono">n = 37</text><rect x="150" y="84" width="103.4" height="17" fill="var(--truth)" rx="2"/><rect x="253.4" y="84" width="99.1" height="17" fill="var(--truth)" opacity=".28" rx="2"/><text x="358.5" y="96" font-size="13.5" fill="var(--ink2)" font-family="JetBrains Mono">original: right 0.32, neighbours 0.31</text><rect x="150" y="106" width="260.8" height="17" fill="var(--a)" rx="2"/><rect x="410.8" y="106" width="31.3" height="17" fill="var(--a)" opacity=".28" rx="2"/><text x="448.1" y="118" font-size="13.5" fill="var(--ink2)" font-family="JetBrains Mono">edited: right 0.81, neighbours 0.10</text></svg></div>
+  <figcaption><b>Figure 1.</b> Top: attention of layer 23 head 0, at the position where the model writes the digit,
+  over the digits of the number it should read from (held-out item m05, teacher-forced on the model's own
+  text; numbers are shares of the head's total attention, the outlined digit is the right one). Bottom: mean
+  attention on the right source digit (solid) and on its neighbours one or two places away (light), on all
+  held-out digit cases, before and after the edit. "Wrong" means wrong in the original model.</figcaption>
+</figure>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">4</div><h2>The edit</h2></div>
+    <p>Only the query of layer 23 head 0 changes: the 256 rows of <code>q_proj</code> that produce it, as <code>W ← W + UVᵀ</code> with rank 16. Keys, values, and everything else stay as they were.</p>
+    <p>The edit is fitted to an internal target, not to the output: the head should put its attention on the right source digit at the writing position. A second term keeps the head's attention unchanged on five unrelated texts, on 40 answers from the other experiments, and at random positions (a KL penalty), and a third keeps the edit small. Because nothing before layer 23 changes, the inputs to the head can be cached once from the original model and the fit runs on that cache, exactly, without a forward or backward pass through the model. The numbers were found by gradient descent (Adam, 400 steps); the rank and the weight of the protecting term were chosen on half of the even items, by a rule written down in advance, and the chosen setting was then refit on all of them.</p>
+    <p>Before any odd item was scored, the fitted edit's hash and four predictions were written into the preregistration.</p>
+    <div class="tw"><table>
+      <thead><tr><th>prediction (held-out odd items)</th><th>result</th><th></th></tr></thead>
+      <tbody>
+        <tr><td>Teacher-forced: ≥ 9 wrong digits fixed, ≤ 3 right ones broken</td><td class="tnum">28 of 37 fixed, 0 of 326 broken</td><td class="hi">holds</td></tr>
+        <tr><td>Regenerated column sums: wrong-digit rate ≤ 6.5% (was 9.9%)</td><td class="tnum">1.6% (8 of 495); Fisher p = 4·10⁻⁸</td><td class="hi">holds</td></tr>
+        <tr><td>Other skills: isolated steps ≥ 47/50, calculator ≥ 58/60, no-tool ≥ 50/60, multiplication ≥ 30/40</td><td class="tnum">47, 60, 53, 34</td><td class="hi">holds</td></tr>
+        <tr><td>Drift on unrelated text no larger than random edits of the same size</td><td class="tnum">KL 0.00035 vs 0.00030–0.00042</td><td class="hi">holds</td></tr>
+      </tbody>
+    </table></div>
+    <figure class="fig" style="margin-top:1.6em">
+  <div class="fig-b"><svg viewBox="0 0 760 160" role="img" aria-label="Wrong-digit rate before and after the edit"><line x1="200.0" y1="10" x2="200.0" y2="136" stroke="var(--hair)"/><text x="200.0" y="152" font-size="12.5" fill="var(--muted)" text-anchor="middle" font-family="JetBrains Mono">0%</text><line x1="280.0" y1="10" x2="280.0" y2="136" stroke="var(--hair)"/><text x="280.0" y="152" font-size="12.5" fill="var(--muted)" text-anchor="middle" font-family="JetBrains Mono">4%</text><line x1="360.0" y1="10" x2="360.0" y2="136" stroke="var(--hair)"/><text x="360.0" y="152" font-size="12.5" fill="var(--muted)" text-anchor="middle" font-family="JetBrains Mono">8%</text><line x1="440.0" y1="10" x2="440.0" y2="136" stroke="var(--hair)"/><text x="440.0" y="152" font-size="12.5" fill="var(--muted)" text-anchor="middle" font-family="JetBrains Mono">12%</text><line x1="520.0" y1="10" x2="520.0" y2="136" stroke="var(--hair)"/><text x="520.0" y="152" font-size="12.5" fill="var(--muted)" text-anchor="middle" font-family="JetBrains Mono">16%</text><text x="0" y="36" font-size="14" fill="var(--ink)" font-family="JetBrains Mono">held-out (odd) items</text><rect x="200" y="16" width="198.3" height="16" fill="var(--truth)" rx="2"/><text x="404.3" y="28" font-size="13.5" fill="var(--ink2)" font-family="JetBrains Mono">original: 36/363 = 9.9%</text><rect x="200" y="37" width="32.3" height="16" fill="var(--a)" rx="2"/><text x="238.3" y="49" font-size="13.5" fill="var(--ink2)" font-family="JetBrains Mono">edited: 8/495 = 1.6%</text><text x="0" y="92" font-size="14" fill="var(--ink)" font-family="JetBrains Mono">fitting (even) items</text><rect x="200" y="72" width="276.8" height="16" fill="var(--truth)" rx="2"/><text x="482.8" y="84" font-size="13.5" fill="var(--ink2)" font-family="JetBrains Mono">original: 53/383 = 13.8%</text><rect x="200" y="93" width="29.7" height="16" fill="var(--a)" rx="2"/><text x="235.7" y="105" font-size="13.5" fill="var(--ink2)" font-family="JetBrains Mono">edited: 7/472 = 1.5%</text></svg></div>
+  <figcaption><b>Figure 2.</b> Share of wrong digits in the column lines, generated from scratch with the forced
+  column format, before and after the edit. Digits are extracted by the same rules from both runs; the edited model
+  also writes fewer malformed lines (68 skipped instead of 121), so its count of digits is larger.</figcaption>
+</figure>
+    <p>Inside the head the change is large: on held-out digits its attention on the right source goes from 0.52 to 0.93 where the model was already right, and from 0.32 to 0.81 where it was wrong (Figure 1). The fitted edit has a third of the norm of the rows it changes (3.24 against 9.96). It also beats the ceiling the oracle suggested: 76% of held-out wrong digits are fixed, not half. A likely reason is that the oracle replaced the head's output at one position, while the edit changes its query everywhere, including in the model's earlier column lines; this was not tested.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">5</div><h2>A second route: going around the step</h2></div>
+    <p>Independently of the repair, I tried the other option: avoid the weak step. The model has two ways to add its partial products, column by column (many digit lookups) or pairwise, adding whole numbers two at a time (few). A direction in the residual stream at layer 18 switches the choice; adding it as a constant bias to that layer's MLP output, a weight change too, moved the model from 11 to 35 pairwise sums out of 40 and multiplication from 32 to 37 of 40.</p>
+    <p>The price was elsewhere. Plain two-number addition and subtraction fell from 20 of 20 to 13 of 20: the model began miscopying 9-digit operands and dropping the lowest digit group in its sums. Its drift on unrelated text was also above random edits of the same size (KL 0.024 against 0.016–0.021). The repair costs less than the bypass on every measure here.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">6</div><h2>What the repair did not fix</h2></div>
+    <p>Answer accuracy on the forced column format went from 6 to 8 of 40. The column lines are now nearly all right, but the final number is still mostly wrong, because the model does not assemble it from those lines: in 37 of 40 answers of the original run, the final answer disagrees with the model's own column digits. That is the next weak step, and it is a different one.</p>
+    <p>Why a step that is right 88% of the time sinks the task: one answer calls it about twenty times, and errors compound. Dziri et al. made this argument for transformers on multi-digit multiplication (<a href="https://arxiv.org/abs/2305.18654">Faith and Fate</a>, 2023); the numbers here fit it.</p>
+    <div class="tw"><table>
+      <thead><tr><th></th><th>digit right</th><th>digits per answer</th><th>all right, if independent</th><th>all right, observed</th><th>answer correct</th></tr></thead>
+      <tbody>
+        <tr><td>original</td><td class="tnum">88.1%</td><td class="tnum">~19</td><td class="tnum">0.881¹⁹ ≈ 9%</td><td class="tnum">8 of 39</td><td class="tnum">6 of 40</td></tr>
+        <tr><td>edited</td><td class="tnum">98.4%</td><td class="tnum">~25</td><td class="tnum">0.984²⁵ ≈ 68%</td><td class="tnum">30 of 39</td><td class="tnum">8 of 40</td></tr>
+      </tbody>
+    </table></div>
+    <p>Errors cluster in some items, so more answers come out clean than independence predicts. After the edit the chain of lookups survives in most answers, and the task fails at the next link: only 7 of those 30 clean answers end with the right number.</p>
+    <p>For the claim of the September note this is the expected picture: a task is a chain, and repairing one link exposes the next. It also bears on the cases the note distinguished. The digit step was not missing from the model: it failed 10–14% of the time, not always, and a small change was enough to fix it. In the note's words, the edit moved mass onto a step the model already had; it did not create one. A step that is truly absent has not been tested here.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">7</div><h2>Checking the fast check</h2></div>
+    <p>Teacher forcing (one forward pass over a reference answer) is hundreds of times faster than generating, so it is the obvious way to screen edits. I compared it with generation on 1,209 pairs of model and correct reference answer, for the original model and both edits.</p>
+    <ul>
+      <li>When a model agrees with a correct reference at every token, it also solves the item when generating: 81 of 82.</li>
+      <li>"Any wrong digit along the original model's correct answer" flagged all 15 items the two edits lost in generation, but also flagged many items they kept. For the bypass, which changes the method, the check is useless; for the repair it works as a filter before regenerating.</li>
+      <li>A one-pass score does not reproduce token-by-token decoding exactly: near-ties (top two tokens within 0.5 logit) flip from numerical differences alone. All four items the repair lost in generation were such knife-edge items for the original model too. Differences of one or two items between runs should be read with that in mind.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">8</div><h2>Related work</h2></div>
+    <p>Locating a component and then changing it is an old idea in interpretability. Two recent pieces are closest to what is done here, and both differ in ways that matter.</p>
+    <p><strong>Weight-space programming</strong> (Takehi, Teoh, Zhang, Khattab, MIT CSAIL, <a href="https://rikiyat.github.io/blog/weight-space-programming/">blog post, 2 November 2026</a>). A general-purpose LLM reads another network's weights and writes new ones, by definition without an optimizer. The headline edit subtracts one direction, found by the editing model, from 64 output columns of two MLPs in Qwen3.5-0.8B and raises MATH-500 from 7.9% to 48.1%; the diagnosed problem is thinking loops. An independent replication (<a href="https://github.com/openwsp/openwsp">OpenWSP</a>) reports that turning thinking off alone gives 46.8%, so the gain is mostly loop removal.</p>
+    <p><strong>Attention Behavior Fine-Tuning</strong> (Cho et al., BlackboxNLP 2025, <a href="https://arxiv.org/abs/2505.14233">arXiv 2505.14233</a>). Also trains on where heads look instead of on the output: in in-context classification, induction heads are rewarded for attending to the correct label token and penalised for the others. Gradients go to the query and key weights of all heads in all layers.</p>
+    <div class="tw"><table>
+      <thead><tr><th></th><th>weight-space programming</th><th>ABFT</th><th>this note</th></tr></thead>
+      <tbody>
+        <tr><td>how the failure is found</td><td>editing LLM traces a behaviour (looping) to a direction</td><td>a generic induction-head filter</td><td>behavioural step isolation, then one head, then its query side</td></tr>
+        <tr><td>what changes</td><td>output columns of two MLPs</td><td>query and key of all heads, all layers</td><td>256 query rows of one head, rank 16</td></tr>
+        <tr><td>how the numbers are found</td><td>written by the LLM, no optimizer</td><td>gradient through the whole model</td><td>gradient on a cached, exact local computation</td></tr>
+        <tr><td>target</td><td>removing a direction</td><td>attention on label tokens</td><td>attention on the source digit, with attention elsewhere held fixed</td></tr>
+        <tr><td>side effects checked</td><td>not reported</td><td>accuracy on other classification sets</td><td>four other skills, random-edit control, preregistered bounds</td></tr>
+      </tbody>
+    </table></div>
+    <p>By the MIT definition the edit here is not weight-space programming, since its numbers come from an optimizer. The target, though, is nearly linear in the query, so a closed-form version without any optimizer looks possible; that would make the two directly comparable. Not done yet.</p>
+    <p>The tooling started from Lyra's <a href="https://github.com/lyramakesmusic/neuron-explorer">neuron explorer</a> for Qwen3.5-4B, which is built around MLP neurons and steering. This work needed attention maps, activation patching and scores over hundreds of cases, so those were added in a small library over the same model and hook points.</p>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <div class="sec-head"><div class="sec-num">9</div><h2>Limits</h2></div>
+    <ul>
+      <li>One model, one task format, 40 items (19 held-out items with 363 digit cases), greedy decoding, thinking off.</li>
+      <li>The repair targets one step of one task; whether the same edit helps the digit lookup in other formats is open (two items lost in isolated steps were digit errors in other formats, both knife-edge).</li>
+      <li>The rank and protection weight were chosen on validation data with only 27 wrong digits, and validation broke 5 of 181 right digits; the held-out test broke none, which may be luck as much as design.</li>
+      <li>Code and data are not public yet.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="col">
+    <p class="foot"><a href="../">← notes</a> · <a href="https://github.com/Alatip">github.com/Alatip</a></p>
+  </div>
+</section>
+</div>
+</body>
+</html>
