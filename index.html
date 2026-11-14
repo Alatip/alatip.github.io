@@ -69,7 +69,7 @@ a{color:var(--accent)}
   <div class="post" data-cats="interp benchmarks" data-kw="weight editing; attention heads; multi-digit arithmetic; Qwen3.5-4B; preregistered">
     <div class="date">12 November 2026</div>
     <h2><a href="repair-the-step/">Repairing One Step in the Weights</a></h2>
-    <p>A first test of "train the step, not the task" from <a href="no-free-lunch/">There Is No Free Lunch After All</a>. Qwen3.5-4B fails long multiplication at one step, taking the digit at a given place, and one attention head does that lookup. A rank-16 change to 256 rows of that head's query weights, fitted on half of the items, cut wrong digits on the held-out half from 9.9% to 1.6% with the other measured skills within preregistered bounds. The step is repaired; the task is not, because the final answer is assembled elsewhere. · <a href="https://doi.org/10.5281/zenodo.24163236">doi</a></p>
+    <p>A first test of "train the step, not the task" from <a href="no-free-lunch/">There Is No Free Lunch After All</a>. Qwen3.5-4B fails long multiplication at one step, taking the digit at a given place, and one attention head does that lookup. A rank-16 change to 256 rows of that head's query weights, fitted on half of the items, cut wrong digits on the held-out half from 9.9% to 1.6% with the other measured skills within preregistered bounds. Counting every column line, wrong lines fell from 36% to 13%: the step is much improved, not repaired, and the task still fails, partly because the final answer is assembled elsewhere. Corrected 14 November. · <a href="https://doi.org/10.5281/zenodo.24163236">doi</a></p>
   </div>
 
   <div class="post" data-cats="benchmarks" data-kw="capability map; benchmarks; lab reports; leaderboards; interactive">
